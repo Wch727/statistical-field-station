@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>§XVI 图论、网络与仿真 — Statistical Field Station</title>
+<link rel="stylesheet" href="assets/vendor/google-fonts.css">
+<link rel="stylesheet" href="assets/vendor/katex.min.css">
+<script src="assets/vendor/katex.min.js"></script>
+<script src="assets/vendor/auto-render.min.js"></script>
+<script src="assets/vendor/d3.v7.min.js"></script>
+<link rel="stylesheet" href="assets/css/site.css">
+<style>
+:root {
+  --parchment: #FDFBF5; --forest: #2D4A3E; --terracotta: #C75146;
+  --gold: #8B6914; --stone: #E8E0D5; --slate: #5B6E65; --surface: #FFFAF0;
+  --display: 'Noto Serif SC', 'Cormorant Garamond', 'STSong', serif;
+  --body: 'Noto Sans SC', 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Consolas', monospace;
+  --page-w: 1100px; --text-w: 72ch; --radius: 4px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:40px}
+body{background:var(--parchment);color:var(--forest);font-family:var(--body);font-size:1.08rem;line-height:1.72}
+p{margin-bottom:14px;max-width:var(--text-w)}
+a{color:var(--terracotta);text-decoration:none}a:hover{text-decoration:underline}
+strong{font-weight:600}
+
+.page{max-width:var(--page-w);margin:0 auto;padding:0 32px 64px}
+.top-nav{padding:16px 0;font-family:var(--mono);font-size:0.78rem;border-bottom:1px solid var(--stone);margin-bottom:40px}
+.top-nav a{color:var(--slate)}.top-nav span{color:var(--gold)}
+
+.hero{padding:32px 0 40px}
+.hero .num{font-family:var(--mono);font-size:0.7rem;letter-spacing:0.18em;color:var(--gold);margin-bottom:6px}
+.hero h1{font-family:var(--display);font-weight:700;font-size:clamp(2rem,5vw,3rem);line-height:1.1;color:var(--forest);margin-bottom:12px}
+.hero .deck{font-size:1.05rem;color:var(--slate);max-width:var(--text-w)}
+
+h2{font-family:var(--display);font-weight:600;font-size:1.6rem;color:var(--forest);margin:36px 0 14px;padding-top:20px;border-top:1px solid var(--stone)}
+h3{font-family:var(--display);font-weight:500;font-size:1.2rem;color:var(--forest);margin:24px 0 10px}
+
+.math-block{text-align:center;padding:16px;background:var(--surface);border:1px solid var(--stone);border-radius:var(--radius);margin:16px 0;overflow-x:auto}
+.derive-box{background:#F5F8F6;border:1px solid var(--stone);border-left:3px solid var(--forest);padding:16px 20px;border-radius:0 var(--radius) var(--radius) 0;margin:16px 0;font-size:0.92rem}
+.derive-box h4{color:var(--forest);font-family:var(--display);font-size:1rem;margin:0 0 8px}
+.concept-box{background:var(--surface);border:1px solid var(--stone);border-radius:var(--radius);padding:16px 20px;margin:16px 0;font-size:0.93rem}
+.concept-box h4{font-family:var(--display);font-size:1.05rem;font-weight:600;color:var(--forest);margin:0 0 8px}
+.toolkit-box{background:#FFF5F3;border:1px solid var(--stone);border-left:3px solid var(--terracotta);padding:14px 18px;border-radius:0 var(--radius) var(--radius) 0;margin:16px 0;font-size:0.92rem}
+.toolkit-box h4{color:var(--terracotta);font-family:var(--display);font-size:1rem;margin:0 0 8px}
+.note-box{background:#FFF8F0;border-left:3px solid var(--gold);padding:14px 18px;border-radius:0 var(--radius) var(--radius) 0;margin:16px 0;font-size:0.93rem}
+.note-box strong{color:var(--gold)}
+.warn-box{background:#FFFBF0;border:1px solid #E8D5A0;border-radius:var(--radius);padding:14px 18px;margin:16px 0;font-size:0.92rem}
+.warn-box::before{content:'⚠ ';font-size:1.1rem}
+.competition-box{background:#F0F7F5;border:1px solid var(--forest);border-left:4px solid var(--forest);padding:18px 22px;border-radius:0 var(--radius) var(--radius) 0;margin:20px 0;font-size:0.93rem}
+.competition-box h4{color:var(--forest);font-family:var(--display);font-size:1.05rem;margin:0 0 8px}
+.competition-box .q{color:var(--terracotta);font-weight:600}
+
+.panel{background:var(--surface);border:1px solid var(--stone);border-radius:6px;box-shadow:inset 0 1px 0 rgba(255,255,255,0.7),0 2px 12px rgba(0,0,0,0.05);padding:24px;margin:20px 0;position:relative}
+.panel::before{content:'';position:absolute;top:0;left:12px;right:12px;height:1px;background:linear-gradient(to right,transparent,var(--gold),transparent);opacity:0.4}
+.panel-label{font-family:var(--mono);font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--stone)}
+.panel-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+
+.stat-cards{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.stat-card{background:var(--surface);border:1px solid var(--stone);border-radius:var(--radius);padding:10px 14px;text-align:center;min-width:72px}
+.stat-card .lbl{font-family:var(--mono);font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--slate);margin-bottom:3px}
+.stat-card .val{font-family:var(--mono);font-size:1.25rem;font-weight:600;color:var(--forest)}
+
+.chart-container{width:100%;overflow-x:auto}
+.chart-container svg{display:block;margin:0 auto}
+
+.compact-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:0.88rem;margin:16px 0}
+.compact-table th,.compact-table td{padding:7px 12px;text-align:left;border-bottom:1px solid var(--stone)}
+.compact-table th{font-family:var(--body);font-size:0.72rem;letter-spacing:0.08em;color:var(--slate);border-bottom:2px solid var(--stone)}
+
+.btn{font-family:var(--mono);font-size:0.75rem;border:1px solid var(--stone);border-radius:var(--radius);background:var(--surface);color:var(--forest);padding:6px 14px;cursor:pointer;transition:all 0.15s}
+.btn:hover{border-color:var(--terracotta);color:var(--terracotta)}
+.btn.active{background:var(--forest);color:#fff;border-color:var(--forest)}
+.btn-group{display:flex;gap:4px;flex-wrap:wrap;margin:8px 0}
+
+footer{text-align:center;padding:32px 0;font-size:0.82rem;color:var(--slate);border-top:1px solid var(--stone);margin-top:40px}
+footer a{color:var(--slate);text-decoration:underline}
+</style>
+</head>
+<body>
+<div class="page">
+
+<nav class="top-nav"><a href="stats_tutorial.html">← Field Station</a> <span>|</span> §XVI 图论、网络与仿真</nav>
+
+<header class="hero">
+  <div class="num">§XVI</div>
+  <h1>图论、网络与仿真</h1>
+  <p class="deck">最短路线是什么？网络中哪些节点最重要？如何模拟随机事件？<strong>图论解决的是关系结构问题，仿真解决的是随机动态问题。两者结合可以处理很多「复杂系统」类题目。</strong>本章涵盖最短路径、最小生成树、网络中心性、蒙特卡洛模拟、排队模型和元胞自动机。</p>
+</header>
+
+<div class="competition-box">
+<h4>竞赛真题场景</h4>
+<p><span class="q">Q：</span>美赛 MCM：如何规划城市交通网络？→ 最短路径 + 最大流。<br>
+<span class="q">Q：</span>国赛/美赛：如何识别社交网络中的关键节点？→ 网络中心性分析。<br>
+<span class="q">Q：</span>美赛 ICM：如何模拟排队系统（如医院、收费站）？→ 排队模拟（离散事件仿真）。<br>
+<span class="q">Q：</span>国赛 B 题：如何模拟交通流或人群疏散？→ 元胞自动机。<br>
+<strong>→ 图论和仿真在竞赛中常作为「建模工具」出现——它们不是最终答案，而是分析和验证方案的手段。</strong></p>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>16.1 核心概念：图与网络</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>图的基本要素</h4>
+<p>图（Graph）由<strong>节点</strong>（Vertex / Node）和<strong>边</strong>（Edge）组成：\(G = (V, E)\)。边可以有权重（距离、成本、容量），可以有方向（有向图 vs 无向图）。</p>
+</div>
+
+<table class="compact-table">
+<thead><tr><th>图的类型</th><th>边特征</th><th>表示</th><th>竞赛应用</th></tr></thead>
+<tbody>
+<tr><td><strong>无向无权图</strong></td><td>对称，无权重</td><td>邻接矩阵/邻接表</td><td>社交网络、连通性</td></tr>
+<tr><td><strong>无向加权图</strong></td><td>对称，有权重</td><td>邻接矩阵（权重值）</td><td>交通网络、距离图</td></tr>
+<tr><td><strong>有向加权图</strong></td><td>不对称，有权重</td><td>邻接矩阵（非对称）</td><td>物流网络、资金流</td></tr>
+</tbody>
+</table>
+
+<div class="note-box">
+<strong>Python 工具：</strong>networkx 是 Python 图论的标准库。一行代码创建图：<code>G = nx.Graph()</code>，一行代码求最短路径：<code>nx.shortest_path(G, source, target)</code>。竞赛中画网络图：<code>nx.draw(G, pos, with_labels=True)</code>。本节涉及的最短路径、最小生成树、中心性等全部在 networkx 中有现成实现。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>16.2 最短路径</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>从 A 到 B 的最优路线</h4>
+<p>最短路径问题是图论中最基本也最实用的问题。在加权图中，找到两个节点之间<strong>权重之和最小</strong>的路径。</p>
+</div>
+
+<div class="derive-box">
+<h4>Dijkstra 算法（贪心）</h4>
+<p><strong>适用：</strong>非负权重的有向/无向图。复杂度 \(O((V+E)\log V)\)（使用优先队列）。</p>
+<p><strong>核心思想：</strong>维护一个「已确定最短距离」的节点集合。每次从未确定节点中选择<strong>当前距离最小</strong>的节点，将其加入已确定集合，然后更新其邻居的距离。</p>
+<p><strong>算法步骤：</strong><br>
+① 初始化：dist[source] = 0，dist[其他] = ∞。<br>
+② 选择 dist 最小且未确定的节点 u。<br>
+③ 对 u 的每个邻居 v：如果 dist[u] + w(u,v) < dist[v]，更新 dist[v] = dist[u] + w(u,v)，记录前驱 prev[v] = u。<br>
+④ 重复 ②-③ 直到所有节点确定或目标节点确定。<br>
+⑤ 从目标节点回溯 prev 链得到最短路径。</p>
+</div>
+
+<div class="derive-box">
+<h4>Floyd-Warshall 算法（动态规划）</h4>
+<p><strong>适用：</strong>所有节点对之间的最短路径。允许负权重（但不允许负环）。复杂度 \(O(V^3)\)。</p>
+<div class="math-block">
+\[
+d_{ij}^{(k)} = \min\left(d_{ij}^{(k-1)},\; d_{ik}^{(k-1)} + d_{kj}^{(k-1)}\right)
+\]
+</div>
+<p>其中 \(d_{ij}^{(k)}\) 表示只使用前 k 个节点作为中间节点时，从 i 到 j 的最短距离。Floyd 的核心洞察：从 i 到 j 的最短路径要么不经过 k，要么经过 k（即 i→k + k→j）。</p>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>16.3 最小生成树</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>用最小的代价连接所有节点</h4>
+<p>最小生成树（Minimum Spanning Tree, MST）是包含所有节点且边权重之和最小的无环连通子图。竞赛应用：铺设管网、布线、通信网络规划。</p>
+</div>
+
+<div class="derive-box">
+<h4>Prim 算法与 Kruskal 算法</h4>
+<p><strong>Prim（顶点扩展）：</strong>从任意节点开始，每次选择连接「树内」和「树外」且权重最小的边，将新节点加入树中。重复直到所有节点入树。与 Dijkstra 结构相似，但选择标准不同（Dijkstra：最小化 dist[源]；Prim：最小化边权重）。</p>
+<p><strong>Kruskal（边排序）：</strong>将所有边按权重升序排列。从小到大遍历每条边，如果加入这条边不会形成环（使用并查集判断），则将其加入 MST。重复直到边数 = V-1。</p>
+<p><strong>选择：</strong>稠密图（边多）→ Prim \(O(V^2)\)；稀疏图（边少）→ Kruskal \(O(E \log E)\)。</p>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>16.4 网络中心性</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>网络中哪些节点最重要？</h4>
+<p>中心性（Centrality）度量节点在网络中的「重要性」。不同中心性度量回答不同的问题。</p>
+</div>
+
+<table class="compact-table">
+<thead><tr><th>中心性</th><th>公式/定义</th><th>回答的问题</th></tr></thead>
+<tbody>
+<tr><td><strong>度中心性</strong></td><td>\(C_D(v) = \deg(v)\)</td><td>谁的联系最多？</td></tr>
+<tr><td><strong>介数中心性</strong></td><td>\(C_B(v) = \sum_{s \neq v \neq t} \frac{\sigma_{st}(v)}{\sigma_{st}}\)</td><td>谁是信息流通的「桥梁」？</td></tr>
+<tr><td><strong>接近中心性</strong></td><td>\(C_C(v) = \frac{1}{\sum_u d(v,u)}\)</td><td>谁离所有人最近？</td></tr>
+<tr><td><strong>特征向量中心性</strong></td><td>\(\mathbf{A}\mathbf{x} = \lambda \mathbf{x}\)（邻接矩阵特征向量）</td><td>谁连接了重要的人？</td></tr>
+<tr><td><strong>PageRank</strong></td><td>\(PR(v) = \frac{1-d}{N} + d \sum_{u \to v} \frac{PR(u)}{L(u)}\)</td><td>在有向图中谁被重要节点指向？</td></tr>
+</tbody>
+</table>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>介数中心性最有区分度——它识别的是「桥接」不同社区的关键节点。在社交网络分析中，高介数节点通常是信息传播的瓶颈。竞赛中同时报告 2-3 种中心性，然后分析排序是否一致，这是很好的论文内容。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>16.5 连通性与社区检测</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>图的结构分析</h4>
+<p><strong>连通分量：</strong>无向图中，如果两个节点之间存在路径，它们属于同一连通分量。竞赛中识别连通分量可以发现网络中的「孤岛」。</p>
+<p><strong>社区检测：</strong>将节点划分为若干组，使组内连接密集、组间连接稀疏。主要方法：① 模块度最大化（Girvan-Newman）② Louvain 算法 ③ 谱聚类（见 §IX）。竞赛中社区检测常用于发现社交网络中的群体结构。</p>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>16.6 蒙特卡洛模拟</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>用随机数解决问题</h4>
+<p>蒙特卡洛方法（Monte Carlo）的核心思想：通过<strong>大量随机采样</strong>来近似计算确定性问题的解。当问题难以解析求解时，蒙特卡洛是一种通用且强大的数值方法。</p>
+</div>
+
+<div class="derive-box">
+<h4>经典示例：用随机点估计 π</h4>
+<p>在 \([-1, 1] \times [-1, 1]\) 的正方形内随机撒点。单位圆内的点满足 \(x^2 + y^2 \leq 1\)。圆面积 / 正方形面积 = \(\pi r^2 / (2r)^2 = \pi/4\)。因此：</p>
+<div class="math-block">
+\[
+\pi \approx 4 \times \frac{\text{圆内点数}}{\text{总点数}}
+\]
+</div>
+<p>误差随点数 \(N\) 以 \(O(1/\sqrt{N})\) 的速度收敛。要增加一位小数精度，需要 100 倍的点数。</p>
+</div>
+
+<div class="derive-box">
+<h4>蒙特卡洛积分的通用形式</h4>
+<div class="math-block">
+\[
+\int_{\Omega} f(x) \, dx \approx \frac{\text{Vol}(\Omega)}{N} \sum_{i=1}^{N} f(x_i), \quad x_i \sim \text{Uniform}(\Omega)
+\]
+</div>
+<p><strong>竞赛应用：</strong>① 高维积分（维度 > 5 时蒙特卡洛比网格法更高效）。② 可靠性分析（结构失效概率估计）。③ 风险评估（金融风险 VaR 的蒙特卡洛估计）。④ 参数灵敏度的全局分析（Sobol 指数）。</p>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>16.7 排队模拟</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>等待线的数学</h4>
+<p>排队论（Queuing Theory）研究服务系统中顾客的等待行为。核心指标：平均等待时间、平均队列长度、服务台利用率。</p>
+</div>
+
+<div class="derive-box">
+<h4>M/M/1 排队模型</h4>
+<p>M/M/1 是最基本的排队模型：<strong>M</strong>arkov 到达（Poisson 过程，到达率 λ）、<strong>M</strong>arkov 服务（服务时间指数分布，服务率 μ）、<strong>1</strong> 个服务台。</p>
+<div class="math-block">
+\[
+\begin{aligned}
+\text{服务台利用率：}&\quad \rho = \frac{\lambda}{\mu} \quad (\rho < 1 \text{ 否则队列无限增长}) \\
+\text{平均队列长度：}&\quad L_q = \frac{\rho^2}{1 - \rho} \\
+\text{平均等待时间：}&\quad W_q = \frac{L_q}{\lambda} = \frac{\rho}{\mu - \lambda} \\
+\text{平均系统内人数：}&\quad L = \frac{\rho}{1 - \rho}
+\end{aligned}
+\]
+</div>
+<p><strong>竞赛中的排队模拟：</strong>当系统复杂（多服务台、非指数分布、优先级规则）时，解析解不存在或难以推导。此时用<strong>离散事件仿真</strong>——用 Python 的 simpy 库模拟每个顾客的到达、等待、服务和离开，统计输出指标。</p>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>16.8 元胞自动机</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>简单规则涌现复杂行为</h4>
+<p>元胞自动机（Cellular Automaton, CA）是离散的动力学系统：空间被划分为网格（元胞），每个元胞有有限个状态，所有元胞根据<strong>相同的局部规则</strong>同步更新。</p>
+</div>
+
+<div class="derive-box">
+<h4>经典示例：交通流 NASCH 模型</h4>
+<p>将道路离散化为元胞（每个元胞为空或被一辆车占据）。车辆速度 v ∈ {0, 1, ..., v_max}。每步更新四步：</p>
+<p><strong>Step 1 — 加速：</strong>\(v \to \min(v+1, v_{\max})\)<br>
+<strong>Step 2 — 减速（防撞）：</strong>\(v \to \min(v, d-1)\)，其中 d 是前方空元胞数<br>
+<strong>Step 3 — 随机慢化：</strong>以概率 p 减速：\(v \to \max(v-1, 0)\)<br>
+<strong>Step 4 — 运动：</strong>车辆向前移动 v 个元胞</p>
+<p>这个简单的四步规则可以复现交通流中的<strong>幽灵堵车</strong>（无外部原因的自发拥堵）和从自由流到拥堵的相变。竞赛中元胞自动机广泛用于交通流、人群疏散、森林火灾蔓延、城市扩张模拟。</p>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- INSTRUMENT No.16A: 最短路径 -->
+<!-- ══════════════════════════════════════════════ -->
+<h2>仪器 No.16A — 最短路径可视化</h2>
+<div class="panel">
+<div class="panel-label">INSTRUMENT No.16A · Dijkstra Shortest Path</div>
+<p style="font-size:0.9rem;color:var(--slate);margin-bottom:12px">点击节点选择起点和终点，Dijkstra 算法自动计算最短路径（红色高亮）。边上的数字是权重（距离）。</p>
+<div class="btn-group">
+  <button class="btn" id="sp-reset">重置选择</button>
+  <button class="btn" id="sp-preset">示例: 0→5</button>
+</div>
+<div class="panel-grid">
+  <div class="chart-container" id="sp-chart"></div>
+  <div>
+    <div class="stat-cards" id="sp-stats"></div>
+    <div id="sp-path-info" style="font-family:var(--mono);font-size:0.82rem;color:var(--slate);margin-top:8px;line-height:1.6"></div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- INSTRUMENT No.16B: 蒙特卡洛 π -->
+<!-- ══════════════════════════════════════════════ -->
+<h2>仪器 No.16B — 蒙特卡洛 π 估计</h2>
+<div class="panel">
+<div class="panel-label">INSTRUMENT No.16B · Monte Carlo π Estimation</div>
+<p style="font-size:0.9rem;color:var(--slate);margin-bottom:12px">在正方形 [-1,1]² 内随机撒点。蓝色点在单位圆内，灰色点在圆外。π ≈ 4 × (圆内点数 / 总点数)。收敛速度 O(1/√N)。</p>
+<div class="btn-group">
+  <button class="btn" id="mc-add100">+100 点</button>
+  <button class="btn" id="mc-add1000">+1000 点</button>
+  <button class="btn" id="mc-add5000">+5000 点</button>
+  <button class="btn" id="mc-reset">重置</button>
+</div>
+<div class="panel-grid">
+  <div class="chart-container" id="mc-chart"></div>
+  <div class="stat-cards" id="mc-stats"></div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>16.9 竞赛实战流程</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="toolkit-box">
+<h4>图论 + 仿真竞赛标准流程</h4>
+<p><strong>图论分析：</strong>① 将问题建模为图——节点是什么？边是什么？权重是什么？② 选择合适的算法（最短路径 / MST / 最大流 / 中心性）。③ 用 networkx 求解。④ 分析结果——哪些节点/边是关键？改变网络结构会怎样？<br>
+<strong>仿真分析：</strong>① 定义系统状态和演化规则。② 确定随机性来源（到达时间、服务时间、随机扰动）。③ 运行多次仿真（至少 100-1000 次独立运行）。④ 报告结果的均值 ± 标准差（因为仿真有随机性，单次结果不可靠）。⑤ 灵敏度分析——改变关键参数，观察结果如何变化。</p>
+</div>
+
+<div class="warn-box">
+<strong>竞赛陷阱：</strong>① 蒙特卡洛仿真只跑一次就报告结果——仿真结果有随机性，必须报告均值和置信区间。② 图论模型过于简化——忽略了实际约束（如道路不是直线、节点之间不是无限容量）。③ 元胞自动机不解释规则设计——评委需要知道你为什么选择这些规则、有什么依据。④ 排队模型用 M/M/1 硬套现实——大多数真实排队系统不是 Poisson 到达 + 指数服务。
+</div>
+
+<footer>
+  <p><a href="stats_15_mechanism.html">← §XV 机理建模与微分方程</a> &nbsp;|&nbsp; <a href="stats_tutorial.html">Field Station 总目录</a></p>
+  <p style="margin-top:8px">Statistical Field Station &copy; 2026 · KaTeX + D3.js</p>
+</footer>
+
+</div>
+
+<script>
+// ============ Dependency Load Guard ============
+if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
+  document.body.insertAdjacentHTML('afterbegin',
+    '<div style="background:#C75146;color:#fff;padding:12px;text-align:center;font-family:Inter,sans-serif">' +
+    '⚠ 交互资源加载失败。请确认 assets 目录完整，并检查文件路径后刷新页面。</div>');
+} else {
+
+// ============ KaTeX Auto-Render ============
+renderMathInElement(document.body, {
+  delimiters: [
+    {left: '\\[', right: '\\]', display: true},
+    {left: '\\(', right: '\\)', display: false},
+    {left: '$$', right: '$$', display: true}
+  ],
+  throwOnError: false
+});
+
+// ============ INSTRUMENT No.16A: Dijkstra ============
+(function() {
+  const W = 500, H = 400;
+  const nodes = [
+    {id:0, x:80, y:200}, {id:1, x:200, y:80}, {id:2, x:200, y:320},
+    {id:3, x:320, y:160}, {id:4, x:320, y:280}, {id:5, x:440, y:200}
+  ];
+  const edges = [
+    {from:0, to:1, w:4}, {from:0, to:2, w:2}, {from:1, to:2, w:1},
+    {from:1, to:3, w:5}, {from:2, to:4, w:3}, {from:3, to:4, w:2},
+    {from:3, to:5, w:3}, {from:4, to:5, w:4}, {from:1, to:4, w:6}
+  ];
+  // Build adjacency
+  const adj = {};
+  nodes.forEach(n => adj[n.id] = []);
+  edges.forEach(e => {
+    adj[e.from].push({to:e.to, w:e.w});
+    adj[e.to].push({to:e.from, w:e.w});
+  });
+
+  let selectedStart = null, selectedEnd = null;
+
+  const svg = d3.select('#sp-chart').append('svg').attr('width',W).attr('height',H).attr('viewBox',`0 0 ${W} ${H}`);
+
+  function dijkstra(start, end) {
+    const dist = {}, prev = {}, visited = {};
+    nodes.forEach(n => { dist[n.id] = Infinity; visited[n.id] = false; prev[n.id] = null; });
+    dist[start] = 0;
+    const pq = [[start, 0]];
+    while (pq.length) {
+      pq.sort((a,b) => a[1] - b[1]);
+      const [u] = pq.shift();
+      if (visited[u]) continue;
+      visited[u] = true;
+      if (u === end) break;
+      adj[u].forEach(({to, w}) => {
+        if (!visited[to] && dist[u] + w < dist[to]) {
+          dist[to] = dist[u] + w;
+          prev[to] = u;
+          pq.push([to, dist[to]]);
+        }
+      });
+    }
+    // Reconstruct path
+    const path = [];
+    let cur = end;
+    while (cur !== null) { path.unshift(cur); cur = prev[cur]; }
+    return {dist: dist[end], path: path[0] === start ? path : []};
+  }
+
+  function draw() {
+    svg.selectAll('*').remove();
+
+    let result = null;
+    if (selectedStart !== null && selectedEnd !== null && selectedStart !== selectedEnd) {
+      result = dijkstra(selectedStart, selectedEnd);
+    }
+
+    // Edges
+    edges.forEach(e => {
+      const inPath = result && result.path.length > 0 &&
+        ((result.path.includes(e.from) && result.path.includes(e.to) &&
+          Math.abs(result.path.indexOf(e.from) - result.path.indexOf(e.to)) === 1));
+      svg.append('line')
+        .attr('x1', nodes.find(n=>n.id===e.from).x).attr('y1', nodes.find(n=>n.id===e.from).y)
+        .attr('x2', nodes.find(n=>n.id===e.to).x).attr('y2', nodes.find(n=>n.id===e.to).y)
+        .attr('stroke', inPath ? 'var(--terracotta)' : 'var(--stone)')
+        .attr('stroke-width', inPath ? 3 : 1.5);
+      // Weight label
+      const mx = (nodes.find(n=>n.id===e.from).x + nodes.find(n=>n.id===e.to).x) / 2;
+      const my = (nodes.find(n=>n.id===e.from).y + nodes.find(n=>n.id===e.to).y) / 2;
+      svg.append('text').attr('x',mx).attr('y',my-8)
+        .text(e.w).style('font-family','var(--mono)').style('font-size','0.7rem')
+        .style('fill', inPath ? 'var(--terracotta)' : 'var(--slate)').style('text-anchor','middle')
+        .style('font-weight', inPath ? '700' : '400');
+    });
+
+    // Nodes
+    nodes.forEach(n => {
+      const isStart = n.id === selectedStart;
+      const isEnd = n.id === selectedEnd;
+      let fill = 'var(--surface)';
+      let stroke = 'var(--forest)';
+      let sw = 1.5;
+      if (isStart) { fill = '#2D6BA0'; stroke = '#2D6BA0'; sw = 2.5; }
+      if (isEnd) { fill = 'var(--terracotta)'; stroke = 'var(--terracotta)'; sw = 2.5; }
+      if (isStart && isEnd) { fill = 'var(--gold)'; stroke = 'var(--gold)'; }
+
+      svg.append('circle').attr('cx',n.x).attr('cy',n.y).attr('r',18)
+        .attr('fill', fill).attr('stroke', stroke).attr('stroke-width', sw)
+        .style('cursor','pointer').on('click', () => {
+          if (selectedStart === null) { selectedStart = n.id; selectedEnd = null; }
+          else if (selectedEnd === null && n.id !== selectedStart) { selectedEnd = n.id; }
+          else { selectedStart = n.id; selectedEnd = null; }
+          draw();
+        });
+      svg.append('text').attr('x',n.x).attr('y',n.y+5)
+        .text(n.id).style('font-family','var(--mono)').style('font-size','0.75rem')
+        .style('fill', (isStart || isEnd) ? '#fff' : 'var(--forest)')
+        .style('text-anchor','middle').style('font-weight','700')
+        .style('cursor','pointer').on('click', () => {
+          if (selectedStart === null) { selectedStart = n.id; selectedEnd = null; }
+          else if (selectedEnd === null && n.id !== selectedStart) { selectedEnd = n.id; }
+          else { selectedStart = n.id; selectedEnd = null; }
+          draw();
+        });
+    });
+
+    // Stats
+    if (result && result.path.length > 0) {
+      d3.select('#sp-stats').html(`
+        <div class="stat-card"><div class="lbl">最短距离</div><div class="val" style="color:var(--terracotta)">${result.dist}</div></div>
+        <div class="stat-card"><div class="lbl">路径长度</div><div class="val">${result.path.length} 节点</div></div>
+        <div class="stat-card"><div class="lbl">起点</div><div class="val">${selectedStart}</div></div>
+        <div class="stat-card"><div class="lbl">终点</div><div class="val">${selectedEnd}</div></div>
+      `);
+      d3.select('#sp-path-info').html(`路径：${result.path.join(' → ')}<br>距离：${result.dist}`);
+    } else if (selectedStart !== null && selectedEnd === null) {
+      d3.select('#sp-stats').html(`<div class="stat-card"><div class="lbl">状态</div><div class="val" style="font-size:1rem">请选择终点</div></div>`);
+      d3.select('#sp-path-info').text('');
+    } else {
+      d3.select('#sp-stats').html(`<div class="stat-card"><div class="lbl">状态</div><div class="val" style="font-size:1rem">点击节点选择起点</div></div>`);
+      d3.select('#sp-path-info').text('');
+    }
+  }
+
+  d3.select('#sp-reset').on('click', () => { selectedStart = null; selectedEnd = null; draw(); });
+  d3.select('#sp-preset').on('click', () => { selectedStart = 0; selectedEnd = 5; draw(); });
+  draw();
+})();
+
+// ============ INSTRUMENT No.16B: Monte Carlo π ============
+(function() {
+  const W = 450, H = 450, margin = 40;
+  const size = W - 2*margin;
+
+  const svg = d3.select('#mc-chart').append('svg').attr('width',W).attr('height',H).attr('viewBox',`0 0 ${W} ${H}`);
+
+  let total = 0, inside = 0;
+
+  // Square and circle
+  svg.append('rect').attr('x',margin).attr('y',margin).attr('width',size).attr('height',size)
+    .attr('fill','none').attr('stroke','var(--stone)').attr('stroke-width',1);
+  // Unit circle (centered at square center, radius = size/2)
+  const circleArc = d3.arc().innerRadius(0).outerRadius(size/2).startAngle(0).endAngle(2*Math.PI);
+  svg.append('path').attr('d', circleArc)
+    .attr('transform',`translate(${margin+size/2},${margin+size/2})`)
+    .attr('fill','rgba(45,107,160,0.08)').attr('stroke','#2D6BA0').attr('stroke-width',1.5);
+
+  // Axes labels
+  svg.append('text').attr('x',margin+size/2).attr('y',margin+size+20).text('x').style('font-family','var(--mono)').style('font-size','0.7rem').style('fill','var(--slate)').style('text-anchor','middle');
+  svg.append('text').attr('x',margin-15).attr('y',margin+size/2).attr('transform',`rotate(-90,${margin-15},${margin+size/2})`).text('y').style('font-family','var(--mono)').style('font-size','0.7rem').style('fill','var(--slate)').style('text-anchor','middle');
+
+  function toX(x) { return margin + (x + 1) / 2 * size; }
+  function toY(y) { return margin + (1 - y) / 2 * size; }
+
+  function addPoints(count) {
+    for (let i = 0; i < count; i++) {
+      const x = Math.random() * 2 - 1;
+      const y = Math.random() * 2 - 1;
+      const inCircle = x*x + y*y <= 1;
+      total++;
+      if (inCircle) inside++;
+      let alpha;
+      if (total > 5000) alpha = 0.15;
+      else if (total > 1000) alpha = 0.3;
+      else alpha = 0.6;
+      const dotR = total > 5000 ? 0.8 : 1.2;
+      svg.append('circle')
+        .attr('cx', toX(x)).attr('cy', toY(y)).attr('r', dotR)
+        .attr('fill', inCircle ? '#2D6BA0' : 'var(--stone)')
+        .attr('opacity', alpha);
+    }
+    updateStats();
+  }
+
+  function updateStats() {
+    const piEst = total > 0 ? 4 * inside / total : 0;
+    const err = total > 0 ? Math.abs(piEst - Math.PI) : 0;
+    d3.select('#mc-stats').html(`
+      <div class="stat-card"><div class="lbl">总点数</div><div class="val">${total}</div></div>
+      <div class="stat-card"><div class="lbl">圆内点数</div><div class="val">${inside}</div></div>
+      <div class="stat-card"><div class="lbl">π 估计值</div><div class="val" style="color:var(--terracotta)">${piEst.toFixed(6)}</div></div>
+      <div class="stat-card"><div class="lbl">误差</div><div class="val">${err.toFixed(6)}</div></div>
+      <div class="stat-card"><div class="lbl">真值 π</div><div class="val">${Math.PI.toFixed(6)}</div></div>
+    `);
+  }
+
+  d3.select('#mc-add100').on('click', () => addPoints(100));
+  d3.select('#mc-add1000').on('click', () => addPoints(1000));
+  d3.select('#mc-add5000').on('click', () => addPoints(5000));
+  d3.select('#mc-reset').on('click', () => {
+    total = 0; inside = 0;
+    svg.selectAll('circle').remove();
+    updateStats();
+  });
+
+  addPoints(200);
+})();
+
+} // End CDN guard
+</script>
+</body>
+</html>

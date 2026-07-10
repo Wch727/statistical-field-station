@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Statistical Field Station — 交互式统计教程</title>
+<link rel="stylesheet" href="assets/vendor/google-fonts.css">
+<link rel="stylesheet" href="assets/css/site.css">
+<style>
+:root {
+  --parchment: #FDFBF5; --forest: #2D4A3E; --terracotta: #C75146;
+  --gold: #8B6914; --stone: #E8E0D5; --slate: #5B6E65; --surface: #FFFAF0;
+  --display: 'Noto Serif SC', 'Cormorant Garamond', 'STSong', serif;
+  --body: 'Noto Sans SC', 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Consolas', monospace;
+  --radius: 4px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--parchment); color: var(--forest);
+  font-family: var(--body); font-size: 1.08rem; line-height: 1.72;
+}
+.page { max-width: 980px; margin: 0 auto; padding: 48px 32px; }
+
+.hero { text-align: center; padding: 60px 0 32px; }
+.hero h1 {
+  font-family: var(--display); font-weight: 700;
+  font-size: clamp(2rem, 5vw, 3.2rem); line-height: 1.1;
+  color: var(--forest); margin-bottom: 8px;
+}
+.hero .subtitle {
+  font-family: var(--mono); font-size: 0.8rem; color: var(--slate);
+  letter-spacing: 0.1em; margin-bottom: 32px;
+}
+.hero p { max-width: 64ch; margin: 0 auto 24px; color: var(--slate); }
+
+/* 竞赛路线图 */
+.roadmap {
+  background: var(--surface);
+  border: 1px solid var(--stone);
+  border-radius: 8px;
+  padding: 28px 32px;
+  margin: 32px 0 40px;
+}
+.roadmap h2 {
+  font-family: var(--display); font-size: 1.4rem; font-weight: 600;
+  color: var(--forest); margin-bottom: 8px;
+}
+.roadmap .sub {
+  font-family: var(--mono); font-size: 0.72rem; color: var(--slate);
+  letter-spacing: 0.08em; margin-bottom: 20px;
+}
+.roadmap-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.roadmap-item {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 12px 16px;
+  border: 1px solid var(--stone);
+  border-radius: var(--radius);
+  background: var(--parchment);
+}
+.roadmap-item .q-icon {
+  font-family: var(--mono); font-size: 1.1rem; font-weight: 700;
+  color: var(--terracotta); min-width: 28px; text-align: center;
+  line-height: 1.4;
+}
+.roadmap-item .q-content strong {
+  display: block; font-size: 0.95rem; color: var(--forest);
+  margin-bottom: 2px;
+}
+.roadmap-item .q-content span {
+  font-size: 0.82rem; color: var(--slate);
+}
+
+/* 章节卡片 */
+.toc { margin: 32px 0; }
+.toc-item {
+  display: block; padding: 20px 24px; margin-bottom: 10px;
+  border: 1px solid var(--stone); border-radius: 6px;
+  background: var(--surface); text-decoration: none;
+  transition: all 0.2s; position: relative;
+}
+.toc-item:hover {
+  border-color: var(--terracotta);
+  box-shadow: 0 2px 16px rgba(199,81,70,0.1);
+  transform: translateX(4px);
+}
+.toc-item .num {
+  font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.15em;
+  color: var(--gold); margin-bottom: 2px;
+}
+.toc-item .title {
+  font-family: var(--display); font-size: 1.4rem; font-weight: 600;
+  color: var(--forest); margin-bottom: 4px;
+}
+.toc-item .desc {
+  font-size: 0.92rem; color: var(--slate);
+}
+.toc-item .tags {
+  margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px;
+}
+.toc-item .tag {
+  font-family: var(--mono); font-size: 0.68rem;
+  padding: 2px 8px; border-radius: 12px;
+  background: var(--stone); color: var(--slate);
+}
+/* 优先级徽章 */
+.priority {
+  position: absolute; top: 20px; right: 24px;
+  font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.1em;
+  padding: 3px 10px; border-radius: 3px;
+  text-transform: uppercase;
+}
+.priority.core {
+  background: var(--terracotta); color: #fff;
+}
+.priority.advanced {
+  background: var(--stone); color: var(--slate);
+}
+
+/* 快速决策框架 */
+.quick-framework {
+  margin: 40px 0 32px;
+  padding: 24px 28px;
+  background: #F5F8F6;
+  border: 1px solid var(--stone);
+  border-left: 3px solid var(--forest);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+.quick-framework h2 {
+  font-family: var(--display); font-size: 1.2rem; font-weight: 600;
+  color: var(--forest); margin-bottom: 16px;
+}
+.flow-row {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  align-items: center; margin-bottom: 10px;
+}
+.flow-box {
+  font-family: var(--mono); font-size: 0.78rem;
+  padding: 6px 14px; border-radius: var(--radius);
+  border: 1px solid var(--stone);
+  background: var(--surface); color: var(--forest);
+  white-space: nowrap;
+}
+.flow-box.go { background: var(--forest); color: #fff; border-color: var(--forest); }
+.flow-arrow { color: var(--gold); font-size: 1.1rem; font-weight: 600; }
+
+footer {
+  text-align: center; padding: 40px 0 20px;
+  font-size: 0.82rem; color: var(--slate);
+  border-top: 1px solid var(--stone); margin-top: 40px;
+}
+
+/* 新手入口卡片 */
+.entry-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin: 32px 0;
+}
+.entry-card {
+  background: var(--surface);
+  border: 1px solid var(--stone);
+  border-radius: 8px;
+  padding: 24px;
+  transition: all 0.2s;
+  text-decoration: none;
+  color: var(--forest);
+}
+.entry-card:hover {
+  border-color: var(--terracotta);
+  box-shadow: 0 4px 20px rgba(199,81,70,0.1);
+  transform: translateY(-2px);
+}
+.entry-card .entry-icon {
+  font-size: 1.8rem;
+  margin-bottom: 10px;
+}
+.entry-card h3 {
+  font-family: var(--display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--forest);
+  margin-bottom: 6px;
+  border: none;
+  padding: 0;
+}
+.entry-card .entry-path {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--terracotta);
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+.entry-card .entry-desc {
+  font-size: 0.85rem;
+  color: var(--slate);
+  line-height: 1.5;
+}
+.entry-label {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.15em;
+  color: var(--gold);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+/* 关键词查找 */
+.keyword-search {
+  margin: 32px 0;
+  padding: 24px 28px;
+  background: #FFF8F0;
+  border: 1px solid var(--stone);
+  border-left: 3px solid var(--gold);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+.keyword-search h2 {
+  font-family: var(--display);
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--forest);
+  margin-bottom: 12px;
+  border: none;
+  padding: 0;
+}
+.keyword-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 24px;
+  font-size: 0.9rem;
+}
+.keyword-grid .kw {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--terracotta);
+}
+.keyword-grid .kw-dest {
+  color: var(--slate);
+}
+
+@media (max-width: 700px) {
+  .entry-grid { grid-template-columns: 1fr; }
+  .keyword-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<header class="hero">
+  <h1>Statistical Field Station</h1>
+  <p class="subtitle">完整交互式统计教程 · 面向数学建模竞赛</p>
+  <p>每个章节都是独立的自包含 HTML 页面，包含完整的公式推导（KaTeX 渲染）、交互式可视化（D3.js）、建模工具箱和竞赛实战指南。所有计算在浏览器端完成，页面无需后端服务，打开即可使用。</p>
+</header>
+
+<!-- ═══════════ 新手入口：三条路径 ═══════════ -->
+<div class="entry-label">从这里开始 · 选择你的路径</div>
+<div class="entry-grid">
+  <a class="entry-card" href="stats_00_toolkit.html">
+    <div class="entry-icon">🗓️</div>
+    <h3>七天入门</h3>
+    <div class="entry-path">§0 → §I → §II → §IV → §X → 做一道真题</div>
+    <div class="entry-desc">零基础快速上手。跳过复杂理论，掌握最核心的数据分析技能，一周内具备竞赛基本能力。</div>
+  </a>
+  <a class="entry-card" href="stats_00_toolkit.html">
+    <div class="entry-icon">🏆</div>
+    <h3>国赛数据路线</h3>
+    <div class="entry-path">清洗 → 统计 → 回归 → 分类/聚类 → 预测 → 优化</div>
+    <div class="entry-desc">按竞赛数据处理流程组织。从数据清洗到模型构建，逐步深入，覆盖数据类题目全流程。</div>
+  </a>
+  <div class="entry-card" style="cursor:default;" onclick="document.querySelector('.keyword-search').scrollIntoView({behavior:'smooth'})">
+    <div class="entry-icon">🔍</div>
+    <h3>按题目查方法</h3>
+    <div class="entry-path">"是否有关" → 相关分析 · "预测未来" → 时间序列 · "成本最低" → 优化</div>
+    <div class="entry-desc">拿到题目不知道用什么方法？从题目关键词出发，直接定位到对应章节和模型。</div>
+  </div>
+</div>
+
+<!-- ═══════════ 关键词 → 方法速查 ═══════════ -->
+<div class="keyword-search">
+  <h2>题目关键词 → 对应方法</h2>
+  <div class="keyword-grid">
+    <div><span class="kw">"是否有关"</span> <span class="kw-dest">→ §III 相关分析 / §IV 卡方检验</span></div>
+    <div><span class="kw">"是否有显著差异"</span> <span class="kw-dest">→ §IV 假设检验</span></div>
+    <div><span class="kw">"影响有多大"</span> <span class="kw-dest">→ §V ANOVA / §VI 回归</span></div>
+    <div><span class="kw">"属于哪一类"</span> <span class="kw-dest">→ §VII 逻辑回归 / §VIII 分类</span></div>
+    <div><span class="kw">"分成几组"</span> <span class="kw-dest">→ §IX 聚类</span></div>
+    <div><span class="kw">"预测未来"</span> <span class="kw-dest">→ §XI 时间序列 / §XII 预测</span></div>
+    <div><span class="kw">"成本最低 / 最优方案"</span> <span class="kw-dest">→ §XIII 优化</span></div>
+    <div><span class="kw">"哪个最好 / 排名"</span> <span class="kw-dest">→ §XIV 综合评价</span></div>
+    <div><span class="kw">"系统演化 / 传播"</span> <span class="kw-dest">→ §XV 机理建模</span></div>
+    <div><span class="kw">"最短路径 / 随机模拟"</span> <span class="kw-dest">→ §XVI 图论与仿真</span></div>
+    <div><span class="kw">"模型好不好"</span> <span class="kw-dest">→ §X 模型评估 / §0 工具箱</span></div>
+    <div><span class="kw">"数据怎么处理"</span> <span class="kw-dest">→ §0 工具箱 / §I 描述统计</span></div>
+  </div>
+</div>
+
+<!-- ═══════════ 竞赛路线图 ═══════════ -->
+<section class="roadmap">
+  <h2>竞赛核心问题类型 → 对应章节</h2>
+  <p class="sub">数学建模竞赛中，数据分析类问题通常围绕以下十一种提问方式展开</p>
+  <div class="roadmap-grid">
+    <div class="roadmap-item">
+      <div class="q-icon">Q1</div>
+      <div class="q-content">
+        <strong>哪些因素有关？</strong>
+        <span>→ §III 相关分析：Pearson / Spearman / Kendall / 偏相关 / dCor</span>
+      </div>
+    </div>
+    <div class="roadmap-item">
+      <div class="q-icon">Q2</div>
+      <div class="q-content">
+        <strong>两组数据是否存在显著差异？</strong>
+        <span>→ §IV 假设检验：t 检验 / 卡方 / Mann-Whitney / Bootstrap / 置换检验</span>
+      </div>
+    </div>
+    <div class="roadmap-item">
+      <div class="q-icon">Q3</div>
+      <div class="q-content">
+        <strong>某因素对结果有多大影响？</strong>
+        <span>→ §V 方差分析 + §VI 线性回归：ANOVA / 事后检验 / OLS / 多元回归 / 效应量</span>
+      </div>
+    </div>
+    <div class="roadmap-item">
+      <div class="q-icon">Q4</div>
+      <div class="q-content">
+        <strong>数据中有什么规律？</strong>
+        <span>→ §I 描述性统计 + §II 可视化：均值/方差/偏度/峰度 / 直方图/箱线图/散点图</span>
+      </div>
+    </div>
+    <div class="roadmap-item">
+      <div class="q-icon">Q5</div>
+      <div class="q-content">
+        <strong>这个样本属于哪一类？</strong>
+        <span>→ §VII 逻辑回归 + §VIII 分类方法：决策树 / 随机森林 / SVM / KNN</span>
+      </div>
+    </div>
+    <div class="roadmap-item">
+      <div class="q-icon">Q6</div>
+      <div class="q-content">
+        <strong>数据能否划分亚类？</strong>
+        <span>→ §IX 聚类分析：K-Means / 层次聚类 / DBSCAN + §X 模型评估与降维</span>
+      </div>
+    </div>
+    <div class="roadmap-item">
+      <div class="q-icon">Q7</div>
+      <div class="q-content">
+        <strong>未来趋势如何预测？</strong>
+        <span>→ §XI 时间序列分析 + §XII 预测问题专论：ARIMA / GM(1,1) / 预测区间 / 多模型比较 / 数据泄漏防御</span>
+      </div>
+    </div>
+    <div class="roadmap-item">
+      <div class="q-icon">Q8</div>
+      <div class="q-content">
+        <strong>如何安排最优方案？</strong>
+        <span>→ §XIII 优化与决策：线性规划 / 整数规划 / 多目标优化 / 动态规划 / 背包 / 选址 / TSP</span>
+      </div>
+    </div>
+    <div class="roadmap-item">
+      <div class="q-icon">Q9</div>
+      <div class="q-content">
+        <strong>哪个方案/地区最好？</strong>
+        <span>→ §XIV 综合评价与排序：熵权法 / TOPSIS / AHP / PCA / 模糊综合评价 / 灰色关联分析</span>
+      </div>
+    </div>
+    <div class="roadmap-item">
+      <div class="q-icon">Q10</div>
+      <div class="q-content">
+        <strong>系统如何随时间演化？</strong>
+        <span>→ §XV 机理建模：差分/微分方程 / Logistic / SIR / 捕食者-猎物 / 数值求解</span>
+      </div>
+    </div>
+    <div class="roadmap-item">
+      <div class="q-icon">Q11</div>
+      <div class="q-content">
+        <strong>最短路径？关键节点？随机模拟？</strong>
+        <span>→ §XVI 图论与仿真：最短路径 / MST / 中心性 / 蒙特卡洛 / 排队 / 元胞自动机</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ 快速决策框架 ═══════════ -->
+<section class="quick-framework">
+  <h2>数据分析快速决策流</h2>
+  <div class="flow-row">
+    <span class="flow-box go">开始之前</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-box">§0 实战工具箱<br>（Pandas/NumPy/绘图/验证）</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-box go">拿到数据</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-box">§I 描述性统计<br>（均值/方差/偏度/峰度）</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-box">§II 可视化<br>（直方图/箱线图/散点图）</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-box">§III 相关分析<br>（哪些因素有关？）</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-box">§IV 假设检验<br>（有显著差异吗？）</span>
+  </div>
+  <div class="flow-row">
+    <span class="flow-box go">分析目标</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-box">§V ANOVA / §VI 回归<br>（影响有多大？）</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-box">§VII 逻辑回归 / §VIII 分类<br>（属于哪一类？）</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-box">§IX 聚类<br>（自然分组？）</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-box">§X 评估与降维<br>（模型好不好？）</span>
+  </div>
+  <div class="flow-row">
+    <span class="flow-box go">特殊数据</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-box">§XI 时间序列<br>（趋势/季节/预测）</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-box">§XII 预测问题专论<br>（评估/区间/GM(1,1)）</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-box">§XIII 优化与决策<br>（LP/IP/DP/多目标）</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-box">§XIV 综合评价<br>（熵权/TOPSIS/AHP）</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-box">§XV 机理建模<br>（ODE/Logistic/SIR）</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-box">§XVI 图论与仿真<br>（路径/MC/元胞）</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-box" style="color:var(--slate)">返回 §X 评估<br>（模型验证）</span>
+  </div>
+  <p style="font-size:0.88rem;color:var(--slate);margin-top:10px;">每一步都依赖前一步的判断。跳步是数模论文最常见的错误——例如没做描述性统计就直接跑回归。</p>
+</section>
+
+<!-- ═══════════ 章节列表 ═══════════ -->
+<nav class="toc">
+  <a class="toc-item" href="stats_00_toolkit.html">
+    <span class="priority core">核心</span>
+    <div class="num">§0</div>
+    <div class="title">数模实战工具箱</div>
+    <div class="desc">Pandas 数据处理速查、NumPy 数值计算、Matplotlib 六图绘制、模型验证完整流程（交叉验证 / 残差分析 / 敏感性 / 鲁棒性）、论文表达六问框架。建模之前必须熟练的「肌肉记忆」级技能。</div>
+    <div class="tags"><span class="tag">Pandas</span><span class="tag">NumPy</span><span class="tag">Matplotlib</span><span class="tag">交叉验证</span><span class="tag">鲁棒性</span><span class="tag">论文六问</span></div>
+  </a>
+
+  <a class="toc-item" href="stats_01_descriptive.html">
+    <span class="priority core">核心</span>
+    <div class="num">§I</div>
+    <div class="title">描述性统计</div>
+    <div class="desc">中心趋势、离散程度、分布形态 —— 数据分析的第一步。从 Bessel 校正的数学推导到 Box-Cox 变换，从异常值检测到正态性检验。数模论文的数据分析部分，第一段永远是描述性统计。</div>
+    <div class="tags"><span class="tag">均值/中位数/众数</span><span class="tag">方差/SD/SEM</span><span class="tag">偏度/峰度</span><span class="tag">Bessel校正</span><span class="tag">Box-Cox</span><span class="tag">Q-Q图</span><span class="tag">Shapiro-Wilk</span><span class="tag">MAD</span></div>
+  </a>
+
+  <a class="toc-item" href="stats_02_visualization.html">
+    <span class="priority core">核心</span>
+    <div class="num">§II</div>
+    <div class="title">数据可视化</div>
+    <div class="desc">直方图、箱线图、小提琴图、Q-Q 图、KDE 密度估计。Anscombe 四重奏与 Datasaurus Dozen 的教训：永远先画图。竞赛中一张好图胜过一千个数字。</div>
+    <div class="tags"><span class="tag">直方图</span><span class="tag">箱线图</span><span class="tag">小提琴图</span><span class="tag">KDE</span><span class="tag">Q-Q图</span><span class="tag">Sturges/FD规则</span><span class="tag">散点图矩阵</span><span class="tag">热力图</span></div>
+  </a>
+
+  <a class="toc-item" href="stats_03_correlation.html">
+    <span class="priority core">核心</span>
+    <div class="num">§III</div>
+    <div class="title">相关分析</div>
+    <div class="desc">Pearson r、Spearman ρ、Kendall τ、偏相关、距离相关、Cramér's V、<strong>典型相关分析 CCA</strong>。Fisher z-变换、置信区间、相关矩阵。回答「哪些因素与目标变量有关？」—— 相关 ≠ 因果。</div>
+    <div class="tags"><span class="tag">Pearson r</span><span class="tag">Spearman ρ</span><span class="tag">Kendall τ</span><span class="tag">CCA</span><span class="tag">偏相关</span><span class="tag">距离相关</span><span class="tag">Cramér's V</span></div>
+  </a>
+
+  <a class="toc-item" href="stats_04_hypothesis.html">
+    <span class="priority core">核心</span>
+    <div class="num">§IV</div>
+    <div class="title">假设检验</div>
+    <div class="desc">t 检验、卡方检验、Mann-Whitney U、<strong>配对检验</strong>、<strong>效应量系统（Cohen's d / Hedges' g）</strong>、<strong>方差齐性检验</strong>、统计功效、多重校正、Bootstrap 与置换检验。</div>
+    <div class="tags"><span class="tag">Welch t-test</span><span class="tag">配对t检验</span><span class="tag">Cohen's d</span><span class="tag">Levene</span><span class="tag">χ²检验</span><span class="tag">Mann-Whitney</span><span class="tag">Bootstrap</span><span class="tag">检验选择决策树</span></div>
+  </a>
+
+  <a class="toc-item" href="stats_05_anova.html">
+    <span class="priority core">核心</span>
+    <div class="num">§V</div>
+    <div class="title">方差分析</div>
+    <div class="desc">单因素与双因素 ANOVA、交互效应、<strong>ANCOVA（协方差分析）</strong>、<strong>MANOVA（多元方差分析）</strong>、Kruskal-Wallis 检验、事后检验、效应量。回答「某因素对结果有多大影响？」</div>
+    <div class="tags"><span class="tag">One-Way ANOVA</span><span class="tag">Two-Way ANOVA</span><span class="tag">ANCOVA</span><span class="tag">MANOVA</span><span class="tag">Kruskal-Wallis</span><span class="tag">Tukey HSD</span><span class="tag">η²/ω²/f</span></div>
+  </a>
+
+  <a class="toc-item" href="stats_06_regression.html">
+    <span class="priority advanced">进阶</span>
+    <div class="num">§VI</div>
+    <div class="title">线性回归</div>
+    <div class="desc">OLS 矩阵推导、多元回归、交互项与多项式、多重共线性 (VIF)、变量选择 (LASSO/Ridge)、<strong>WLS（加权最小二乘）</strong>、<strong>分位数回归</strong>、残差诊断、AIC/BIC。</div>
+    <div class="tags"><span class="tag">OLS矩阵推导</span><span class="tag">WLS</span><span class="tag">分位数回归</span><span class="tag">VIF</span><span class="tag">LASSO/Ridge</span><span class="tag">Cook's D</span><span class="tag">DW检验</span><span class="tag">AIC/BIC</span></div>
+  </a>
+
+  <a class="toc-item" href="stats_07_logistic.html">
+    <span class="priority advanced">进阶</span>
+    <div class="num">§VII</div>
+    <div class="title">逻辑回归</div>
+    <div class="desc">Logit-Odds-概率三层解读、MLE 数值求解、ROC 与 AUC、<strong>校准曲线</strong>、<strong>Hosmer-Lemeshow 检验</strong>、类别不平衡、多分类与有序逻辑回归、GLM 统一框架。</div>
+    <div class="tags"><span class="tag">Sigmoid</span><span class="tag">MLE/IRLS</span><span class="tag">ROC/AUC</span><span class="tag">校准曲线</span><span class="tag">HL检验</span><span class="tag">Odds Ratio</span><span class="tag">GLM框架</span></div>
+  </a>
+
+  <a class="toc-item" href="stats_08_classification.html">
+    <span class="priority advanced">进阶</span>
+    <div class="num">§VIII</div>
+    <div class="title">分类方法</div>
+    <div class="desc">决策树（熵/基尼/剪枝）、随机森林（Bagging/OOB）、<strong>XGBoost / LightGBM</strong>、SVM（最大间隔/核技巧）、KNN、<strong>朴素贝叶斯</strong>、<strong>SMOTE 类别不平衡</strong>。回答「这个样本属于哪一类？」</div>
+    <div class="tags"><span class="tag">决策树</span><span class="tag">随机森林</span><span class="tag">XGBoost</span><span class="tag">SVM</span><span class="tag">KNN</span><span class="tag">朴素贝叶斯</span><span class="tag">SMOTE</span></div>
+  </a>
+
+  <a class="toc-item" href="stats_09_clustering.html">
+    <span class="priority advanced">进阶</span>
+    <div class="num">§IX</div>
+    <div class="title">聚类分析</div>
+    <div class="desc">K-Means（Lloyd 算法/肘部法则）、层次聚类（Ward/树状图）、DBSCAN（密度聚类）、<strong>高斯混合模型 GMM</strong>、<strong>聚类评估指标（轮廓系数/DB/CH）</strong>。回答「数据能否划分亚类？」</div>
+    <div class="tags"><span class="tag">K-Means</span><span class="tag">层次聚类</span><span class="tag">DBSCAN</span><span class="tag">GMM</span><span class="tag">EM算法</span><span class="tag">轮廓系数</span><span class="tag">Davies-Bouldin</span></div>
+  </a>
+
+  <a class="toc-item" href="stats_10_evaluation.html">
+    <span class="priority core">核心</span>
+    <div class="num">§X</div>
+    <div class="title">模型评估与降维</div>
+    <div class="desc">混淆矩阵、精确率/召回率/F1、ROC/AUC、K 折交叉验证、PCA、<strong>偏最小二乘 PLS</strong>、<strong>偏差-方差权衡</strong>、特征选择、数据标准化。回答「模型好不好？」</div>
+    <div class="tags"><span class="tag">混淆矩阵</span><span class="tag">F1/AUC</span><span class="tag">交叉验证</span><span class="tag">PCA</span><span class="tag">PLS</span><span class="tag">偏差-方差</span><span class="tag">特征选择</span></div>
+  </a>
+
+  <a class="toc-item" href="stats_11_timeseries.html">
+    <span class="priority advanced">进阶</span>
+    <div class="num">§XI</div>
+    <div class="title">时间序列分析</div>
+    <div class="desc">趋势-季节-残差分解、平稳性（ADF 检验）、ACF/PACF、ARIMA(p,d,q)、SARIMA 季节模型、指数平滑/ETS、AICc 模型选择、预测与置信区间。回答「未来趋势如何？」</div>
+    <div class="tags"><span class="tag">ARIMA</span><span class="tag">SARIMA</span><span class="tag">ACF/PACF</span><span class="tag">ADF检验</span><span class="tag">季节分解</span><span class="tag">Holt-Winters</span><span class="tag">预测</span></div>
+  </a>
+<a class="toc-item" href="stats_12_prediction.html">
+    <span class="priority core">核心</span>
+    <div class="num">§XII</div>
+    <div class="title">预测问题专论</div>
+    <div class="desc">回归预测评估指标（RMSE/MAE/MAPE）、预测区间 vs 置信区间、<strong>灰色预测 GM(1,1)</strong>（小样本预测标配）、多模型比较框架、数据泄漏防御。回答「预测的可信度有多高？」</div>
+    <div class="tags"><span class="tag">RMSE/MAE/MAPE</span><span class="tag">预测区间</span><span class="tag">GM(1,1)</span><span class="tag">灰色预测</span><span class="tag">多模型比较</span><span class="tag">数据泄漏</span><span class="tag">集成</span></div>
+  </a>
+<a class="toc-item" href="stats_13_optimization.html">
+    <span class="priority core">核心</span>
+    <div class="num">§XIII</div>
+    <div class="title">优化与决策</div>
+    <div class="desc">把自然语言翻译成数学模型——线性规划（单纯形/对偶/影子价格）、整数规划（分支定界）、<strong>0-1 规划与逻辑约束</strong>、非线性规划（KKT）、多目标优化（Pareto/TOPSIS）、动态规划（Bellman 方程）、背包/选址/TSP/VRP 经典模型。</div>
+    <div class="tags"><span class="tag">线性规划</span><span class="tag">整数规划</span><span class="tag">0-1规划</span><span class="tag">多目标优化</span><span class="tag">动态规划</span><span class="tag">TSP/VRP</span><span class="tag">灵敏度分析</span></div>
+  </a>
+  <a class="toc-item" href="stats_14_evaluation.html">
+    <span class="priority core">核心</span>
+    <div class="num">§XIV</div>
+    <div class="title">综合评价与排序</div>
+    <div class="desc">哪个方案最好？如何构造综合指标？—— 熵权法（客观赋权）、<strong>TOPSIS（逼近理想解）</strong>、<strong>AHP 层次分析法</strong>（一致性检验）、PCA 降维评价、因子分析、模糊综合评价、灰色关联分析。强调指标体系论证与灵敏度分析，避免机械套用模板。</div>
+    <div class="tags"><span class="tag">熵权法</span><span class="tag">TOPSIS</span><span class="tag">AHP</span><span class="tag">PCA</span><span class="tag">模糊综合评价</span><span class="tag">灰色关联</span><span class="tag">灵敏度</span></div>
+  </a>
+  <a class="toc-item" href="stats_15_mechanism.html">
+    <span class="priority advanced">进阶</span>
+    <div class="num">§XV</div>
+    <div class="title">机理建模与微分方程</div>
+    <div class="desc">从第一性原理推导系统方程。差分方程、常微分方程、<strong>Logistic 增长</strong>、<strong>SIR 传染病模型</strong>、Lotka-Volterra 捕食者-猎物、扩散方程、数值求解 (solve_ivp)、参数估计 (curve_fit)。回答「系统如何随时间演化？」</div>
+    <div class="tags"><span class="tag">微分方程</span><span class="tag">Logistic</span><span class="tag">SIR</span><span class="tag">捕食者-猎物</span><span class="tag">solve_ivp</span><span class="tag">参数估计</span></div>
+  </a>
+  <a class="toc-item" href="stats_16_graph.html">
+    <span class="priority advanced">进阶</span>
+    <div class="num">§XVI</div>
+    <div class="title">图论、网络与仿真</div>
+    <div class="desc">图论 + 随机仿真的组合工具箱。最短路径 (Dijkstra/Floyd)、最小生成树 (Prim/Kruskal)、<strong>网络中心性</strong>、<strong>蒙特卡洛模拟</strong>、排队论 (M/M/1)、元胞自动机 (交通流 NASCH)。回答「最短路线？关键节点？如何模拟随机系统？」</div>
+    <div class="tags"><span class="tag">Dijkstra</span><span class="tag">MST</span><span class="tag">中心性</span><span class="tag">蒙特卡洛</span><span class="tag">排队论</span><span class="tag">元胞自动机</span></div>
+  </a>
+</nav>
+
+<footer>
+  <p>Statistical Field Station &copy; 2026 · 所有计算在浏览器端完成 · KaTeX + D3.js</p>
+  <p style="margin-top:4px;">§0 实战工具箱（Pandas/NumPy/Matplotlib/验证）→ 核心章节（§I–§V, §X, §XII–§XIV）覆盖竞赛约 80% 的数据分析需求 · 进阶章节（§VI–§IX, §XI, §XV–§XVI）用于复杂建模与高级分析</p>
+</footer>
+
+</div>
+</body>
+</html>

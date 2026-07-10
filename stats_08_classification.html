@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>§VIII 分类方法 — Statistical Field Station</title>
+<link rel="stylesheet" href="assets/vendor/google-fonts.css">
+<link rel="stylesheet" href="assets/vendor/katex.min.css">
+<script src="assets/vendor/katex.min.js"></script>
+<script src="assets/vendor/auto-render.min.js"></script>
+<script src="assets/vendor/d3.v7.min.js"></script>
+<link rel="stylesheet" href="assets/css/site.css">
+<style>
+:root {
+  --parchment: #FDFBF5; --forest: #2D4A3E; --terracotta: #C75146;
+  --gold: #8B6914; --stone: #E8E0D5; --slate: #5B6E65; --surface: #FFFAF0;
+  --display: 'Noto Serif SC', 'Cormorant Garamond', 'STSong', serif;
+  --body: 'Noto Sans SC', 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Consolas', monospace;
+  --page-w: 1100px; --text-w: 72ch; --radius: 4px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:40px}
+body{background:var(--parchment);color:var(--forest);font-family:var(--body);font-size:1.08rem;line-height:1.72}
+p{margin-bottom:14px;max-width:var(--text-w)}
+a{color:var(--terracotta);text-decoration:none}a:hover{text-decoration:underline}
+strong{font-weight:600}
+
+.page{max-width:var(--page-w);margin:0 auto;padding:0 32px 64px}
+.top-nav{padding:16px 0;font-family:var(--mono);font-size:0.78rem;border-bottom:1px solid var(--stone);margin-bottom:40px}
+.top-nav a{color:var(--slate)}.top-nav span{color:var(--gold)}
+
+.hero{padding:32px 0 40px}
+.hero .num{font-family:var(--mono);font-size:0.7rem;letter-spacing:0.18em;color:var(--gold);margin-bottom:6px}
+.hero h1{font-family:var(--display);font-weight:700;font-size:clamp(2rem,5vw,3rem);line-height:1.1;color:var(--forest);margin-bottom:12px}
+.hero .deck{font-size:1.05rem;color:var(--slate);max-width:var(--text-w)}
+
+h2{font-family:var(--display);font-weight:600;font-size:1.6rem;color:var(--forest);margin:36px 0 14px;padding-top:20px;border-top:1px solid var(--stone)}
+h3{font-family:var(--display);font-weight:500;font-size:1.2rem;color:var(--forest);margin:24px 0 10px}
+
+.math-block{text-align:center;padding:16px;background:var(--surface);border:1px solid var(--stone);border-radius:var(--radius);margin:16px 0;overflow-x:auto}
+.derive-box{background:#F5F8F6;border:1px solid var(--stone);border-left:3px solid var(--forest);padding:16px 20px;border-radius:0 var(--radius) var(--radius) 0;margin:16px 0;font-size:0.92rem}
+.derive-box h4{color:var(--forest);font-family:var(--display);text-transform:none;letter-spacing:0;font-size:1rem;margin:0 0 8px}
+.concept-box{background:var(--surface);border:1px solid var(--stone);border-radius:var(--radius);padding:16px 20px;margin:16px 0;font-size:0.93rem}
+.concept-box h4{font-family:var(--display);font-size:1.05rem;font-weight:600;color:var(--forest);margin:0 0 8px}
+.toolkit-box{background:#FFF5F3;border:1px solid var(--stone);border-left:3px solid var(--terracotta);padding:14px 18px;border-radius:0 var(--radius) var(--radius) 0;margin:16px 0;font-size:0.92rem}
+.toolkit-box h4{color:var(--terracotta);font-family:var(--display);font-size:1rem;margin:0 0 8px}
+.note-box{background:#FFF8F0;border-left:3px solid var(--gold);padding:14px 18px;border-radius:0 var(--radius) var(--radius) 0;margin:16px 0;font-size:0.93rem}
+.note-box strong{color:var(--gold)}
+.warn-box{background:#FFFBF0;border:1px solid #E8D5A0;border-radius:var(--radius);padding:14px 18px;margin:16px 0;font-size:0.92rem}
+.warn-box::before{content:'⚠ ';font-size:1.1rem}
+.competition-box{background:#F0F7F5;border:1px solid var(--forest);border-left:4px solid var(--forest);padding:18px 22px;border-radius:0 var(--radius) var(--radius) 0;margin:20px 0;font-size:0.93rem}
+.competition-box h4{color:var(--forest);font-family:var(--display);font-size:1.05rem;margin:0 0 8px}
+.competition-box .q{color:var(--terracotta);font-weight:600}
+
+.panel{background:var(--surface);border:1px solid var(--stone);border-radius:6px;box-shadow:inset 0 1px 0 rgba(255,255,255,0.7),0 2px 12px rgba(0,0,0,0.05);padding:24px;margin:20px 0;position:relative}
+.panel::before{content:'';position:absolute;top:0;left:12px;right:12px;height:1px;background:linear-gradient(to right,transparent,var(--gold),transparent);opacity:0.4}
+.panel-label{font-family:var(--mono);font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--stone)}
+.panel-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+
+.stat-cards{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.stat-card{background:var(--surface);border:1px solid var(--stone);border-radius:var(--radius);padding:10px 14px;text-align:center;min-width:72px}
+.stat-card .lbl{font-family:var(--mono);font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--slate);margin-bottom:3px}
+.stat-card .val{font-family:var(--mono);font-size:1.25rem;font-weight:600;color:var(--forest)}
+
+.slider-row{display:flex;align-items:center;gap:12px;margin:10px 0;flex-wrap:wrap}
+.slider-row label{font-family:var(--mono);font-size:0.85rem;color:var(--slate);min-width:100px}
+.slider-row input[type=range]{flex:1;min-width:100px;accent-color:var(--terracotta)}
+.slider-val{font-family:var(--mono);font-weight:600;color:var(--terracotta);min-width:36px;font-size:0.88rem}
+
+.chart-container{width:100%;overflow-x:auto}
+.chart-container svg{display:block;margin:0 auto}
+
+.compact-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:0.88rem;margin:16px 0}
+.compact-table th,.compact-table td{padding:7px 12px;text-align:left;border-bottom:1px solid var(--stone)}
+.compact-table th{font-family:var(--body);font-size:0.72rem;letter-spacing:0.08em;color:var(--slate);border-bottom:2px solid var(--stone)}
+
+.btn{font-family:var(--mono);font-size:0.75rem;border:1px solid var(--stone);border-radius:var(--radius);background:var(--surface);color:var(--forest);padding:6px 14px;cursor:pointer;transition:all 0.15s}
+.btn:hover{border-color:var(--terracotta);color:var(--terracotta)}
+.btn.active{background:var(--forest);color:#fff;border-color:var(--forest)}
+.btn-group{display:flex;gap:4px;flex-wrap:wrap;margin:8px 0}
+
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin:8px 0;font-family:var(--mono);font-size:0.78rem}
+.legend-item{display:flex;align-items:center;gap:6px}
+.legend-dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+
+footer{text-align:center;padding:32px 0;font-size:0.82rem;color:var(--slate);border-top:1px solid var(--stone);margin-top:40px}
+footer a{color:var(--slate);text-decoration:underline}
+</style>
+</head>
+<body>
+<div class="page">
+
+<nav class="top-nav"><a href="stats_tutorial.html">← Field Station</a> <span>|</span> §VIII 分类方法</nav>
+
+<header class="hero">
+  <div class="num">§VIII</div>
+  <h1>分类方法</h1>
+  <p class="deck">当因变量 Y 是类别标签时，我们需要分类器。本章涵盖四种核心分类算法：决策树（可解释性之王）、随机森林（集成学习的经典）、支持向量机（最大化间隔的几何方法）和 K 近邻（最简单的非参数分类器）。每种方法都配有完整的数学推导与交互式可视化。</p>
+</header>
+
+<div class="competition-box">
+<h4>竞赛真题场景</h4>
+<p><span class="q">Q：</span>国赛 B 题常考：根据多个特征判断样本类别（如根据化学成分判断葡萄酒产地、根据消费行为判断用户类型）。<br>
+<span class="q">Q：</span>美赛 MCM C 题：对亚马逊评论进行情感分类（正面/负面），一等奖论文使用随机森林 + TF-IDF 特征。<br>
+<span class="q">Q：</span>泰坦尼克号生存预测（Kaggle 经典）：根据乘客属性（舱位、性别、年龄）预测是否生存。<br>
+<strong>→ 竞赛中，分类问题的核心不只是准确率，而是模型的可解释性——评委需要知道「为什么这样分类」。</strong></p>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>8.1 决策树</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>核心思想</h4>
+<p>决策树通过<strong>递归二分</strong>将特征空间划分为矩形区域。每次分裂选择最优特征和最优切分点，使得子节点尽可能「纯」——即同一类样本聚集在一起。最终生成一棵可以翻译为 if-then 规则的树。</p>
+</div>
+
+<h3>8.1.1 信息增益与熵</h3>
+
+<p>信息熵衡量一个节点的不纯度。设节点 \(t\) 中第 \(k\) 类样本的比例为 \(\hat{p}_{k}\)，则：</p>
+
+<div class="math-block">
+\[
+H(t) = -\sum_{k=1}^{K} \hat{p}_{k} \log_2 \hat{p}_{k}
+\]
+</div>
+
+<p>当所有类别等概率时，熵最大（\(H = \log_2 K\)）；当所有样本属于同一类时，熵最小（\(H = 0\)）。</p>
+
+<div class="derive-box">
+<h4>推导：为什么熵的底数是 2？</h4>
+<p>熵的单位是 <strong>bit</strong>。如果以 \(e\) 为底，单位是 nat；以 10 为底，单位是 dit。在决策树中，使用 \(\log_2\) 是因为每个分裂本质上是一个二分问题——「是/否」恰好对应 1 bit 的信息。信息增益定义为：</p>
+<div class="math-block">
+\[
+\text{Gain}(t, s) = H(t) - \left( \frac{n_L}{n} H(t_L) + \frac{n_R}{n} H(t_R) \right)
+\]
+</div>
+<p>其中 \(s\) 是分裂点，\(t_L, t_R\) 是左右子节点，\(n_L, n_R\) 是子节点样本数。我们选择使 Gain 最大化的特征和分裂点。</p>
+</div>
+
+<h3>8.1.2 基尼不纯度</h3>
+
+<p>CART（Classification and Regression Tree）使用基尼系数代替熵：</p>
+
+<div class="math-block">
+\[
+G(t) = 1 - \sum_{k=1}^{K} \hat{p}_{k}^2 = \sum_{k \neq j} \hat{p}_{k} \hat{p}_{j}
+\]
+</div>
+
+<p>基尼系数可以理解为：从节点 \(t\) 中随机抽取两个样本，它们属于不同类别的概率。熵和基尼在大多数情况下给出相似的分裂结果，但基尼计算更快（不需要对数运算）。</p>
+
+<div class="note-box">
+<strong>竞赛提示：</strong>CART 默认使用基尼系数，且每个节点只产生<strong>二叉树</strong>（binary split）。这避免了 ID3/C4.5 的多路分裂导致的数据碎片化问题。在数模竞赛中，推荐使用 CART（sklearn 的默认决策树实现）。
+</div>
+
+<h3>8.1.3 剪枝策略</h3>
+
+<p>完全生长的决策树几乎必然过拟合（每个叶子只有一个样本，训练误差为 0）。剪枝是控制复杂度的关键：</p>
+
+<div class="concept-box">
+<h4>代价复杂度剪枝 (Cost-Complexity Pruning)</h4>
+<p>定义代价函数：</p>
+<div class="math-block">
+\[
+R_{\alpha}(T) = R(T) + \alpha |T|
+\]
+</div>
+<p>其中 \(R(T)\) 是训练误差（如误分类率），\(|T|\) 是叶子节点数，\(\alpha\) 是复杂度惩罚参数。\(\alpha = 0\) 给出完全生长的树，\(\alpha \to \infty\) 给出只有根节点的树。通过交叉验证选择最优 \(\alpha\)。</p>
+</div>
+
+<div class="warn-box">
+<strong>常见陷阱：</strong>决策树对训练数据的微小变化极度敏感——增加或删除一个样本可能导致完全不同的树结构。这被称为<strong>高方差</strong>问题。随机森林正是为了解决这个问题而设计的。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>8.2 随机森林</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>核心思想</h4>
+<p>随机森林 = <strong>Bagging + 随机特征选择</strong>。训练多棵决策树，每棵树在随机抽样的数据子集上训练，且每次分裂只考虑随机选取的特征子集。最终通过投票（分类）或平均（回归）来预测。</p>
+</div>
+
+<h3>8.2.1 Bootstrap Aggregating (Bagging)</h3>
+
+<p>从原始训练集 \(D = \{(x_1,y_1), \ldots, (x_n,y_n)\}\) 中，有放回地抽取 \(n\) 个样本，形成 Bootstrap 样本 \(D^*\)。重复 \(B\) 次，训练 \(B\) 棵树。最终预测：</p>
+
+<div class="math-block">
+\[
+\hat{f}_{\text{rf}}(x) = \frac{1}{B} \sum_{b=1}^{B} \hat{f}_b(x) \quad \text{(回归)} \qquad
+\hat{f}_{\text{rf}}(x) = \text{majority vote}\{\hat{f}_b(x)\}_{b=1}^{B} \quad \text{(分类)}
+\]
+</div>
+
+<div class="derive-box">
+<h4>推导：为什么 Bagging 减少方差？</h4>
+<p>设每棵树的方差为 \(\sigma^2\)，树之间的相关系数为 \(\rho\)。则 \(B\) 棵树平均的方差为：</p>
+<div class="math-block">
+\[
+\text{Var}\left(\frac{1}{B}\sum_{b=1}^{B} \hat{f}_b\right)
+= \frac{1}{B^2}\left(\sum_{b=1}^{B} \text{Var}(\hat{f}_b) + \sum_{b \neq c} \text{Cov}(\hat{f}_b, \hat{f}_c)\right)
+= \frac{\sigma^2}{B} + \frac{B-1}{B}\rho\sigma^2
+\]
+</div>
+<p>当 \(B \to \infty\)，方差趋近于 \(\rho\sigma^2\)。关键洞察：<strong>随机特征选择</strong>减少了树之间的相关性 \(\rho\)，从而进一步降低方差。这就是随机森林比单纯 Bagging 更好的原因。</p>
+</div>
+
+<h3>8.2.2 袋外误差 (OOB Error)</h3>
+
+<p>每个 Bootstrap 样本大约包含 63.2% 的原始样本（因为 \(1 - (1-1/n)^n \approx 1 - 1/e \approx 0.632\)）。未被抽中的约 36.8% 样本称为 OOB（Out-Of-Bag）样本，可作为<strong>免费的验证集</strong>，无需额外划分训练/测试集。</p>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>随机森林的 OOB 误差是模型性能的无偏估计（近似于交叉验证）。在数模论文中报告 OOB 误差可以作为模型评估的一部分，不需要单独划分验证集。此外，随机森林的<strong>特征重要性</strong>（基于平均不纯度减少或排列重要性）是分析变量影响力的重要工具。
+</div>
+
+<h3>8.2.3 随机森林 vs 单棵决策树</h3>
+
+<table class="compact-table">
+<thead><tr><th>特性</th><th>单棵决策树</th><th>随机森林</th></tr></thead>
+<tbody>
+<tr><td>可解释性</td><td>极高（if-then 规则）</td><td>低（黑箱）</td></tr>
+<tr><td>方差</td><td>高（对数据敏感）</td><td>低（Bagging 降低方差）</td></tr>
+<tr><td>偏差</td><td>低</td><td>略高（但通常可接受）</td></tr>
+<tr><td>过拟合风险</td><td>高（需要剪枝）</td><td>低（树越多越稳定）</td></tr>
+<tr><td>特征重要性</td><td>基于分裂增益</td><td>更稳定（平均多棵树）</td></tr>
+<tr><td>计算复杂度</td><td>\(O(pn\log n)\)</td><td>\(O(Bp\sqrt{p}n\log n)\)</td></tr>
+</tbody>
+</table>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>8.2A 梯度提升：XGBoost 与 LightGBM</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>核心思想</h4>
+<p>梯度提升（Gradient Boosting）与随机森林不同——它不是并行训练多棵树然后平均，而是<strong>串行地</strong>训练树，每棵新树专门拟合前一轮的残差。最终预测是所有树的加权和。XGBoost 和 LightGBM 是梯度提升的工业级实现，在 Kaggle 和竞赛中统治表格数据。</p>
+</div>
+
+<h3>梯度提升的数学原理</h3>
+
+<div class="derive-box">
+<h4>推导：梯度提升 = 函数空间的梯度下降</h4>
+<p>设损失函数为 \(L(y, F(x))\)，目标是找到 \(F(x)\) 最小化 \(\sum_i L(y_i, F(x_i))\)。</p>
+<p>在第 \(m\) 轮，已经有 \(F_{m-1}(x)\)。计算<strong>负梯度</strong>（即残差的推广）：</p>
+<div class="math-block">
+\[
+r_{im} = -\left[ \frac{\partial L(y_i, F(x_i))}{\partial F(x_i)} \right]_{F = F_{m-1}}
+\]
+</div>
+<p>训练一棵回归树 \(h_m(x)\) 拟合 \(r_{im}\)。然后沿梯度方向更新：</p>
+<div class="math-block">
+\[
+F_m(x) = F_{m-1}(x) + \nu \cdot h_m(x)
+\]
+</div>
+<p>其中 \(\nu \in (0,1]\) 是<strong>学习率</strong>（shrinkage），控制每棵树的贡献。\(\nu\) 越小，需要的树越多，但泛化性能越好——这是 boosting 最重要的超参数。</p>
+</div>
+
+<h3>XGBoost 的改进</h3>
+
+<p>XGBoost 在标准梯度提升上做了三个关键改进：</p>
+<ol style="margin:0 0 14px 24px;max-width:var(--text-w)">
+  <li><strong>正则化目标函数：</strong>\(\text{Obj} = \sum_i L(y_i, \hat{y}_i) + \sum_m \Omega(h_m)\)，其中 \(\Omega(h) = \gamma T + \frac{1}{2}\lambda \|w\|^2\)，\(T\) 是叶子数，\(w\) 是叶子权重。这直接控制树的复杂度。</li>
+  <li><strong>二阶泰勒展开：</strong>使用梯度和 Hessian（二阶导数）来更精确地近似损失函数，比只用一阶梯度的 GBDT 更准确。</li>
+  <li><strong>列抽样 + 行抽样：</strong>类似随机森林的特征和样本随机化，进一步防止过拟合。</li>
+</ol>
+
+<div class="math-block">
+\[
+\text{Gain} = \frac{1}{2}\left[ \frac{G_L^2}{H_L + \lambda} + \frac{G_R^2}{H_R + \lambda} - \frac{(G_L+G_R)^2}{H_L+H_R+\lambda} \right] - \gamma
+\]
+</div>
+
+<p>其中 \(G = \sum g_i\)（梯度之和），\(H = \sum h_i\)（Hessian 之和）。分裂只有当 Gain > 0 时才执行——这天然实现了<strong>预剪枝</strong>。</p>
+
+<h3>LightGBM 的差异化优势</h3>
+
+<table class="compact-table">
+<thead><tr><th>特性</th><th>XGBoost</th><th>LightGBM</th></tr></thead>
+<tbody>
+<tr><td>树生长策略</td><td>Level-wise（按层生长）</td><td>Leaf-wise（按叶子生长）</td></tr>
+<tr><td>特征离散化</td><td>精确贪心 / 近似</td><td>GOSS + EFB（基于直方图）</td></tr>
+<tr><td>类别特征</td><td>需要 One-Hot / Label Encode</td><td>原生支持类别特征</td></tr>
+<tr><td>训练速度</td><td>快</td><td>更快（10× 以上）</td></tr>
+<tr><td>内存占用</td><td>中</td><td>低</td></tr>
+</tbody>
+</table>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>XGBoost 和 LightGBM 是竞赛中<strong>必试的模型</strong>。调参顺序：① 先调 n_estimators（树的数量）和 learning_rate（通常 0.01-0.1）。② 再调 max_depth 和 min_child_weight。③ 最后调 subsample 和 colsample_bytree。④ 使用早停（early stopping）防止过拟合。LightGBM 在大数据上更快，XGBoost 在小数据上更稳定。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>8.3 支持向量机 (SVM)</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>核心思想</h4>
+<p>SVM 寻找一个<strong>最大化间隔</strong>的超平面来分离两类样本。间隔（margin）定义为超平面到最近样本的距离。最大化间隔等价于最小化结构风险，这赋予了 SVM 出色的泛化能力。</p>
+</div>
+
+<h3>8.3.1 硬间隔 SVM（线性可分情况）</h3>
+
+<p>设超平面为 \(w^T x + b = 0\)。对于线性可分的数据，要求所有样本满足 \(y_i(w^T x_i + b) \ge 1\)。几何间隔为 \(\frac{2}{\|w\|}\)。最大化间隔等价于：</p>
+
+<div class="math-block">
+\[
+\min_{w,b} \frac{1}{2}\|w\|^2 \quad \text{s.t.} \quad y_i(w^T x_i + b) \ge 1, \quad \forall i
+\]
+</div>
+
+<div class="derive-box">
+<h4>推导：SVM 的对偶问题</h4>
+<p>引入拉格朗日乘子 \(\alpha_i \ge 0\)：</p>
+<div class="math-block">
+\[
+\mathcal{L}(w,b,\alpha) = \frac{1}{2}\|w\|^2 - \sum_{i=1}^{n} \alpha_i \left[ y_i(w^T x_i + b) - 1 \right]
+\]
+</div>
+<p>对 \(w,b\) 求偏导并令其为 0，得 \(w = \sum \alpha_i y_i x_i\)，\(\sum \alpha_i y_i = 0\)。代入得对偶问题：</p>
+<div class="math-block">
+\[
+\max_{\alpha} \sum_{i=1}^{n} \alpha_i - \frac{1}{2}\sum_{i=1}^{n}\sum_{j=1}^{n} \alpha_i \alpha_j y_i y_j (x_i^T x_j)
+\quad \text{s.t.} \quad \alpha_i \ge 0,\ \sum \alpha_i y_i = 0
+\]
+</div>
+<p>关键观察：① 对偶问题只涉及样本的内积 \(x_i^T x_j\)，这为核技巧铺平了道路。② 最优解中，只有支持向量（\(\alpha_i > 0\)）对决策边界有贡献——大多数 \(\alpha_i = 0\)，模型是稀疏的。</p>
+</div>
+
+<h3>8.3.2 软间隔与核技巧</h3>
+
+<p><strong>软间隔：</strong>当数据不完全线性可分时，引入松弛变量 \(\xi_i \ge 0\)：</p>
+<div class="math-block">
+\[
+\min_{w,b,\xi} \frac{1}{2}\|w\|^2 + C \sum_{i=1}^{n} \xi_i \quad \text{s.t.} \quad y_i(w^T x_i + b) \ge 1 - \xi_i,\ \xi_i \ge 0
+\]
+</div>
+<p>其中 \(C\) 是正则化参数：\(C\) 大 → 更重视分类正确（可能过拟合），\(C\) 小 → 更重视间隔最大化（可能欠拟合）。</p>
+
+<p><strong>核技巧：</strong>将对偶问题中的内积 \(x_i^T x_j\) 替换为核函数 \(K(x_i, x_j)\)，隐式地在高维空间中进行线性分类：</p>
+
+<table class="compact-table">
+<thead><tr><th>核函数</th><th>公式</th><th>适用场景</th></tr></thead>
+<tbody>
+<tr><td>线性核</td><td>\(K(x_i,x_j) = x_i^T x_j\)</td><td>高维稀疏数据（文本分类）</td></tr>
+<tr><td>多项式核</td><td>\(K(x_i,x_j) = (x_i^T x_j + c)^d\)</td><td>已知多项式关系</td></tr>
+<tr><td>RBF (高斯) 核</td><td>\(K(x_i,x_j) = \exp(-\gamma\|x_i-x_j\|^2)\)</td><td>最通用，竞赛首选</td></tr>
+<tr><td>Sigmoid 核</td><td>\(K(x_i,x_j) = \tanh(\kappa x_i^T x_j + c)\)</td><td>等价于两层神经网络</td></tr>
+</tbody>
+</table>
+
+<div class="toolkit-box">
+<h4>竞赛工具箱：SVM 调参</h4>
+<p><strong>核心参数：</strong>\(C\)（正则化强度）和 \(\gamma\)（RBF 核的带宽）。<br>
+<strong>调参策略：</strong>网格搜索 \(C \in \{10^{-3}, 10^{-2}, \ldots, 10^{3}\}\)，\(\gamma \in \{10^{-3}, \ldots, 10^{3}\}\)，配合交叉验证。<br>
+<strong>数据预处理：</strong>SVM 对特征尺度敏感——<strong>必须先标准化</strong>（Z-score 或 MinMax）。<br>
+<strong>竞赛模板：</strong>先用线性 SVM 做基线 → 再用 RBF SVM 调参 → 报告支持向量数量作为模型复杂度指标。</p>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>8.4 K 近邻 (KNN)</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>核心思想</h4>
+<p>KNN 可能是最简单的分类器：对新样本 \(x\)，找到训练集中距离它最近的 \(K\) 个样本，用多数投票决定类别。KNN 没有显式的训练过程——所有计算都在预测时进行（懒惰学习，lazy learning）。</p>
+</div>
+
+<h3>8.4.1 距离度量</h3>
+
+<div class="math-block">
+\[
+\begin{aligned}
+\text{欧氏距离：} & d(x, x') = \sqrt{\sum_{j=1}^{p} (x_j - x_j')^2} \\
+\text{曼哈顿距离：} & d(x, x') = \sum_{j=1}^{p} |x_j - x_j'| \\
+\text{闵可夫斯基距离：} & d(x, x') = \left(\sum_{j=1}^{p} |x_j - x_j'|^q\right)^{1/q} \\
+\text{余弦相似度：} & d(x, x') = 1 - \frac{x \cdot x'}{\|x\| \|x'\|}
+\end{aligned}
+\]
+</div>
+
+<div class="note-box">
+<strong>竞赛提示：</strong>高维空间中，所有点之间的距离趋于相等（<strong>维度灾难</strong>），KNN 失效。经验法则：当 \(p > 10\) 时，先做 PCA 降维或特征选择，再使用 KNN。此外，KNN 对特征尺度极度敏感——如果某个特征的取值范围是 [0,1000]，另一个是 [0,1]，距离几乎完全由第一个特征决定。<strong>必须标准化。</strong>
+</div>
+
+<h3>8.4.2 K 的选择</h3>
+
+<p>\(K\) 控制偏差-方差权衡：</p>
+<ul style="margin:0 0 14px 24px;max-width:var(--text-w)">
+  <li>\(K = 1\)：零偏差（训练误差为 0），但方差极大（决策边界非常曲折）</li>
+  <li>\(K\) 很大：决策边界平滑，但偏差增大（可能忽略局部模式）</li>
+  <li>经验法则：\(K \approx \sqrt{n}\)，通过交叉验证精调</li>
+</ul>
+
+<div class="derive-box">
+<h4>推导：KNN 的泛化误差界</h4>
+<p>可以证明，当 \(n \to \infty\)，\(K \to \infty\)，\(K/n \to 0\) 时，KNN 的错误率收敛到不超过贝叶斯最优错误率的两倍：</p>
+<div class="math-block">
+\[
+P(\text{error}) \le 2 \cdot P^*(\text{error}) - \frac{K}{K-1} \cdot P^*(\text{error})^2
+\]
+</div>
+<p>其中 \(P^*(\text{error})\) 是贝叶斯错误率（任何分类器能达到的最低错误率）。这意味着在无限数据极限下，KNN 的错误率被严格控制在贝叶斯错误率的两倍以内——这是 KNN 强大的理论保证。</p>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>8.4B 朴素贝叶斯</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>核心思想</h4>
+<p>朴素贝叶斯基于贝叶斯定理，并做了一个「朴素」的假设——<strong>在给定类别的条件下，所有特征相互独立</strong>。尽管这个假设在现实中几乎不成立，但朴素贝叶斯在高维数据（如文本分类）中表现惊人地好，且训练速度极快。</p>
+</div>
+
+<h3>贝叶斯定理与分类决策</h3>
+
+<div class="math-block">
+\[
+P(Y = k \mid X = x) = \frac{P(X = x \mid Y = k) \cdot P(Y = k)}{P(X = x)}
+\propto P(Y = k) \prod_{j=1}^{p} P(X_j = x_j \mid Y = k)
+\]
+</div>
+
+<p>分类决策：选择后验概率最大的类别：\(\hat{y} = \arg\max_k P(Y=k) \prod_{j=1}^{p} P(X_j=x_j \mid Y=k)\)。</p>
+
+<h3>三种常见变体</h3>
+
+<table class="compact-table">
+<thead><tr><th>变体</th><th>\(P(X_j \mid Y=k)\) 的假设</th><th>适用场景</th></tr></thead>
+<tbody>
+<tr><td>Gaussian NB</td><td>正态分布 \(N(\mu_{jk}, \sigma^2_{jk})\)</td><td>连续特征，特征近似正态</td></tr>
+<tr><td>Multinomial NB</td><td>多项分布（词频）</td><td>文本分类、离散计数</td></tr>
+<tr><td>Bernoulli NB</td><td>伯努利分布（出现/不出现）</td><td>二元特征（如词袋模型）</td></tr>
+</tbody>
+</table>
+
+<div class="derive-box">
+<h4>推导：Gaussian NB 的参数估计</h4>
+<p>对于特征 \(j\) 和类别 \(k\)，用 MLE 估计均值和方差：</p>
+<div class="math-block">
+\[
+\hat{\mu}_{jk} = \frac{1}{n_k} \sum_{i: y_i=k} x_{ij}, \quad
+\hat{\sigma}^2_{jk} = \frac{1}{n_k} \sum_{i: y_i=k} (x_{ij} - \hat{\mu}_{jk})^2
+\]
+</div>
+<p>预测时，计算每个类别的对数后验概率（取对数避免下溢）：</p>
+<div class="math-block">
+\[
+\log P(Y=k \mid x) \propto \log P(Y=k) + \sum_{j=1}^{p} \left[ -\frac{1}{2}\log(2\pi\hat{\sigma}^2_{jk}) - \frac{(x_j - \hat{\mu}_{jk})^2}{2\hat{\sigma}^2_{jk}} \right]
+\]
+</div>
+</div>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>朴素贝叶斯是绝佳的<strong>基线模型</strong>。训练只需计算均值和方差（O(np)），预测是 O(p)。在文本分类竞赛中，Multinomial NB + TF-IDF 是经典组合。此外，朴素贝叶斯的概率输出天然可解释——每个特征对最终分类的贡献可以精确计算。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>8.5 分类方法选择决策树</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<table class="compact-table">
+<thead><tr><th>条件</th><th>推荐方法</th><th>理由</th></tr></thead>
+<tbody>
+<tr><td>需要可解释性（论文要解释为什么）</td><td>决策树 / 逻辑回归</td><td>if-then 规则或 Odds Ratio 可直接解释</td></tr>
+<tr><td>样本量小（n &lt; 1000）</td><td>SVM (RBF) / KNN</td><td>小样本下 SVM 泛化性能好</td></tr>
+<tr><td>样本量大、特征多</td><td>随机森林 / XGBoost</td><td>集成方法在大数据上表现优异</td></tr>
+<tr><td>特征维度极高（p &gt; n）</td><td>SVM (线性核) / 带 L1 的逻辑回归</td><td>线性核天然适合高维稀疏数据</td></tr>
+<tr><td>数据高度非线性</td><td>随机森林 / SVM (RBF)</td><td>核方法或树模型能捕捉非线性模式</td></tr>
+<tr><td>需要概率输出</td><td>逻辑回归 / 随机森林</td><td>逻辑回归直接输出概率，RF 可输出类别比例</td></tr>
+<tr><td>需要报告特征重要性</td><td>随机森林 / 逻辑回归</td><td>RF 有内置的特征重要性度量</td></tr>
+</tbody>
+</table>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>8.5A 类别不平衡处理</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>问题的本质</h4>
+<p>当正负样本比例严重失衡（如 1:99）时，分类器倾向于「全部预测为多数类」——准确率很高但完全无用。这个问题在竞赛中极为常见（欺诈检测、疾病诊断、罕见事件预测）。</p>
+</div>
+
+<h3>SMOTE：合成少数类过采样</h3>
+
+<p>SMOTE (Synthetic Minority Oversampling TEchnique) 不是简单复制少数类样本，而是在<strong>特征空间中插值</strong>生成新样本：</p>
+
+<div class="derive-box">
+<h4>SMOTE 算法</h4>
+<p>对每个少数类样本 \(x_i\)：<br>
+① 找到它的 \(k\) 个最近邻（KNN，在少数类内部）。<br>
+② 随机选择一个邻居 \(x_{nn}\)。<br>
+③ 在 \(x_i\) 和 \(x_{nn}\) 的连线上随机生成新样本：</p>
+<div class="math-block">
+\[
+x_{\text{new}} = x_i + \lambda \cdot (x_{nn} - x_i), \quad \lambda \sim U(0,1)
+\]
+</div>
+<p>这比简单复制好得多——新样本增加了少数类的「覆盖范围」，而不是在已有样本上重复。</p>
+</div>
+
+<h3>其他处理方法</h3>
+
+<table class="compact-table">
+<thead><tr><th>方法</th><th>策略</th><th>优点</th><th>缺点</th></tr></thead>
+<tbody>
+<tr><td>Class Weight</td><td>给少数类更高的损失权重</td><td>不改变数据分布</td><td>需要调权重参数</td></tr>
+<tr><td>Random Under-sampling</td><td>随机丢弃多数类样本</td><td>简单、数据量减少</td><td>可能丢失重要信息</td></tr>
+<tr><td>SMOTE</td><td>合成少数类样本</td><td>不丢失信息</td><td>可能引入噪声</td></tr>
+<tr><td>SMOTE + Tomek Links</td><td>SMOTE 后清理边界</td><td>减少 SMOTE 的噪声</td><td>计算量稍大</td></tr>
+<tr><td>Threshold Moving</td><td>调整分类阈值</td><td>最简单、无额外计算</td><td>不改变模型本身</td></tr>
+</tbody>
+</table>
+
+<div class="warn-box">
+<strong>竞赛常见错误：</strong>① 不标准化就使用 SVM/KNN（距离和核函数对尺度敏感）。② 用随机森林却无法解释结果——评委需要知道哪些特征最重要。③ 在极度不平衡的数据上只报告准确率——需要看精确率、召回率、F1（见 §X）。④ 没有报告交叉验证结果——单次训练/测试划分的随机性太大。⑤ 在测试集上做 SMOTE——SMOTE 只能用于训练集，测试集必须保持原始分布。
+</div>
+
+<!-- ═══════════ 8.5B AdaBoost ═══════════ -->
+<h2>8.5B AdaBoost</h2>
+
+<div class="concept-box">
+<h4>Boosting 的始祖</h4>
+<p>AdaBoost (Adaptive Boosting) 是第一个实用的 boosting 算法（Freund & Schapire, 1995）。与梯度提升不同，AdaBoost 通过<strong>迭代调整样本权重</strong>来训练弱分类器序列——每个新分类器专注于前一个分类器分错的样本。</p>
+</div>
+
+<div class="derive-box">
+<h4>AdaBoost 算法</h4>
+<p><strong>Step 1：</strong>初始化所有样本权重 \(w_i = 1/n\)。<br>
+<strong>Step 2：</strong>对于 m = 1 到 M：</p>
+<ol style="margin:0 0 0 20px">
+  <li>用当前权重 \(w_i\) 训练弱分类器 \(G_m(x)\)</li>
+  <li>计算加权误差 \(err_m = \sum w_i \cdot \mathbf{1}\{G_m(x_i) \neq y_i\} / \sum w_i\)</li>
+  <li>计算分类器权重 \(\alpha_m = \ln\left(\frac{1 - err_m}{err_m}\right)\)</li>
+  <li>更新样本权重：\(w_i \leftarrow w_i \cdot \exp(\alpha_m \cdot \mathbf{1}\{G_m(x_i) \neq y_i\})\)</li>
+</ol>
+<p><strong>Step 3：</strong>最终分类器：\(G(x) = \text{sign}\left(\sum_{m=1}^{M} \alpha_m G_m(x)\right)\)</p>
+<div class="math-block">
+\[
+\alpha_m = \frac{1}{2}\ln\left(\frac{1 - err_m}{err_m}\right) \quad \text{——误差越小的分类器，权重越大}
+\]
+</div>
+</div>
+
+<div class="note-box">
+<strong>竞赛对比：</strong>AdaBoost 对异常值敏感（因为误分类样本的权重指数增长），适合<strong>数据干净、噪声低</strong>的场景。XGBoost/LightGBM 对噪声更鲁棒，是竞赛中的默认选择。但 AdaBoost 概念简单、理论优美，在论文中作为对比方法很有价值。
+</div>
+
+<!-- ═══════════ 8.5C 超参数调优 ═══════════ -->
+<h2>8.5C 超参数调优</h2>
+
+<div class="concept-box">
+<h4>模型性能的「隐藏开关」</h4>
+<p>超参数（Hyperparameters）是在训练前设定的参数——如 KNN 的 K、随机森林的树数、SVM 的 C 和 γ、XGBoost 的学习率。选择合适的超参数可以显著提升模型性能，<strong>竞赛中必须做超参数调优</strong>。</p>
+</div>
+
+<h3>Grid Search (网格搜索)</h3>
+<p>预先定义每个超参数的候选值集合，<strong>穷举所有组合</strong>，通过交叉验证选择最优组合。例如：KNN 的 K ∈ {1,3,5,7,9,11}，SVM 的 C ∈ {0.1,1,10,100}，γ ∈ {0.01,0.1,1} → 共 6×4×3=72 种组合。</p>
+
+<h3>Random Search (随机搜索)</h3>
+<p>从超参数空间中<strong>随机采样</strong>一定数量的组合。研究表明，在相同计算预算下，随机搜索通常优于网格搜索——因为不是所有超参数都同等重要，随机搜索能探索更多重要超参数的值。</p>
+
+<h3>Bayesian Optimization (贝叶斯优化)</h3>
+<p>用高斯过程（或其他代理模型）<strong>建模</strong>超参数与 CV 性能之间的关系，每次选择「最可能提升性能」的超参数组合来评估。贝叶斯优化比随机搜索更高效（用更少的评估次数找到更好的超参数），但实现更复杂。</p>
+
+<div class="toolkit-box">
+<h4>建模工具箱：超参数调优指南</h4>
+<table class="compact-table">
+<thead><tr><th>模型</th><th>关键超参数</th><th>调优范围</th></tr></thead>
+<tbody>
+<tr><td>KNN</td><td>K</td><td>1 ~ 30</td></tr>
+<tr><td>随机森林</td><td>n_estimators, max_depth, max_features</td><td>100~500, 3~20, sqrt/log2</td></tr>
+<tr><td>XGBoost</td><td>learning_rate, max_depth, n_estimators, subsample</td><td>0.01~0.3, 3~10, 100~1000, 0.6~1.0</td></tr>
+<tr><td>SVM (RBF)</td><td>C, γ</td><td>0.01~100, 0.001~10</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="warn-box">
+<strong>竞赛陷阱：</strong>① 在测试集上调超参数——这是数据泄漏，会导致性能虚高。正确的做法：训练集 → 交叉验证调参 → 验证集评估 → 测试集最终报告。② 超参数调优不报告搜索范围和 CV 折数——论文中必须写清楚。③ 调参范围太窄——最优值可能在你设定的范围之外。
+</div>
+
+<!-- ═══════════ 8.5D CatBoost ═══════════ -->
+<h2>8.5D CatBoost</h2>
+
+<div class="concept-box">
+<h4>专为分类特征设计的 GBDT</h4>
+<p>CatBoost (Categorical Boosting, Yandex 2017) 与 XGBoost/LightGBM 同属 GBDT 家族，但其核心创新是<strong>对分类特征的自动处理</strong>——不需要手动做 one-hot 编码或标签编码。</p>
+</div>
+
+<p><strong>CatBoost 的三个关键创新：</strong></p>
+<ol style="margin:0 0 0 24px;max-width:var(--text-w)">
+  <li><strong>有序目标统计 (Ordered Target Statistics)：</strong>将分类特征的值替换为该类别的目标均值——但使用<strong>排序后的历史数据</strong>计算，避免数据泄漏（传统目标编码会导致过拟合）。</li>
+  <li><strong>有序提升 (Ordered Boosting)：</strong>每棵树只用前 i-1 个样本训练，预测第 i 个样本——避免梯度估计的偏差。</li>
+  <li><strong>对称树 (Symmetric Trees)：</strong>与 XGBoost 的非对称树不同，CatBoost 使用对称（平衡）树——所有叶子在同一深度分裂，预测速度更快。</li>
+</ol>
+
+<div class="note-box">
+<strong>竞赛选择：</strong>当数据中<strong>分类特征很多</strong>（如城市、职业、产品类别等）且不想手动编码时，CatBoost 是最佳选择。当特征主要是数值型时，LightGBM 通常更快，XGBoost 更稳定。三者性能差异通常很小——竞赛中三者都值得尝试，选交叉验证最好的。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- INSTRUMENT No.8A: KNN 决策边界 -->
+<!-- ══════════════════════════════════════════════ -->
+<h2>仪器 No.8A — KNN 决策边界可视化</h2>
+<div class="panel">
+<div class="panel-label">INSTRUMENT No.8A · KNN Decision Boundary</div>
+<p style="font-size:0.9rem;color:var(--slate);margin-bottom:12px">点击画布添加红色（左键）或蓝色（Shift+点击）样本点。调整 K 值观察决策边界的变化。K=1 时边界最曲折（过拟合），K 增大时边界趋于平滑。</p>
+<div class="slider-row">
+  <label>K = <span class="slider-val" id="knn-k-val">3</span></label>
+  <input type="range" id="knn-k" min="1" max="15" value="3" step="1">
+</div>
+<div class="btn-group">
+  <button class="btn" id="knn-rand">随机生成数据</button>
+  <button class="btn" id="knn-clear">清空画布</button>
+  <button class="btn" id="knn-toggle-class">切换当前类别</button>
+  <span style="font-family:var(--mono);font-size:0.78rem;color:var(--slate);margin-left:8px">当前: <strong id="knn-current-class" style="color:var(--terracotta)">Class A (红)</strong></span>
+</div>
+<div class="legend">
+  <div class="legend-item"><span class="legend-dot" style="background:#C75146"></span> Class A</div>
+  <div class="legend-item"><span class="legend-dot" style="background:#2D6BA0"></span> Class B</div>
+  <div class="legend-item"><span class="legend-dot" style="background:rgba(199,81,70,0.15);border:1px solid rgba(199,81,70,0.3)"></span> 预测为 A 的区域</div>
+</div>
+<div class="chart-container" id="knn-chart"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- INSTRUMENT No.8B: 决策树分裂演示 -->
+<!-- ══════════════════════════════════════════════ -->
+<h2>仪器 No.8B — 决策树分裂演示</h2>
+<div class="panel">
+<div class="panel-label">INSTRUMENT No.8B · Decision Tree Split</div>
+<p style="font-size:0.9rem;color:var(--slate);margin-bottom:12px">一维二分类数据。拖动滑块选择分裂点，观察熵的变化和信息增益。最佳分裂点使信息增益最大化（子节点最纯）。</p>
+<div class="slider-row">
+  <label>分裂点 <span class="slider-val" id="dt-split-val">0.50</span></label>
+  <input type="range" id="dt-split" min="0.05" max="0.95" value="0.50" step="0.01">
+</div>
+<div class="btn-group">
+  <button class="btn" id="dt-best">自动寻找最优分裂</button>
+  <button class="btn" id="dt-reshuffle">重新生成数据</button>
+</div>
+<div class="stat-cards" id="dt-stats"></div>
+<div class="chart-container" id="dt-chart"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>8.6 竞赛实战流程</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="toolkit-box">
+<h4>分类问题竞赛流程</h4>
+<p><strong>Step 1：</strong>数据预处理——标准化（SVM/KNN 必需）、处理缺失值、编码分类变量。<br>
+<strong>Step 2：</strong>探索性分析——各类别在特征空间中的分布（PCA 降维可视化，见 §X）。<br>
+<strong>Step 3：</strong>基线模型——逻辑回归或 KNN（简单快速，建立性能基准）。<br>
+<strong>Step 4：</strong>进阶模型——随机森林或 SVM（RBF 核），调参 + 交叉验证。<br>
+<strong>Step 5：</strong>模型比较——报告准确率、精确率、召回率、F1、AUC（见 §X）。<br>
+<strong>Step 6：</strong>特征重要性分析——哪些特征对分类贡献最大？用随机森林的特征重要性。<br>
+<strong>Step 7：</strong>结果解释——不只报告数字，要解释为什么这个模型最好。</p>
+</div>
+
+<footer>
+  <p><a href="stats_tutorial.html">← 返回 Field Station 总目录</a> &nbsp;|&nbsp; 下一章：<a href="stats_09_clustering.html">§IX 聚类分析 →</a></p>
+  <p style="margin-top:8px">Statistical Field Station &copy; 2026 · KaTeX + D3.js</p>
+</footer>
+
+</div>
+
+<script>
+// ============ KaTeX Auto-Render ============
+renderMathInElement(document.body, {
+  delimiters: [
+    {left: '\\[', right: '\\]', display: true},
+    {left: '\\(', right: '\\)', display: false},
+    {left: '$$', right: '$$', display: true}
+  ],
+  throwOnError: false
+});
+
+// ============ INSTRUMENT No.8A: KNN Decision Boundary ============
+(function() {
+  const W = 700, H = 500, margin = {top:10, right:10, bottom:10, left:10};
+  const pw = W - margin.left - margin.right;
+  const ph = H - margin.top - margin.bottom;
+  const xScale = d3.scaleLinear().domain([0,1]).range([margin.left, margin.left + pw]);
+  const yScale = d3.scaleLinear().domain([0,1]).range([margin.top + ph, margin.top]);
+
+  const svg = d3.select('#knn-chart').append('svg').attr('width',W).attr('height',H)
+    .attr('viewBox',`0 0 ${W} ${H}`);
+
+  // Background grid
+  svg.append('rect').attr('x',margin.left).attr('y',margin.top)
+    .attr('width',pw).attr('height',ph)
+    .attr('fill','#FAF8F3').attr('stroke', 'var(--stone)').attr('stroke-width',1);
+
+  // Grid lines
+  for (let i = 0; i <= 10; i++) {
+    svg.append('line').attr('x1',margin.left).attr('x2',margin.left+pw)
+      .attr('y1',yScale(i/10)).attr('y2',yScale(i/10))
+      .attr('stroke','var(--stone)').attr('stroke-width',0.5).attr('stroke-dasharray','2,2');
+    svg.append('line').attr('y1',margin.top).attr('y2',margin.top+ph)
+      .attr('x1',xScale(i/10)).attr('x2',xScale(i/10))
+      .attr('stroke','var(--stone)').attr('stroke-width',0.5).attr('stroke-dasharray','2,2');
+  }
+
+  let points = [];
+  let currentClass = 0; // 0=A (red), 1=B (blue)
+  let K = 3;
+
+  const boundaryGroup = svg.append('g');
+  const pointsGroup = svg.append('g');
+
+  function drawBoundary() {
+    boundaryGroup.selectAll('*').remove();
+    if (points.length === 0) return;
+
+    const gridSize = 100;
+    const grid = [];
+    for (let i = 0; i <= gridSize; i++) {
+      for (let j = 0; j <= gridSize; j++) {
+        const x = i / gridSize, y = j / gridSize;
+        // Find K nearest neighbors
+        const dists = points.map((p, idx) => ({
+          idx, cls: p.cls,
+          d: Math.sqrt((p.x-x)**2 + (p.y-y)**2)
+        })).sort((a,b) => a.d - b.d).slice(0, K);
+        const votes = d3.rollup(dists, v => v.length, d => d.cls);
+        const pred = [...votes.entries()].sort((a,b) => b[1]-a[1])[0][0];
+        grid.push({x, y, pred});
+      }
+    }
+
+    // Draw Voronoi-like regions as small rects
+    const cellW = pw / gridSize, cellH = ph / gridSize;
+    grid.forEach(g => {
+      boundaryGroup.append('rect')
+        .attr('x', xScale(g.x) - cellW/2).attr('y', yScale(g.y) - cellH/2)
+        .attr('width', cellW+0.5).attr('height', cellH+0.5)
+        .attr('fill', g.pred === 0 ? 'rgba(199,81,70,0.12)' : 'rgba(45,107,160,0.12)')
+        .attr('stroke','none');
+    });
+  }
+
+  function drawPoints() {
+    pointsGroup.selectAll('*').remove();
+    pointsGroup.selectAll('circle').data(points).join('circle')
+      .attr('cx', d => xScale(d.x)).attr('cy', d => yScale(d.y))
+      .attr('r', 5).attr('fill', d => d.cls === 0 ? '#C75146' : '#2D6BA0')
+      .attr('stroke', '#fff').attr('stroke-width', 1.5)
+      .attr('opacity', 0.9);
+  }
+
+  function redraw() {
+    drawBoundary();
+    drawPoints();
+  }
+
+  // Click handler
+  svg.on('click', function(event) {
+    const [mx, my] = d3.pointer(event);
+    const x = Math.max(0, Math.min(1, (mx - margin.left) / pw));
+    const y = Math.max(0, Math.min(1, (margin.top + ph - my) / ph));
+    const cls = d3.event && d3.event.shiftKey ? 1 : currentClass;
+    points.push({x, y, cls});
+    redraw();
+  });
+
+  // Use mousedown for shift detection
+  svg.on('mousedown', function(event) {
+    if (event.shiftKey) {
+      d3.select('#knn-current-class').text('Class B (蓝)').style('color','#2D6BA0');
+    }
+  });
+  svg.on('mouseup', function() {
+    d3.select('#knn-current-class').text('Class A (红)').style('color','var(--terracotta)');
+  });
+
+  d3.select('#knn-k').on('input', function() {
+    K = +this.value;
+    d3.select('#knn-k-val').text(K);
+    redraw();
+  });
+
+  d3.select('#knn-rand').on('click', function() {
+    points = [];
+    const rng = d3.randomUniform(0.15, 0.85);
+    for (let i = 0; i < 30; i++) {
+      const cls = Math.random() < 0.5 ? 0 : 1;
+      const cx = cls === 0 ? 0.3 : 0.7, cy = cls === 0 ? 0.3 : 0.7;
+      points.push({
+        x: Math.max(0.02, Math.min(0.98, cx + (Math.random()-0.5)*0.5)),
+        y: Math.max(0.02, Math.min(0.98, cy + (Math.random()-0.5)*0.5)),
+        cls
+      });
+    }
+    redraw();
+  });
+
+  d3.select('#knn-clear').on('click', function() {
+    points = [];
+    redraw();
+  });
+
+  d3.select('#knn-toggle-class').on('click', function() {
+    currentClass = 1 - currentClass;
+    d3.select('#knn-current-class')
+      .text(currentClass === 0 ? 'Class A (红)' : 'Class B (蓝)')
+      .style('color', currentClass === 0 ? 'var(--terracotta)' : '#2D6BA0');
+  });
+
+  // Initialize with random data
+  d3.select('#knn-rand').dispatch('click');
+})();
+
+// ============ INSTRUMENT No.8B: Decision Tree Split ============
+(function() {
+  const W = 700, H = 350, margin = {top:20, right:30, bottom:40, left:50};
+  const pw = W - margin.left - margin.right;
+  const ph = H - margin.top - margin.bottom;
+  const xScale = d3.scaleLinear().domain([0,1]).range([margin.left, margin.left+pw]);
+  const yScale = d3.scaleLinear().domain([-0.1, 1.1]).range([margin.top+ph, margin.top]);
+
+  const svg = d3.select('#dt-chart').append('svg').attr('width',W).attr('height',H)
+    .attr('viewBox',`0 0 ${W} ${H}`);
+
+  // Axes
+  svg.append('g').attr('transform',`translate(0,${margin.top+ph})`).call(d3.axisBottom(xScale));
+  svg.append('g').attr('transform',`translate(${margin.left},0)`).call(d3.axisLeft(yScale).ticks(5));
+  svg.append('text').attr('x',W/2).attr('y',H-4).attr('text-anchor','middle')
+    .style('font-family','var(--mono)').style('font-size','0.7rem').style('fill','var(--slate)').text('Feature X');
+  svg.append('text').attr('x',-H/2).attr('y',14).attr('transform','rotate(-90)').attr('text-anchor','middle')
+    .style('font-family','var(--mono)').style('font-size','0.7rem').style('fill','var(--slate)').text('Class (0/1)');
+
+  let data = [];
+
+  function generateData() {
+    data = [];
+    for (let i = 0; i < 80; i++) {
+      const x = Math.random();
+      // Class 0 mostly on left, class 1 mostly on right, with overlap
+      const p1 = 1 / (1 + Math.exp(-8*(x - 0.5))); // sigmoid
+      const cls = Math.random() < p1 ? 1 : 0;
+      data.push({x, cls, y: cls + (Math.random()-0.5)*0.15});
+    }
+  }
+
+  function entropy(vals) {
+    if (vals.length === 0) return 0;
+    const p1 = d3.sum(vals) / vals.length;
+    const p0 = 1 - p1;
+    let h = 0;
+    if (p0 > 0) h -= p0 * Math.log2(p0);
+    if (p1 > 0) h -= p1 * Math.log2(p1);
+    return h;
+  }
+
+  function update(split) {
+    const left = data.filter(d => d.x < split);
+    const right = data.filter(d => d.x >= split);
+    const H_parent = entropy(data.map(d => d.cls));
+    const H_left = entropy(left.map(d => d.cls));
+    const H_right = entropy(right.map(d => d.cls));
+    const wL = left.length / data.length, wR = right.length / data.length;
+    const H_children = wL * H_left + wR * H_right;
+    const gain = H_parent - H_children;
+
+    d3.select('#dt-stats').html(`
+      <div class="stat-card"><div class="lbl">父节点熵 H(t)</div><div class="val">${H_parent.toFixed(3)}</div></div>
+      <div class="stat-card"><div class="lbl">左子节点熵 H(L)</div><div class="val">${H_left.toFixed(3)}</div></div>
+      <div class="stat-card"><div class="lbl">右子节点熵 H(R)</div><div class="val">${H_right.toFixed(3)}</div></div>
+      <div class="stat-card"><div class="lbl">加权子节点熵</div><div class="val">${H_children.toFixed(3)}</div></div>
+      <div class="stat-card"><div class="lbl">信息增益 IG</div><div class="val" style="color:${gain > 0.05 ? 'var(--terracotta)' : 'var(--slate)'}">${gain.toFixed(3)}</div></div>
+      <div class="stat-card"><div class="lbl">左:右 样本数</div><div class="val">${left.length}:${right.length}</div></div>
+    `);
+
+    // Redraw
+    svg.selectAll('.dot').remove();
+    svg.selectAll('.split-line').remove();
+    svg.selectAll('.shade').remove();
+
+    // Shade regions
+    svg.append('rect').attr('class','shade').attr('x',xScale(0)).attr('y',margin.top)
+      .attr('width',xScale(split)-xScale(0)).attr('height',ph)
+      .attr('fill','rgba(199,81,70,0.06)');
+    svg.append('rect').attr('class','shade').attr('x',xScale(split)).attr('y',margin.top)
+      .attr('width',xScale(1)-xScale(split)).attr('height',ph)
+      .attr('fill','rgba(45,107,160,0.06)');
+
+    // Split line
+    svg.append('line').attr('class','split-line')
+      .attr('x1',xScale(split)).attr('x2',xScale(split))
+      .attr('y1',margin.top).attr('y2',margin.top+ph)
+      .attr('stroke','var(--gold)').attr('stroke-width',2).attr('stroke-dasharray','6,3');
+
+    // Data points
+    svg.selectAll('.dot').data(data).join('circle').attr('class','dot')
+      .attr('cx', d => xScale(d.x)).attr('cy', d => yScale(d.y))
+      .attr('r', 4).attr('fill', d => d.cls === 0 ? '#C75146' : '#2D6BA0')
+      .attr('stroke', '#fff').attr('stroke-width', 1).attr('opacity', 0.8);
+
+    // Mean lines in each region
+    const left0 = left.filter(d => d.cls===0), left1 = left.filter(d => d.cls===1);
+    const right0 = right.filter(d => d.cls===0), right1 = right.filter(d => d.cls===1);
+    if (left.length > 0) {
+      svg.append('text').attr('class','split-line')
+        .attr('x', xScale(split/2)).attr('y', margin.top + 14)
+        .attr('text-anchor','middle').style('font-family','var(--mono)').style('font-size','0.65rem')
+        .style('fill','var(--slate)').text(`0:${left0.length} 1:${left1.length}`);
+    }
+    if (right.length > 0) {
+      svg.append('text').attr('class','split-line')
+        .attr('x', xScale((split+1)/2)).attr('y', margin.top + 14)
+        .attr('text-anchor','middle').style('font-family','var(--mono)').style('font-size','0.65rem')
+        .style('fill','var(--slate)').text(`0:${right0.length} 1:${right1.length}`);
+    }
+  }
+
+  const slider = d3.select('#dt-split');
+  slider.on('input', function() {
+    const v = +this.value;
+    d3.select('#dt-split-val').text(v.toFixed(2));
+    if (data.length > 0) update(v);
+  });
+
+  d3.select('#dt-best').on('click', function() {
+    let bestSplit = 0.5, bestGain = 0;
+    for (let s = 0.05; s <= 0.95; s += 0.01) {
+      const left = data.filter(d => d.x < s), right = data.filter(d => d.x >= s);
+      if (left.length < 3 || right.length < 3) continue;
+      const Hp = entropy(data.map(d=>d.cls));
+      const h = (left.length/data.length)*entropy(left.map(d=>d.cls)) + (right.length/data.length)*entropy(right.map(d=>d.cls));
+      const gain = Hp - h;
+      if (gain > bestGain) { bestGain = gain; bestSplit = s; }
+    }
+    slider.property('value', bestSplit);
+    d3.select('#dt-split-val').text(bestSplit.toFixed(2));
+    update(bestSplit);
+  });
+
+  d3.select('#dt-reshuffle').on('click', function() {
+    generateData();
+    const s = +slider.property('value');
+    update(s);
+  });
+
+  generateData();
+  update(0.5);
+})();
+</script>
+</body>
+</html>

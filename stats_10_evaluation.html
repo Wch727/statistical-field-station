@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>§X 模型评估与降维 — Statistical Field Station</title>
+<link rel="stylesheet" href="assets/vendor/google-fonts.css">
+<link rel="stylesheet" href="assets/vendor/katex.min.css">
+<script src="assets/vendor/katex.min.js"></script>
+<script src="assets/vendor/auto-render.min.js"></script>
+<script src="assets/vendor/d3.v7.min.js"></script>
+<link rel="stylesheet" href="assets/css/site.css">
+<style>
+:root {
+  --parchment: #FDFBF5; --forest: #2D4A3E; --terracotta: #C75146;
+  --gold: #8B6914; --stone: #E8E0D5; --slate: #5B6E65; --surface: #FFFAF0;
+  --display: 'Noto Serif SC', 'Cormorant Garamond', 'STSong', serif;
+  --body: 'Noto Sans SC', 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Consolas', monospace;
+  --page-w: 1100px; --text-w: 72ch; --radius: 4px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:40px}
+body{background:var(--parchment);color:var(--forest);font-family:var(--body);font-size:1.08rem;line-height:1.72}
+p{margin-bottom:14px;max-width:var(--text-w)}
+a{color:var(--terracotta);text-decoration:none}a:hover{text-decoration:underline}
+strong{font-weight:600}
+
+.page{max-width:var(--page-w);margin:0 auto;padding:0 32px 64px}
+.top-nav{padding:16px 0;font-family:var(--mono);font-size:0.78rem;border-bottom:1px solid var(--stone);margin-bottom:40px}
+.top-nav a{color:var(--slate)}.top-nav span{color:var(--gold)}
+
+.hero{padding:32px 0 40px}
+.hero .num{font-family:var(--mono);font-size:0.7rem;letter-spacing:0.18em;color:var(--gold);margin-bottom:6px}
+.hero h1{font-family:var(--display);font-weight:700;font-size:clamp(2rem,5vw,3rem);line-height:1.1;color:var(--forest);margin-bottom:12px}
+.hero .deck{font-size:1.05rem;color:var(--slate);max-width:var(--text-w)}
+
+h2{font-family:var(--display);font-weight:600;font-size:1.6rem;color:var(--forest);margin:36px 0 14px;padding-top:20px;border-top:1px solid var(--stone)}
+h3{font-family:var(--display);font-weight:500;font-size:1.2rem;color:var(--forest);margin:24px 0 10px}
+
+.math-block{text-align:center;padding:16px;background:var(--surface);border:1px solid var(--stone);border-radius:var(--radius);margin:16px 0;overflow-x:auto}
+.derive-box{background:#F5F8F6;border:1px solid var(--stone);border-left:3px solid var(--forest);padding:16px 20px;border-radius:0 var(--radius) var(--radius) 0;margin:16px 0;font-size:0.92rem}
+.derive-box h4{color:var(--forest);font-family:var(--display);text-transform:none;letter-spacing:0;font-size:1rem;margin:0 0 8px}
+.concept-box{background:var(--surface);border:1px solid var(--stone);border-radius:var(--radius);padding:16px 20px;margin:16px 0;font-size:0.93rem}
+.concept-box h4{font-family:var(--display);font-size:1.05rem;font-weight:600;color:var(--forest);margin:0 0 8px}
+.toolkit-box{background:#FFF5F3;border:1px solid var(--stone);border-left:3px solid var(--terracotta);padding:14px 18px;border-radius:0 var(--radius) var(--radius) 0;margin:16px 0;font-size:0.92rem}
+.toolkit-box h4{color:var(--terracotta);font-family:var(--display);font-size:1rem;margin:0 0 8px}
+.note-box{background:#FFF8F0;border-left:3px solid var(--gold);padding:14px 18px;border-radius:0 var(--radius) var(--radius) 0;margin:16px 0;font-size:0.93rem}
+.note-box strong{color:var(--gold)}
+.warn-box{background:#FFFBF0;border:1px solid #E8D5A0;border-radius:var(--radius);padding:14px 18px;margin:16px 0;font-size:0.92rem}
+.warn-box::before{content:'⚠ ';font-size:1.1rem}
+.competition-box{background:#F0F7F5;border:1px solid var(--forest);border-left:4px solid var(--forest);padding:18px 22px;border-radius:0 var(--radius) var(--radius) 0;margin:20px 0;font-size:0.93rem}
+.competition-box h4{color:var(--forest);font-family:var(--display);font-size:1.05rem;margin:0 0 8px}
+.competition-box .q{color:var(--terracotta);font-weight:600}
+
+.panel{background:var(--surface);border:1px solid var(--stone);border-radius:6px;box-shadow:inset 0 1px 0 rgba(255,255,255,0.7),0 2px 12px rgba(0,0,0,0.05);padding:24px;margin:20px 0;position:relative}
+.panel::before{content:'';position:absolute;top:0;left:12px;right:12px;height:1px;background:linear-gradient(to right,transparent,var(--gold),transparent);opacity:0.4}
+.panel-label{font-family:var(--mono);font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--stone)}
+.panel-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+
+.stat-cards{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.stat-card{background:var(--surface);border:1px solid var(--stone);border-radius:var(--radius);padding:10px 14px;text-align:center;min-width:72px}
+.stat-card .lbl{font-family:var(--mono);font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--slate);margin-bottom:3px}
+.stat-card .val{font-family:var(--mono);font-size:1.25rem;font-weight:600;color:var(--forest)}
+
+.slider-row{display:flex;align-items:center;gap:12px;margin:10px 0;flex-wrap:wrap}
+.slider-row label{font-family:var(--mono);font-size:0.85rem;color:var(--slate);min-width:100px}
+.slider-row input[type=range]{flex:1;min-width:100px;accent-color:var(--terracotta)}
+.slider-val{font-family:var(--mono);font-weight:600;color:var(--terracotta);min-width:36px;font-size:0.88rem}
+
+.chart-container{width:100%;overflow-x:auto}
+.chart-container svg{display:block;margin:0 auto}
+
+.compact-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:0.88rem;margin:16px 0}
+.compact-table th,.compact-table td{padding:7px 12px;text-align:left;border-bottom:1px solid var(--stone)}
+.compact-table th{font-family:var(--body);font-size:0.72rem;letter-spacing:0.08em;color:var(--slate);border-bottom:2px solid var(--stone)}
+
+.btn{font-family:var(--mono);font-size:0.75rem;border:1px solid var(--stone);border-radius:var(--radius);background:var(--surface);color:var(--forest);padding:6px 14px;cursor:pointer;transition:all 0.15s}
+.btn:hover{border-color:var(--terracotta);color:var(--terracotta)}
+.btn.active{background:var(--forest);color:#fff;border-color:var(--forest)}
+.btn-group{display:flex;gap:4px;flex-wrap:wrap;margin:8px 0}
+
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin:8px 0;font-family:var(--mono);font-size:0.78rem}
+.legend-item{display:flex;align-items:center;gap:6px}
+.legend-dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+
+/* Confusion matrix display */
+.cm-table{display:inline-grid;grid-template-columns:auto 80px 80px;grid-template-rows:auto 80px 80px;gap:2px;margin:12px 0;font-family:var(--mono);font-size:0.85rem}
+.cm-table .cm-cell{display:flex;align-items:center;justify-content:center;padding:8px;background:var(--surface);border:1px solid var(--stone);border-radius:var(--radius);font-weight:600;font-size:1.1rem}
+.cm-table .cm-cell.tp{background:rgba(45,107,160,0.15);color:#2D6BA0}
+.cm-table .cm-cell.tn{background:rgba(91,140,62,0.15);color:#5B8C3E}
+.cm-table .cm-cell.fp{background:rgba(199,81,70,0.12);color:var(--terracotta)}
+.cm-table .cm-cell.fn{background:rgba(199,81,70,0.2);color:var(--terracotta)}
+.cm-table .cm-header{display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:var(--slate);letter-spacing:0.08em}
+
+footer{text-align:center;padding:32px 0;font-size:0.82rem;color:var(--slate);border-top:1px solid var(--stone);margin-top:40px}
+footer a{color:var(--slate);text-decoration:underline}
+</style>
+</head>
+<body>
+<div class="page">
+
+<nav class="top-nav"><a href="stats_tutorial.html">← Field Station</a> <span>|</span> §X 模型评估与降维</nav>
+
+<header class="hero">
+  <div class="num">§X</div>
+  <h1>模型评估与降维</h1>
+  <p class="deck">模型训练好了，但怎么知道它好不好？本章涵盖分类模型评估（混淆矩阵、精确率、召回率、F1、ROC/AUC）、交叉验证（K-fold、留一法）、数据标准化、主成分分析（PCA）和特征选择——这些是竞赛中区分「能用模型」和「用对模型」的关键技能。</p>
+</header>
+
+<div class="competition-box">
+<h4>竞赛真题场景</h4>
+<p><span class="q">Q：</span>几乎所有竞赛论文都需要报告模型评估指标。评委最常问的问题：「你的模型准确率是 95%，但数据集正负样本比例是 95:5——如果全预测为正类，准确率也是 95%。你的模型真的有用吗？」<br>
+<span class="q">Q：</span>国赛常考：200 个样本，30 个特征，如何筛选最重要的特征？需要用 PCA 降维 + 特征选择。<br>
+<span class="q">Q：</span>美赛评审标准明确要求「Sensitivity Analysis」——模型对参数变化的敏感度分析。交叉验证用于评估模型的泛化稳定性；敏感性分析用于研究输入、参数或假设变化对结果的影响。二者都属于模型验证，但解决的问题不同。<br>
+<strong>→ 模型评估不是跑完代码后补的几行数字，而是整个建模过程中持续进行的质量保证。</strong></p>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>10.1 混淆矩阵与分类评估指标</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>混淆矩阵 (Confusion Matrix)</h4>
+<p>对于二分类问题，将预测结果与真实标签交叉制表，得到四个基本计数：</p>
+</div>
+
+<div class="cm-table">
+  <div class="cm-header"></div>
+  <div class="cm-header">预测正</div>
+  <div class="cm-header">预测负</div>
+  <div class="cm-header">真实正</div>
+  <div class="cm-cell tp">TP</div>
+  <div class="cm-cell fn">FN</div>
+  <div class="cm-header">真实负</div>
+  <div class="cm-cell fp">FP</div>
+  <div class="cm-cell tn">TN</div>
+</div>
+
+<p style="margin-top:12px;">从这四个数出发，可以定义所有关键的评估指标：</p>
+
+<div class="math-block">
+\[
+\begin{aligned}
+\text{准确率 (Accuracy)} &= \frac{TP + TN}{TP + TN + FP + FN} \\
+\text{精确率 (Precision)} &= \frac{TP}{TP + FP} \quad\text{——预测为正的有多少是真的？}\\
+\text{召回率 (Recall)} &= \frac{TP}{TP + FN} \quad\text{——真正的正类被找出了多少？}\\
+\text{F1 分数} &= \frac{2 \cdot \text{Precision} \cdot \text{Recall}}{\text{Precision} + \text{Recall}} = \frac{2TP}{2TP + FP + FN}
+\end{aligned}
+\]
+</div>
+
+<div class="derive-box">
+<h4>推导：F1 为什么是调和平均？</h4>
+<p>F1 是精确率和召回率的<strong>调和平均数</strong>（而非算术平均）：</p>
+<div class="math-block">
+\[
+\frac{1}{F_1} = \frac{1}{2}\left(\frac{1}{P} + \frac{1}{R}\right)
+\]
+</div>
+<p>调和平均比算术平均更「严厉」——如果 Precision 或 Recall 中有一个很低，F1 也会很低。例如 Precision=1.0，Recall=0.1，算术平均=0.55，但 F1=0.18。这迫使模型在两个指标上都表现良好。</p>
+<p>更一般地，\(F_\beta\) 分数允许调整权重：</p>
+<div class="math-block">
+\[
+F_\beta = (1+\beta^2)\frac{P \cdot R}{\beta^2 P + R}
+\]
+</div>
+<p>\(\beta < 1\)：更重视 Precision（如垃圾邮件检测——宁可漏掉，不能误判）。\(\beta > 1\)：更重视 Recall（如疾病筛查——宁可误诊，不能漏诊）。</p>
+</div>
+
+<h3>10.1.2 ROC 曲线与 AUC</h3>
+
+<p>ROC (Receiver Operating Characteristic) 曲线以 FPR（假阳性率）为横轴，TPR（召回率）为纵轴，通过变化分类阈值画出。AUC（Area Under Curve）是 ROC 曲线下的面积：</p>
+
+<div class="math-block">
+\[
+\text{AUC} \in [0.5, 1.0]
+\]
+</div>
+
+<p>AUC = 1：完美分类器；AUC = 0.5：随机猜测；AUC 的统计解释：<strong>随机选一个正样本和一个负样本，分类器给正样本更高分数的概率</strong>。</p>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>在类别不平衡的情况下，<strong>不要报告准确率</strong>——报告精确率、召回率、F1 和 AUC。如果正类只占 5%，模型把所有样本都预测为负类，准确率仍有 95%，但正类召回率为 0，正类 F1 也为 0。ROC-AUC 对类别比例的直接变化相对不敏感，但在严重类别不平衡问题中可能显得过于乐观，此时应同时报告 PR-AUC、Precision、Recall 和 F1。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>10.2 交叉验证</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>核心思想</h4>
+<p>单次训练/测试划分的评估结果可能受随机性影响很大。交叉验证通过多次划分、多次训练和评估，得到更稳定、更可靠的性能估计。</p>
+</div>
+
+<h3>10.2.1 K 折交叉验证</h3>
+
+<p>将数据集随机分为 \(K\) 个等大的折（fold）。每次用 \(K-1\) 折训练，1 折验证，重复 \(K\) 次：</p>
+
+<div class="math-block">
+\[
+\text{CV Error} = \frac{1}{K} \sum_{k=1}^{K} \text{Error}_k
+\]
+</div>
+
+<table class="compact-table">
+<thead><tr><th>K 值</th><th>偏差</th><th>方差</th><th>计算量</th><th>适用场景</th></tr></thead>
+<tbody>
+<tr><td>K = 5</td><td>低</td><td>中</td><td>中</td><td>通用，竞赛首选</td></tr>
+<tr><td>K = 10</td><td>较低</td><td>较低</td><td>较高</td><td>样本量适中时</td></tr>
+<tr><td>K = n (LOOCV)</td><td>最低</td><td>最高</td><td>极高</td><td>极小样本时</td></tr>
+</tbody>
+</table>
+
+<div class="derive-box">
+<h4>偏差-方差视角下的 K 选择</h4>
+<p>交叉验证的误差估计是一个<strong>有偏估计</strong>——训练集比全数据集小，模型性能被低估。K 越小，训练集越小，偏差越大。但 K 越大，训练集之间的重叠越多，模型之间的相关性越高，方差越大。</p>
+<p>5 折和 10 折是经验上偏差-方差平衡最好的选择。留一法（LOOCV）偏差最小但方差最大，且计算量为 \(O(n)\) 倍——在大数据上不实用。</p>
+</div>
+
+<h3>10.2.2 分层抽样与重复 CV</h3>
+
+<p><strong>分层 K 折 (Stratified K-Fold)：</strong>保持每折中各类别的比例与原始数据一致。对于分类问题，分层几乎是必须的——否则某些折可能完全没有某一类。</p>
+
+<p><strong>重复 K 折 (Repeated K-Fold)：</strong>将 K 折交叉验证重复多次（每次重新随机划分），取所有结果的平均。这进一步降低了方差，代价是计算量增加。竞赛中常用 5×2 或 10×5 的重复 CV。</p>
+
+<div class="warn-box">
+<strong>竞赛常见错误：</strong>① 交叉验证后再做特征选择——这会导致数据泄露（data leakage）。所有预处理（标准化、特征选择、PCA）必须在交叉验证的<strong>每一折内部</strong>独立进行。② 用交叉验证的结果选择模型，然后在测试集上报告同样的交叉验证结果——这是双重使用验证数据，会高估性能。③ 时间序列数据用随机 K 折——时间结构被破坏，应该用时间序列交叉验证（TimeSeriesSplit）。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>10.3 主成分分析 (PCA)</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>核心思想</h4>
+<p>PCA 寻找数据中<strong>方差最大的方向</strong>（主成分），将高维数据投影到低维空间，同时保留尽可能多的信息。PCA 是一种线性变换，等价于对协方差矩阵做特征值分解。</p>
+</div>
+
+<h3>10.3.1 数学推导</h3>
+
+<p>设数据中心化后为 \(X \in \mathbb{R}^{n \times p}\)（每列均值为 0）。协方差矩阵为 \(S = \frac{1}{n-1}X^T X\)。</p>
+
+<p>第一主成分方向 \(w_1\) 是最大化投影方差的单位向量：</p>
+
+<div class="math-block">
+\[
+w_1 = \arg\max_{\|w\|=1} \text{Var}(Xw) = \arg\max_{\|w\|=1} w^T S w
+\]
+</div>
+
+<div class="derive-box">
+<h4>推导：PCA 等价于特征值分解</h4>
+<p>这是一个带约束的优化问题，用拉格朗日乘子法：</p>
+<div class="math-block">
+\[
+\mathcal{L}(w, \lambda) = w^T S w - \lambda(w^T w - 1)
+\]
+\[
+\frac{\partial \mathcal{L}}{\partial w} = 2Sw - 2\lambda w = 0 \quad \Rightarrow \quad Sw = \lambda w
+\]
+</div>
+<p>所以 \(w_1\) 是 \(S\) 的<strong>特征向量</strong>！代入目标函数：\(w_1^T S w_1 = \lambda_1 w_1^T w_1 = \lambda_1\)。因此，第一主成分对应最大特征值 \(\lambda_1\) 的特征向量；第 \(k\) 主成分对应第 \(k\) 大特征值的特征向量。</p>
+<p><strong>关键性质：</strong>各主成分之间<strong>正交</strong>（不相关），总方差等于所有特征值之和：\(\sum_{j=1}^{p} \lambda_j = \text{tr}(S)\)。</p>
+</div>
+
+<h3>10.3.2 方差解释率与维度选择</h3>
+
+<div class="math-block">
+\[
+\text{第 }k\text{ 主成分的方差解释率} = \frac{\lambda_k}{\sum_{j=1}^{p} \lambda_j}
+\]
+\[
+\text{前 }m\text{ 个主成分的累积方差解释率} = \frac{\sum_{k=1}^{m} \lambda_k}{\sum_{j=1}^{p} \lambda_j}
+\]
+</div>
+
+<p>经验法则：选择累积方差解释率达到 80%-95% 的最小 \(m\)。或者看碎石图（scree plot）——特征值曲线的「肘部」。</p>
+
+<div class="toolkit-box">
+<h4>竞赛工具箱：PCA 使用指南</h4>
+<p><strong>必须标准化：</strong>PCA 对方差敏感——如果某个特征天然方差大（如收入范围是 0-100000），它会在 PCA 中主导所有主成分。先 Z-score 标准化。<br>
+<strong>可解释性：</strong>每个主成分是原始特征的线性组合，可以看载荷（loading）来解释每个主成分的含义。例如「PC1 ≈ 0.8×身高 + 0.6×体重」→ PC1 代表「体型」。<br>
+<strong>非线性：</strong>PCA 只能捕捉线性结构。对于非线性流形，考虑 t-SNE 或 UMAP（但这些都是可视化工具，不适合作为特征工程步骤）。<br>
+<strong>竞赛中 PCA 的三大用途：</strong>① 降维后可视化（2D/3D 散点图）。② 去除多重共线性（PCA 后的主成分互相正交）。③ 作为其他模型的特征输入（如 PCA → K-Means 聚类）。</p>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>10.3A 偏最小二乘 (PLS)</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>PCA 的竞赛替代方案</h4>
+<p>PCA 寻找的是<strong>X 空间中方差最大的方向</strong>——完全不考虑 Y。但竞赛中，我们真正关心的是与 Y 相关的方向。PLS（Partial Least Squares）同时分解 X 和 Y，寻找<strong>最能解释 Y 的 X 的线性组合</strong>。当 \(p \gg n\)（特征数远超样本数）时，PLS 通常优于 PCA。</p>
+</div>
+
+<h3>PLS 的数学原理</h3>
+
+<div class="derive-box">
+<h4>PLS 的优化目标</h4>
+<p>PCA 最大化 \(\text{Var}(Xw)\)。PLS 最大化 \(\text{Cov}(Xw, Yc)^2\)——即 X 的线性组合与 Y 的线性组合的协方差：</p>
+<div class="math-block">
+\[
+\max_{w,c} \text{Cov}(Xw, Yc)^2 \quad \text{s.t.} \quad \|w\| = \|c\| = 1
+\]
+</div>
+<p>这等价于对交叉协方差矩阵 \(X^T Y\) 做 SVD 分解。第一个 PLS 方向就是 \(X^T Y\) 的第一个左奇异向量。数学上，PLS 的得分向量是 X 的列空间与 Y 的列空间之间的「桥梁」。</p>
+</div>
+
+<h3>PCA vs PLS 选择指南</h3>
+
+<table class="compact-table">
+<thead><tr><th>条件</th><th>推荐</th><th>理由</th></tr></thead>
+<tbody>
+<tr><td>无监督（只有 X）</td><td>PCA</td><td>PLS 需要 Y</td></tr>
+<tr><td>有 Y，特征数远大于样本数</td><td>PLS</td><td>PLS 利用 Y 的信息，降维更有效</td></tr>
+<tr><td>有 Y，X 的噪声维度多</td><td>PLS</td><td>PLS 忽略与 Y 无关的方差方向</td></tr>
+<tr><td>需要可视化、无特定 Y</td><td>PCA</td><td>PCA 是探索性数据分析的标准工具</td></tr>
+</tbody>
+</table>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>PLS 是竞赛中处理高维小样本问题的利器。特别是在化学计量学（近红外光谱）、基因组学（基因表达数据）等竞赛中，PLS 几乎是标准配置。在论文中，PLS 的得分图（score plot）和载荷图（loading plot）是必做的可视化。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>10.3B 偏差-方差权衡</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>理解模型误差的根本来源</h4>
+<p>任何模型的预测误差都可以分解为三个不可约的部分——偏差（Bias）、方差（Variance）和噪声。理解这个分解是选择模型复杂度的理论基础。</p>
+</div>
+
+<div class="derive-box">
+<h4>推导：偏差-方差分解</h4>
+<p>对于平方损失，期望预测误差可以分解为：</p>
+<div class="math-block">
+\[
+\begin{aligned}
+\mathbb{E}[(Y - \hat{f}(x))^2] &= \underbrace{(\mathbb{E}[\hat{f}(x)] - f(x))^2}_{\text{Bias}^2} + \underbrace{\mathbb{E}[(\hat{f}(x) - \mathbb{E}[\hat{f}(x)])^2]}_{\text{Variance}} + \underbrace{\sigma^2_{\varepsilon}}_{\text{Irreducible Noise}}
+\end{aligned}
+\]
+</div>
+<p><strong>偏差：</strong>模型预测的期望与真实值之间的差距——模型类本身的限制。高偏差 = 欠拟合。<br>
+<strong>方差：</strong>模型预测在不同训练集上的波动——模型对数据敏感度。高方差 = 过拟合。<br>
+<strong>噪声：</strong>数据本身的随机性——任何模型都无法消除的下界。</p>
+</div>
+
+<p>这解释了为什么模型选择不是越复杂越好：简单模型（如线性回归）偏差高但方差低；复杂模型（如深度神经网络）偏差低但方差高。最优模型在偏差和方差之间取得平衡。</p>
+
+<div class="note-box">
+<strong>竞赛启示：</strong>偏差-方差权衡解释了为什么集成方法（随机森林、XGBoost）效果好——它们在不增加偏差的情况下降低了方差。也解释了为什么交叉验证是模型选择的必要工具——它估计的是泛化误差，而非训练误差。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>10.3C 嵌套交叉验证</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>模型选择 ≠ 模型评估——不能混用同一份数据</h4>
+<p>标准 K 折交叉验证用于<strong>评估</strong>已知模型的性能。但如果你用交叉验证来<strong>选择</strong>模型（如比较 KNN 的 K=3 vs K=5 vs K=7），然后<strong>报告</strong>选择过程中的最优 CV 分数——这就是<strong>乐观偏差</strong>。嵌套交叉验证将选择和评估分离，得到无偏的性能估计。</p>
+</div>
+
+<div class="derive-box">
+<h4>嵌套 CV 的结构</h4>
+<p><strong>外层循环（K_outer 折）：</strong>评估最终模型的泛化性能。<br>
+<strong>内层循环（K_inner 折）：</strong>在训练折上做超参数选择。</p>
+<p>例如 5×2 嵌套 CV：外层 5 折，每折的训练数据再做内层 2 折来选超参数。最终报告的是<strong>外层 5 折的平均性能</strong>——这些数据从未参与超参数选择，因此性能估计是无偏的。</p>
+<div class="math-block">
+\[
+\text{CV Error}_{\text{nested}} = \frac{1}{K_{\text{outer}}} \sum_{k=1}^{K_{\text{outer}}} \text{Error}(\text{model selected by inner CV on fold } k)
+\]
+</div>
+</div>
+
+<div class="warn-box">
+<strong>竞赛陷阱：</strong>最常见的错误——用全部数据做 5 折 CV 选 K=7，然后报告 K=7 的 CV 分数 0.92。实际上这个 0.92 是乐观的——因为 K=7 就是选了让 CV 分数最高的 K。嵌套 CV 可能给出 0.87——这才是真实的泛化性能。如果数据量足够（n > 500），用简单的 train/validation/test 划分替代嵌套 CV 更简单。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>10.3D 超参数优化</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>从手动试错到自动搜索</h4>
+<p>绝大部分 ML 模型都有超参数——KNN 的 K、随机森林的树数、SVM 的 C 和 γ、XGBoost 的学习率。超参数优化是竞赛中提升模型性能的关键步骤。</p>
+</div>
+
+<table class="compact-table">
+<thead><tr><th>方法</th><th>做法</th><th>优点</th><th>缺点</th></tr></thead>
+<tbody>
+<tr><td><strong>Grid Search</strong></td><td>穷举所有候选值的组合</td><td>简单、可并行</td><td>维度诅咒——3 个参数各 10 个值 = 1000 种组合</td></tr>
+<tr><td><strong>Random Search</strong></td><td>从分布中随机采样 N 组</td><td>同预算下比 Grid 更高效</td><td>可能遗漏最优组合</td></tr>
+<tr><td><strong>Bayesian Opt</strong></td><td>用高斯过程建模超参数→性能</td><td>最少评估找到最优</td><td>实现复杂、序贯执行难并行</td></tr>
+<tr><td><strong>Optuna / Hyperopt</strong></td><td>TPE (Tree-structured Parzen Estimator)</td><td>自动、高效、支持剪枝</td><td>需要额外安装库</td></tr>
+</tbody>
+</table>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>论文中写：「我们使用 5 折网格搜索对随机森林的超参数进行调优，搜索范围：n_estimators ∈ {100, 200, 300, 500}，max_depth ∈ {3, 5, 7, 10, None}，max_features ∈ {sqrt, log2, None}。最优参数组合为 n_estimators=300, max_depth=7, max_features=sqrt，在验证集上达到 F1=0.86。」——这种描述展示了完整的调参流程。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>10.3E 模型解释 (SHAP)</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>从「预测了什么」到「为什么这么预测」</h4>
+<p>竞赛论文中，仅仅报告「模型准确率 95%」是不够的。评委想知道：<strong>哪些特征驱动了预测？每个特征对预测的贡献有多大？</strong>SHAP (SHapley Additive exPlanations) 基于博弈论中的 Shapley 值，为每个特征的每个预测提供可加的贡献分解。</p>
+</div>
+
+<div class="math-block">
+\[
+\phi_j = \sum_{S \subseteq F \setminus \{j\}} \frac{|S|!(|F| - |S| - 1)!}{|F|!} \left[ f(S \cup \{j\}) - f(S) \right]
+\]
+</div>
+
+<p>其中 \(\phi_j\) 是特征 \(j\) 的 Shapley 值——在<strong>所有可能的特征子集</strong>上，特征 \(j\) 加入后的边际贡献的加权平均。</p>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>SHAP 在竞赛论文中的黄金用法：① 特征重要性条形图——哪些特征对预测最重要？② SHAP 摘要图——每个特征的高/低值如何影响预测？③ 单个样本的 SHAP 瀑布图——解释为什么这个特定样本被预测为正类。<br>
+<strong>注意：</strong>SHAP 计算量大（O(2^p)），实际使用 KernelSHAP（模型无关）或 TreeSHAP（树模型专用，O(TL²)）。竞赛中如果不用 SHAP，至少用<strong>排列重要性 (Permutation Importance)</strong>——随机打乱某个特征，看性能下降多少。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>10.3F 多分类评估指标</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>从二分类到多分类——指标如何聚合？</h4>
+<p>当有 3 个或更多类别时，精确率、召回率、F1 需要从「每个类别一个值」聚合为「一个总指标」。聚合方式影响结论。</p>
+</div>
+
+<div class="math-block">
+\[
+\begin{aligned}
+\text{Macro avg：} & \quad \frac{1}{K}\sum_{k=1}^{K} \text{F1}_k \quad \text{（每个类权重相等，小类别与大类别同等重要）} \\
+\text{Micro avg：} & \quad \text{F1}\left(\sum TP_k, \sum FP_k, \sum FN_k\right) \quad \text{（每个样本权重相等，被大类主导）} \\
+\text{Weighted avg：} & \quad \sum_{k=1}^{K} w_k \cdot \text{F1}_k \quad \text{（按类别样本数加权，考虑了类别不平衡）}
+\end{aligned}
+\]
+</div>
+
+<div class="derive-box">
+<h4>选择指南</h4>
+<p><strong>类别平衡时：</strong>Macro ≈ Micro ≈ Weighted，选哪个差别不大。<br>
+<strong>类别不平衡时：</strong>Micro 被大类主导（如果大类准确率 99%，Micro F1 也会接近 99%），可能掩盖小类差的表现。Macro 给每个类同等权重——如果小类很重要，用 Macro。Weighted 是折中方案。<br>
+<strong>竞赛推荐：</strong>同时报告 Macro 和 Weighted F1，说明「我们关注所有类别的均衡表现，因此主要参考 Macro F1」。另附<strong>混淆矩阵</strong>——让评委看到每个类别的具体表现。</p>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>10.4 特征选择</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<p>特征选择有三种范式：</p>
+
+<table class="compact-table">
+<thead><tr><th>范式</th><th>方法</th><th>原理</th><th>优点</th><th>缺点</th></tr></thead>
+<tbody>
+<tr><td><strong>Filter（过滤式）</strong></td><td>方差阈值、相关系数、互信息、卡方检验</td><td>独立于模型，按统计指标筛选</td><td>快速、可扩展</td><td>不考虑特征间交互</td></tr>
+<tr><td><strong>Wrapper（包裹式）</strong></td><td>前向选择、后向消除、递归特征消除 (RFE)</td><td>用模型性能评估特征子集</td><td>考虑特征交互</td><td>计算量大</td></tr>
+<tr><td><strong>Embedded（嵌入式）</strong></td><td>LASSO (L1)、随机森林特征重要性、Elastic Net</td><td>特征选择与模型训练同时进行</td><td>效率与效果兼顾</td><td>模型特定</td></tr>
+</tbody>
+</table>
+
+<div class="derive-box">
+<h4>LASSO 的特征选择原理</h4>
+<p>LASSO 在 OLS 损失函数中加入 L1 惩罚项：</p>
+<div class="math-block">
+\[
+\hat{\beta}_{\text{LASSO}} = \arg\min_{\beta} \left\{ \sum_{i=1}^{n} (y_i - x_i^T\beta)^2 + \lambda \sum_{j=1}^{p} |\beta_j| \right\}
+\]
+</div>
+<p>L1 惩罚的几何特性（菱形约束区域）使得某些 \(\beta_j\) 恰好为 0——实际上就是在做特征选择。\(\lambda\) 越大，被选中的特征越少。通过交叉验证选择最优 \(\lambda\)。</p>
+</div>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>特征选择的黄金组合 = <strong>Filter 初筛（去除方差极低、相关性极高的特征）→ Embedded 精筛（LASSO 或随机森林重要性）→ 交叉验证确认</strong>。在论文中，不要只说「我们选了 8 个特征」，要说明为什么选这 8 个——报告每个特征的重要性得分和选择依据。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>10.5 数据标准化</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<table class="compact-table">
+<thead><tr><th>方法</th><th>公式</th><th>适用场景</th></tr></thead>
+<tbody>
+<tr><td>Z-score 标准化</td><td>\(x' = \frac{x - \mu}{\sigma}\)</td><td><strong>竞赛默认首选</strong>。PCA、SVM、K-Means、逻辑回归</td></tr>
+<tr><td>Min-Max 归一化</td><td>\(x' = \frac{x - x_{\min}}{x_{\max} - x_{\min}}\)</td><td>需要固定范围 [0,1]（如神经网络输入层）</td></tr>
+<tr><td>Robust Scaling</td><td>\(x' = \frac{x - \text{median}}{\text{IQR}}\)</td><td>有异常值时（使用中位数和 IQR 替代均值和标准差）</td></tr>
+<tr><td>Quantile Transform</td><td>映射到均匀或正态分布</td><td>特征分布高度偏斜时</td></tr>
+</tbody>
+</table>
+
+<div class="warn-box">
+<strong>关键提醒：</strong>标准化参数（均值、标准差、最小值、最大值）必须<strong>从训练集计算，然后应用于验证集/测试集</strong>。在交叉验证中，每一折都要用训练折的参数来标准化验证折。用全数据集计算标准化参数再交叉验证 = 数据泄露。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- INSTRUMENT No.10A: 交互式混淆矩阵 -->
+<!-- ══════════════════════════════════════════════ -->
+<h2>仪器 No.10A — 交互式混淆矩阵与阈值调节</h2>
+<div class="panel">
+<div class="panel-label">INSTRUMENT No.10A · Confusion Matrix & Threshold Tuning</div>
+<p style="font-size:0.9rem;color:var(--slate);margin-bottom:12px">模拟一个二分类器的分数分布。拖动阈值观察 TP/FP/FN/TN 的变化，以及精确率、召回率、F1 的实时更新。理解阈值如何影响精确率-召回率权衡。</p>
+<div class="slider-row">
+  <label>分类阈值 = <span class="slider-val" id="cm-thresh-val">0.50</span></label>
+  <input type="range" id="cm-thresh" min="0.05" max="0.95" value="0.50" step="0.01">
+</div>
+<div class="slider-row">
+  <label>正类比例 = <span class="slider-val" id="cm-ratio-val">0.30</span></label>
+  <input type="range" id="cm-ratio" min="0.05" max="0.50" value="0.30" step="0.01">
+</div>
+<div class="btn-group">
+  <button class="btn" id="cm-reshuffle">重新生成数据</button>
+</div>
+<div class="panel-grid">
+  <div>
+    <div class="chart-container" id="cm-dist-chart"></div>
+    <div class="cm-table" id="cm-matrix"></div>
+  </div>
+  <div>
+    <div class="stat-cards" id="cm-stats"></div>
+    <div class="chart-container" id="cm-roc-chart"></div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- INSTRUMENT No.10B: PCA 可视化 -->
+<!-- ══════════════════════════════════════════════ -->
+<h2>仪器 No.10B — PCA 降维可视化</h2>
+<div class="panel">
+<div class="panel-label">INSTRUMENT No.10B · PCA Projection & Scree Plot</div>
+<p style="font-size:0.9rem;color:var(--slate);margin-bottom:12px">3D 数据（三个相关变量）通过 PCA 投影到 2D。左图：原始 3D 数据的 2D 投影（散点图）。右图：碎石图（特征值 + 累积方差解释率）。观察 PCA 如何找到方差最大的方向。</p>
+<div class="btn-group">
+  <button class="btn" id="pca-reshuffle">重新生成数据</button>
+  <button class="btn" id="pca-rotate">旋转数据</button>
+</div>
+<div class="panel-grid">
+  <div class="chart-container" id="pca-scatter-chart"></div>
+  <div class="chart-container" id="pca-scree-chart"></div>
+</div>
+<div class="stat-cards" id="pca-stats"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>10.6 竞赛实战流程</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="toolkit-box">
+<h4>模型评估与特征工程竞赛流程</h4>
+<p><strong>Step 1：</strong>数据标准化（Z-score），从训练集计算参数，应用于所有数据。<br>
+<strong>Step 2：</strong>特征初筛——去除方差极低（常数特征）、相关性极高（>0.95）的特征。<br>
+<strong>Step 3：</strong>PCA 分析——看前几个主成分的累积方差解释率，判断是否需要降维。<br>
+<strong>Step 4：</strong>特征选择——LASSO 或随机森林特征重要性，选出 top-K 特征。<br>
+<strong>Step 5：</strong>模型训练 + 5 折交叉验证——报告 CV 分数的均值 ± 标准差。<br>
+<strong>Step 6：</strong>混淆矩阵分析——不只是准确率，报告精确率、召回率、F1、AUC。<br>
+<strong>Step 7：</strong>敏感性分析——改变关键参数（如 K、阈值），观察性能变化。</p>
+</div>
+
+<footer>
+  <p><a href="stats_09_clustering.html">← §IX 聚类分析</a> &nbsp;|&nbsp; <a href="stats_tutorial.html">Field Station 总目录</a></p>
+  <p style="margin-top:8px">Statistical Field Station &copy; 2026 · KaTeX + D3.js</p>
+</footer>
+
+</div>
+
+<script>
+// ============ KaTeX Auto-Render ============
+renderMathInElement(document.body, {
+  delimiters: [
+    {left: '\\[', right: '\\]', display: true},
+    {left: '\\(', right: '\\)', display: false},
+    {left: '$$', right: '$$', display: true}
+  ],
+  throwOnError: false
+});
+
+// ============ INSTRUMENT No.10A: Confusion Matrix ============
+(function() {
+  const W = 520, H = 280, margin = {top:20, right:30, bottom:35, left:40};
+  const pw = W - margin.left - margin.right;
+  const ph = H - margin.top - margin.bottom;
+
+  const svg = d3.select('#cm-dist-chart').append('svg').attr('width',W).attr('height',H)
+    .attr('viewBox',`0 0 ${W} ${H}`);
+
+  let scoresNeg = [], scoresPos = [];
+
+  function generateScores(ratio) {
+    const nPos = Math.floor(200 * ratio);
+    const nNeg = 200 - nPos;
+    scoresPos = [];
+    scoresNeg = [];
+    // Positive class: scores centered around 0.65
+    for (let i = 0; i < nPos; i++) {
+      scoresPos.push(Math.max(0, Math.min(1, 0.65 + (Math.random()+Math.random()+Math.random())/3*0.5 - 0.25)));
+    }
+    // Negative class: scores centered around 0.35
+    for (let i = 0; i < nNeg; i++) {
+      scoresNeg.push(Math.max(0, Math.min(1, 0.35 + (Math.random()+Math.random()+Math.random())/3*0.5 - 0.25)));
+    }
+  }
+
+  function computeMetrics(thresh) {
+    const tp = scoresPos.filter(s => s >= thresh).length;
+    const fn = scoresPos.filter(s => s < thresh).length;
+    const fp = scoresNeg.filter(s => s >= thresh).length;
+    const tn = scoresNeg.filter(s => s < thresh).length;
+    const acc = (tp+tn)/(tp+tn+fp+fn);
+    const prec = tp/(tp+fp) || 0;
+    const rec = tp/(tp+fn) || 0;
+    const f1 = (prec+rec > 0) ? 2*prec*rec/(prec+rec) : 0;
+    return {tp, fn, fp, tn, acc, prec, rec, f1};
+  }
+
+  function computeROCPoints() {
+    const points = [];
+    for (let t = 0; t <= 1.01; t += 0.02) {
+      const tp = scoresPos.filter(s => s >= t).length;
+      const fn = scoresPos.length - tp;
+      const fp = scoresNeg.filter(s => s >= t).length;
+      const tn = scoresNeg.length - fp;
+      const tpr = tp/(tp+fn) || 0;
+      const fpr = fp/(fp+tn) || 0;
+      points.push({fpr, tpr, thresh: t});
+    }
+    return points;
+  }
+
+  function computeAUC() {
+    const pts = computeROCPoints();
+    let auc = 0;
+    for (let i = 1; i < pts.length; i++) {
+      auc += (pts[i].fpr - pts[i-1].fpr) * (pts[i].tpr + pts[i-1].tpr) / 2;
+    }
+    return auc;
+  }
+
+  function update() {
+    const thresh = +d3.select('#cm-thresh').property('value');
+    const ratio = +d3.select('#cm-ratio').property('value');
+    d3.select('#cm-thresh-val').text(thresh.toFixed(2));
+    d3.select('#cm-ratio-val').text(ratio.toFixed(2));
+
+    const m = computeMetrics(thresh);
+    const auc = computeAUC();
+    const rocPts = computeROCPoints();
+
+    // Distribution chart
+    svg.selectAll('*').remove();
+    const xScale = d3.scaleLinear().domain([0,1]).range([margin.left, margin.left+pw]);
+
+    // KDE histograms
+    const bins = d3.bin().domain([0,1]).thresholds(40);
+    const histNeg = bins(scoresNeg);
+    const histPos = bins(scoresPos);
+    const maxH = d3.max([...histNeg, ...histPos], d => d.length) || 1;
+    const yScale = d3.scaleLinear().domain([0, maxH*1.15]).range([margin.top+ph, margin.top]);
+
+    // Axes
+    svg.append('g').attr('transform',`translate(0,${margin.top+ph})`).call(d3.axisBottom(xScale).ticks(5));
+    svg.append('g').attr('transform',`translate(${margin.left},0)`).call(d3.axisLeft(yScale).ticks(4));
+    svg.append('text').attr('x',W/2).attr('y',H-4).attr('text-anchor','middle')
+      .style('font-family','var(--mono)').style('font-size','0.65rem').style('fill','var(--slate)').text('Score');
+    svg.append('text').attr('x',-H/2).attr('y',12).attr('transform','rotate(-90)').attr('text-anchor','middle')
+      .style('font-family','var(--mono)').style('font-size','0.65rem').style('fill','var(--slate)').text('Count');
+
+    // Histograms
+    histNeg.forEach(d => {
+      svg.append('rect').attr('x', xScale(d.x0)).attr('y', yScale(d.length))
+        .attr('width', Math.max(1, xScale(d.x1)-xScale(d.x0)-1))
+        .attr('height', yScale(0)-yScale(d.length))
+        .attr('fill', '#2D6BA0').attr('opacity', 0.5);
+    });
+    histPos.forEach(d => {
+      svg.append('rect').attr('x', xScale(d.x0)).attr('y', yScale(d.length))
+        .attr('width', Math.max(1, xScale(d.x1)-xScale(d.x0)-1))
+        .attr('height', yScale(0)-yScale(d.length))
+        .attr('fill', '#C75146').attr('opacity', 0.5);
+    });
+
+    // Threshold line
+    svg.append('line').attr('x1',xScale(thresh)).attr('x2',xScale(thresh))
+      .attr('y1',margin.top).attr('y2',margin.top+ph)
+      .attr('stroke','var(--gold)').attr('stroke-width',2).attr('stroke-dasharray','6,3');
+
+    // Legend
+    svg.append('rect').attr('x',margin.left+8).attr('y',margin.top+4).attr('width',10).attr('height',10).attr('fill','#C75146').attr('opacity',0.5);
+    svg.append('text').attr('x',margin.left+22).attr('y',margin.top+13).text('正类').style('font-size','0.7rem').style('fill','var(--slate)');
+    svg.append('rect').attr('x',margin.left+68).attr('y',margin.top+4).attr('width',10).attr('height',10).attr('fill','#2D6BA0').attr('opacity',0.5);
+    svg.append('text').attr('x',margin.left+82).attr('y',margin.top+13).text('负类').style('font-size','0.7rem').style('fill','var(--slate)');
+
+    // Confusion matrix display
+    d3.select('#cm-matrix').html(`
+      <div class="cm-header"></div><div class="cm-header">预测正</div><div class="cm-header">预测负</div>
+      <div class="cm-header">真实正</div><div class="cm-cell tp">${m.tp}</div><div class="cm-cell fn">${m.fn}</div>
+      <div class="cm-header">真实负</div><div class="cm-cell fp">${m.fp}</div><div class="cm-cell tn">${m.tn}</div>
+    `);
+
+    // Stats
+    d3.select('#cm-stats').html(`
+      <div class="stat-card"><div class="lbl">准确率 Acc</div><div class="val">${(m.acc*100).toFixed(1)}%</div></div>
+      <div class="stat-card"><div class="lbl">精确率 Prec</div><div class="val" style="color:#2D6BA0">${(m.prec*100).toFixed(1)}%</div></div>
+      <div class="stat-card"><div class="lbl">召回率 Rec</div><div class="val" style="color:var(--terracotta)">${(m.rec*100).toFixed(1)}%</div></div>
+      <div class="stat-card"><div class="lbl">F1 分数</div><div class="val" style="color:var(--forest)">${(m.f1*100).toFixed(1)}%</div></div>
+      <div class="stat-card"><div class="lbl">AUC</div><div class="val" style="color:var(--gold)">${auc.toFixed(3)}</div></div>
+    `);
+
+    // ROC curve
+    const rocSvg = d3.select('#cm-roc-chart');
+    rocSvg.selectAll('*').remove();
+    const rW = 320, rH = 280, rM = {top:20, right:20, bottom:35, left:40};
+    const rPw = rW - rM.left - rM.right, rPh = rH - rM.top - rM.bottom;
+    const rSvg = rocSvg.append('svg').attr('width',rW).attr('height',rH).attr('viewBox',`0 0 ${rW} ${rH}`);
+
+    const rx = d3.scaleLinear().domain([0,1]).range([rM.left, rM.left+rPw]);
+    const ry = d3.scaleLinear().domain([0,1]).range([rM.top+rPh, rM.top]);
+
+    rSvg.append('g').attr('transform',`translate(0,${rM.top+rPh})`).call(d3.axisBottom(rx).ticks(4));
+    rSvg.append('g').attr('transform',`translate(${rM.left},0)`).call(d3.axisLeft(ry).ticks(4));
+    rSvg.append('text').attr('x',rW/2).attr('y',rH-4).attr('text-anchor','middle')
+      .style('font-family','var(--mono)').style('font-size','0.6rem').style('fill','var(--slate)').text('FPR');
+    rSvg.append('text').attr('x',-rH/2).attr('y',10).attr('transform','rotate(-90)').attr('text-anchor','middle')
+      .style('font-family','var(--mono)').style('font-size','0.6rem').style('fill','var(--slate)').text('TPR');
+
+    // Diagonal
+    rSvg.append('line').attr('x1',rx(0)).attr('x2',rx(1)).attr('y1',ry(0)).attr('y2',ry(1))
+      .attr('stroke','var(--stone)').attr('stroke-width',1).attr('stroke-dasharray','4,4');
+
+    // ROC curve
+    const line = d3.line().x(d => rx(d.fpr)).y(d => ry(d.tpr));
+    rSvg.append('path').datum(rocPts).attr('d',line)
+      .attr('fill','none').attr('stroke','var(--terracotta)').attr('stroke-width',2);
+
+    // AUC fill
+    const areaPts = [...rocPts, {fpr:1,tpr:0}];
+    const area = d3.area().x(d => rx(d.fpr)).y0(ry(0)).y1(d => ry(d.tpr));
+    rSvg.append('path').datum(areaPts).attr('d',area)
+      .attr('fill','rgba(199,81,70,0.1)');
+
+    rSvg.append('text').attr('x',rx(0.6)).attr('y',ry(0.2))
+      .style('font-family','var(--mono)').style('font-size','0.7rem').style('fill','var(--terracotta)')
+      .text(`AUC = ${auc.toFixed(3)}`);
+  }
+
+  d3.select('#cm-thresh').on('input', update);
+  d3.select('#cm-ratio').on('input', function() {
+    generateScores(+this.value);
+    update();
+  });
+  d3.select('#cm-reshuffle').on('click', function() {
+    generateScores(+d3.select('#cm-ratio').property('value'));
+    update();
+  });
+
+  generateScores(0.3);
+  update();
+})();
+
+// ============ INSTRUMENT No.10B: PCA ============
+(function() {
+  const W = 480, H = 380, margin = {top:20, right:20, bottom:40, left:45};
+  const pw = W - margin.left - margin.right;
+  const ph = H - margin.top - margin.bottom;
+
+  const scatterSvg = d3.select('#pca-scatter-chart').append('svg').attr('width',W).attr('height',H)
+    .attr('viewBox',`0 0 ${W} ${H}`);
+  const screeSvg = d3.select('#pca-scree-chart').append('svg').attr('width',W).attr('height',H)
+    .attr('viewBox',`0 0 ${W} ${H}`);
+
+  let data3D = []; // {x1, x2, x3}
+  let pc1 = [], pc2 = [];
+  let evals = []; // eigenvalues
+
+  function generateData() {
+    data3D = [];
+    // Generate correlated 3D data
+    for (let i = 0; i < 120; i++) {
+      const a = Math.random()*4 - 2; // latent factor 1
+      const b = Math.random()*3 - 1.5; // latent factor 2
+      const noise = (Math.random()-0.5)*0.5;
+      data3D.push({
+        x1: 0.8*a + 0.2*b + noise,
+        x2: 0.6*a - 0.4*b + (Math.random()-0.5)*0.5,
+        x3: 0.4*a + 0.6*b + (Math.random()-0.5)*0.5
+      });
+    }
+  }
+
+  function computePCA() {
+    if (data3D.length === 0) return;
+    const n = data3D.length;
+    // Compute means
+    const mx1 = d3.mean(data3D, d => d.x1), mx2 = d3.mean(data3D, d => d.x2), mx3 = d3.mean(data3D, d => d.x3);
+    // Center
+    const X = data3D.map(d => [d.x1-mx1, d.x2-mx2, d.x3-mx3]);
+    // Covariance matrix (3x3)
+    const cov = [[0,0,0],[0,0,0],[0,0,0]];
+    for (let i = 0; i < 3; i++) {
+      for (let j = 0; j < 3; j++) {
+        let s = 0;
+        for (let k = 0; k < n; k++) s += X[k][i] * X[k][j];
+        cov[i][j] = s / (n-1);
+      }
+    }
+    // Power iteration for eigenvalues/vectors (simplified for 3x3)
+    // Use characteristic polynomial for 3x3
+    const a = cov[0][0], b = cov[0][1], c = cov[0][2];
+    const d = cov[1][0], e = cov[1][1], f = cov[1][2];
+    const g = cov[2][0], h = cov[2][1], i = cov[2][2];
+
+    // Trace, determinant, and sum of principal minors
+    const tr = a + e + i;
+    const det = a*(e*i-f*h) - b*(d*i-f*g) + c*(d*h-e*g);
+    const m2 = (a*e-b*d) + (a*i-c*g) + (e*i-f*h);
+
+    // Characteristic: λ³ - tr·λ² + m2·λ - det = 0
+    // Use numerical approach for eigenvalues
+    function charPoly(lam) { return lam*lam*lam - tr*lam*lam + m2*lam - det; }
+    // Find roots via simple search
+    const roots = [];
+    for (let lam = -5; lam <= 5; lam += 0.001) {
+      const v = charPoly(lam);
+      if (Math.abs(v) < 0.01 && (roots.length === 0 || Math.abs(lam - roots[roots.length-1]) > 0.05)) {
+        roots.push(lam);
+      }
+    }
+    evals = roots.sort((a,b) => b-a).slice(0,3);
+    if (evals.length < 3) evals = [1, 0.5, 0.2]; // fallback
+
+    // Compute eigenvectors (simplified: use inverse iteration)
+    // For simplicity, approximate PC1, PC2 by projecting
+    // Actually, let's compute eigenvectors properly
+    function computeEigenvector(lambda) {
+      const M = [[a-lambda, b, c], [d, e-lambda, f], [g, h, i-lambda]];
+      // Solve M·v = 0 using cross product of two rows
+      // Pick two independent rows
+      let v = [0,0,0];
+      // Cross product of row 0 and row 1
+      v[0] = M[0][1]*M[1][2] - M[0][2]*M[1][1];
+      v[1] = M[0][2]*M[1][0] - M[0][0]*M[1][2];
+      v[2] = M[0][0]*M[1][1] - M[0][1]*M[1][0];
+      const norm = Math.sqrt(v[0]*v[0]+v[1]*v[1]+v[2]*v[2]);
+      if (norm < 1e-10) {
+        // Use row 0 and row 2
+        v[0] = M[0][1]*M[2][2] - M[0][2]*M[2][1];
+        v[1] = M[0][2]*M[2][0] - M[0][0]*M[2][2];
+        v[2] = M[0][0]*M[2][1] - M[0][1]*M[2][0];
+        const n2 = Math.sqrt(v[0]*v[0]+v[1]*v[1]+v[2]*v[2]);
+        if (n2 < 1e-10) return [1,0,0];
+        return [v[0]/n2, v[1]/n2, v[2]/n2];
+      }
+      return [v[0]/norm, v[1]/norm, v[2]/norm];
+    }
+
+    const ev1 = computeEigenvector(evals[0]);
+    const ev2 = computeEigenvector(evals[1]);
+
+    // Project to PC1, PC2
+    pc1 = X.map(x => x[0]*ev1[0] + x[1]*ev1[1] + x[2]*ev1[2]);
+    pc2 = X.map(x => x[0]*ev2[0] + x[1]*ev2[1] + x[2]*ev2[2]);
+  }
+
+  function update() {
+    computePCA();
+
+    // Scatter plot
+    scatterSvg.selectAll('*').remove();
+    if (pc1.length === 0) return;
+
+    const xExt = d3.extent(pc1), yExt = d3.extent(pc2);
+    const xPad = (xExt[1]-xExt[0])*0.1 || 0.5;
+    const yPad = (yExt[1]-yExt[0])*0.1 || 0.5;
+    const xScale = d3.scaleLinear().domain([xExt[0]-xPad, xExt[1]+xPad]).range([margin.left, margin.left+pw]);
+    const yScale = d3.scaleLinear().domain([yExt[0]-yPad, yExt[1]+yPad]).range([margin.top+ph, margin.top]);
+
+    scatterSvg.append('g').attr('transform',`translate(0,${margin.top+ph})`).call(d3.axisBottom(xScale).ticks(5));
+    scatterSvg.append('g').attr('transform',`translate(${margin.left},0)`).call(d3.axisLeft(yScale).ticks(5));
+    scatterSvg.append('text').attr('x',W/2).attr('y',H-6).attr('text-anchor','middle')
+      .style('font-family','var(--mono)').style('font-size','0.65rem').style('fill','var(--slate)').text('PC1');
+    scatterSvg.append('text').attr('x',-H/2).attr('y',12).attr('transform','rotate(-90)').attr('text-anchor','middle')
+      .style('font-family','var(--mono)').style('font-size','0.65rem').style('fill','var(--slate)').text('PC2');
+
+    // Origin lines
+    scatterSvg.append('line').attr('x1',xScale(0)).attr('x2',xScale(0))
+      .attr('y1',margin.top).attr('y2',margin.top+ph)
+      .attr('stroke','var(--stone)').attr('stroke-width',0.5).attr('stroke-dasharray','3,3');
+    scatterSvg.append('line').attr('y1',yScale(0)).attr('y2',yScale(0))
+      .attr('x1',margin.left).attr('x2',margin.left+pw)
+      .attr('stroke','var(--stone)').attr('stroke-width',0.5).attr('stroke-dasharray','3,3');
+
+    // Points colored by PC1 value
+    const colorScale = d3.scaleSequential(d3.interpolateRdYlBu).domain([xExt[1], xExt[0]]);
+    scatterSvg.selectAll('.pca-point').data(pc1).join('circle').attr('class','pca-point')
+      .attr('cx', (d,i) => xScale(pc1[i])).attr('cy', (d,i) => yScale(pc2[i]))
+      .attr('r', 4).attr('fill', (d,i) => colorScale(pc1[i]))
+      .attr('stroke','#fff').attr('stroke-width',1).attr('opacity', 0.8);
+
+    // Scree plot
+    screeSvg.selectAll('*').remove();
+    const sW = W, sH = H, sM = {top:20, right:30, bottom:40, left:50};
+    const sPw = sW - sM.left - sM.right, sPh = sH - sM.top - sM.bottom;
+
+    const totalVar = d3.sum(evals);
+    const explained = evals.map(e => e/totalVar);
+    const cumulative = explained.map((_,i) => d3.sum(explained.slice(0,i+1)));
+
+    const barX = d3.scaleBand().domain(['PC1','PC2','PC3']).range([sM.left, sM.left+sPw]).padding(0.4);
+    const barY = d3.scaleLinear().domain([0, Math.max(1, d3.max(explained)*1.15)]).range([sM.top+sPh, sM.top]);
+    const lineY = d3.scaleLinear().domain([0,1]).range([sM.top+sPh, sM.top]);
+
+    screeSvg.append('g').attr('transform',`translate(0,${sM.top+sPh})`).call(d3.axisBottom(barX));
+    screeSvg.append('g').attr('transform',`translate(${sM.left},0)`).call(d3.axisLeft(barY).ticks(4).tickFormat(d3.format('.0%')));
+    screeSvg.append('g').attr('transform',`translate(${sM.left+sPw},0)`).call(d3.axisRight(lineY).ticks(5).tickFormat(d3.format('.0%')));
+
+    screeSvg.append('text').attr('x',sW/2).attr('y',sH-6).attr('text-anchor','middle')
+      .style('font-family','var(--mono)').style('font-size','0.65rem').style('fill','var(--slate)').text('Principal Component');
+
+    // Bars
+    screeSvg.selectAll('.bar').data(explained).join('rect').attr('class','bar')
+      .attr('x', (d,i) => barX(['PC1','PC2','PC3'][i]))
+      .attr('y', d => barY(d)).attr('width', barX.bandwidth())
+      .attr('height', d => barY(0)-barY(d))
+      .attr('fill', (d,i) => ['#C75146','#2D6BA0','#5B8C3E'][i]).attr('opacity',0.7);
+
+    // Cumulative line
+    const cumLine = d3.line().x((d,i) => barX(['PC1','PC2','PC3'][i]) + barX.bandwidth()/2).y(d => lineY(d));
+    screeSvg.append('path').datum(cumulative).attr('d',cumLine)
+      .attr('fill','none').attr('stroke','var(--gold)').attr('stroke-width',2.5);
+
+    screeSvg.selectAll('.cum-dot').data(cumulative).join('circle').attr('class','cum-dot')
+      .attr('cx', (d,i) => barX(['PC1','PC2','PC3'][i]) + barX.bandwidth()/2)
+      .attr('cy', d => lineY(d)).attr('r', 4).attr('fill','var(--gold)');
+
+    // Stats
+    d3.select('#pca-stats').html(`
+      <div class="stat-card"><div class="lbl">PC1 方差解释率</div><div class="val" style="color:#C75146">${(explained[0]*100).toFixed(1)}%</div></div>
+      <div class="stat-card"><div class="lbl">PC2 方差解释率</div><div class="val" style="color:#2D6BA0">${(explained[1]*100).toFixed(1)}%</div></div>
+      <div class="stat-card"><div class="lbl">PC3 方差解释率</div><div class="val" style="color:#5B8C3E">${(explained[2]*100).toFixed(1)}%</div></div>
+      <div class="stat-card"><div class="lbl">累积 (PC1+PC2)</div><div class="val" style="color:var(--forest)">${(cumulative[1]*100).toFixed(1)}%</div></div>
+      <div class="stat-card"><div class="lbl">特征值 PC1</div><div class="val">${evals[0].toFixed(3)}</div></div>
+      <div class="stat-card"><div class="lbl">特征值 PC2</div><div class="val">${evals[1].toFixed(3)}</div></div>
+    `);
+  }
+
+  d3.select('#pca-reshuffle').on('click', () => { generateData(); update(); });
+  d3.select('#pca-rotate').on('click', () => { generateData(); update(); });
+
+  generateData();
+  update();
+})();
+</script>
+</body>
+</html>

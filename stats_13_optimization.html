@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>§XIII 优化与决策 — Statistical Field Station</title>
+<link rel="stylesheet" href="assets/vendor/google-fonts.css">
+<link rel="stylesheet" href="assets/vendor/katex.min.css">
+<script src="assets/vendor/katex.min.js"></script>
+<script src="assets/vendor/auto-render.min.js"></script>
+<script src="assets/vendor/d3.v7.min.js"></script>
+<link rel="stylesheet" href="assets/css/site.css">
+<style>
+:root {
+  --parchment: #FDFBF5; --forest: #2D4A3E; --terracotta: #C75146;
+  --gold: #8B6914; --stone: #E8E0D5; --slate: #5B6E65; --surface: #FFFAF0;
+  --display: 'Noto Serif SC', 'Cormorant Garamond', 'STSong', serif;
+  --body: 'Noto Sans SC', 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Consolas', monospace;
+  --page-w: 1100px; --text-w: 72ch; --radius: 4px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:40px}
+body{background:var(--parchment);color:var(--forest);font-family:var(--body);font-size:1.08rem;line-height:1.72}
+p{margin-bottom:14px;max-width:var(--text-w)}
+a{color:var(--terracotta);text-decoration:none}a:hover{text-decoration:underline}
+strong{font-weight:600}
+
+.page{max-width:var(--page-w);margin:0 auto;padding:0 32px 64px}
+.top-nav{padding:16px 0;font-family:var(--mono);font-size:0.78rem;border-bottom:1px solid var(--stone);margin-bottom:40px}
+.top-nav a{color:var(--slate)}.top-nav span{color:var(--gold)}
+
+.hero{padding:32px 0 40px}
+.hero .num{font-family:var(--mono);font-size:0.7rem;letter-spacing:0.18em;color:var(--gold);margin-bottom:6px}
+.hero h1{font-family:var(--display);font-weight:700;font-size:clamp(2rem,5vw,3rem);line-height:1.1;color:var(--forest);margin-bottom:12px}
+.hero .deck{font-size:1.05rem;color:var(--slate);max-width:var(--text-w)}
+
+h2{font-family:var(--display);font-weight:600;font-size:1.6rem;color:var(--forest);margin:36px 0 14px;padding-top:20px;border-top:1px solid var(--stone)}
+h3{font-family:var(--display);font-weight:500;font-size:1.2rem;color:var(--forest);margin:24px 0 10px}
+
+.math-block{text-align:center;padding:16px;background:var(--surface);border:1px solid var(--stone);border-radius:var(--radius);margin:16px 0;overflow-x:auto}
+.derive-box{background:#F5F8F6;border:1px solid var(--stone);border-left:3px solid var(--forest);padding:16px 20px;border-radius:0 var(--radius) var(--radius) 0;margin:16px 0;font-size:0.92rem}
+.derive-box h4{color:var(--forest);font-family:var(--display);text-transform:none;letter-spacing:0;font-size:1rem;margin:0 0 8px}
+.concept-box{background:var(--surface);border:1px solid var(--stone);border-radius:var(--radius);padding:16px 20px;margin:16px 0;font-size:0.93rem}
+.concept-box h4{font-family:var(--display);font-size:1.05rem;font-weight:600;color:var(--forest);margin:0 0 8px}
+.toolkit-box{background:#FFF5F3;border:1px solid var(--stone);border-left:3px solid var(--terracotta);padding:14px 18px;border-radius:0 var(--radius) var(--radius) 0;margin:16px 0;font-size:0.92rem}
+.toolkit-box h4{color:var(--terracotta);font-family:var(--display);font-size:1rem;margin:0 0 8px}
+.note-box{background:#FFF8F0;border-left:3px solid var(--gold);padding:14px 18px;border-radius:0 var(--radius) var(--radius) 0;margin:16px 0;font-size:0.93rem}
+.note-box strong{color:var(--gold)}
+.warn-box{background:#FFFBF0;border:1px solid #E8D5A0;border-radius:var(--radius);padding:14px 18px;margin:16px 0;font-size:0.92rem}
+.warn-box::before{content:'⚠ ';font-size:1.1rem}
+.competition-box{background:#F0F7F5;border:1px solid var(--forest);border-left:4px solid var(--forest);padding:18px 22px;border-radius:0 var(--radius) var(--radius) 0;margin:20px 0;font-size:0.93rem}
+.competition-box h4{color:var(--forest);font-family:var(--display);font-size:1.05rem;margin:0 0 8px}
+.competition-box .q{color:var(--terracotta);font-weight:600}
+
+.panel{background:var(--surface);border:1px solid var(--stone);border-radius:6px;box-shadow:inset 0 1px 0 rgba(255,255,255,0.7),0 2px 12px rgba(0,0,0,0.05);padding:24px;margin:20px 0;position:relative}
+.panel::before{content:'';position:absolute;top:0;left:12px;right:12px;height:1px;background:linear-gradient(to right,transparent,var(--gold),transparent);opacity:0.4}
+.panel-label{font-family:var(--mono);font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--stone)}
+.panel-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+
+.stat-cards{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.stat-card{background:var(--surface);border:1px solid var(--stone);border-radius:var(--radius);padding:10px 14px;text-align:center;min-width:72px}
+.stat-card .lbl{font-family:var(--mono);font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--slate);margin-bottom:3px}
+.stat-card .val{font-family:var(--mono);font-size:1.25rem;font-weight:600;color:var(--forest)}
+
+.slider-row{display:flex;align-items:center;gap:12px;margin:10px 0;flex-wrap:wrap}
+.slider-row label{font-family:var(--mono);font-size:0.85rem;color:var(--slate);min-width:100px}
+.slider-row input[type=range]{flex:1;min-width:100px;accent-color:var(--terracotta)}
+.slider-val{font-family:var(--mono);font-weight:600;color:var(--terracotta);min-width:36px;font-size:0.88rem}
+
+.chart-container{width:100%;overflow-x:auto}
+.chart-container svg{display:block;margin:0 auto}
+
+.compact-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:0.88rem;margin:16px 0}
+.compact-table th,.compact-table td{padding:7px 12px;text-align:left;border-bottom:1px solid var(--stone)}
+.compact-table th{font-family:var(--body);font-size:0.72rem;letter-spacing:0.08em;color:var(--slate);border-bottom:2px solid var(--stone)}
+
+.btn{font-family:var(--mono);font-size:0.75rem;border:1px solid var(--stone);border-radius:var(--radius);background:var(--surface);color:var(--forest);padding:6px 14px;cursor:pointer;transition:all 0.15s}
+.btn:hover{border-color:var(--terracotta);color:var(--terracotta)}
+.btn.active{background:var(--forest);color:#fff;border-color:var(--forest)}
+.btn-group{display:flex;gap:4px;flex-wrap:wrap;margin:8px 0}
+
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin:8px 0;font-family:var(--mono);font-size:0.78rem}
+.legend-item{display:flex;align-items:center;gap:6px}
+.legend-dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+
+footer{text-align:center;padding:32px 0;font-size:0.82rem;color:var(--slate);border-top:1px solid var(--stone);margin-top:40px}
+footer a{color:var(--slate);text-decoration:underline}
+
+/* Formulation step display */
+.form-step{display:flex;gap:16px;align-items:flex-start;margin:12px 0;padding:12px 16px;background:var(--surface);border:1px solid var(--stone);border-radius:var(--radius)}
+.form-step .step-num{font-family:var(--mono);font-size:1.4rem;font-weight:700;color:var(--terracotta);min-width:32px;text-align:center;line-height:1.3}
+.form-step .step-content{flex:1}
+.form-step .step-content strong{display:block;color:var(--forest);margin-bottom:2px}
+.form-step .step-content span{font-size:0.9rem;color:var(--slate)}
+</style>
+</head>
+<body>
+<div class="page">
+
+<nav class="top-nav"><a href="stats_tutorial.html">← Field Station</a> <span>|</span> §XIII 优化与决策</nav>
+
+<header class="hero">
+  <div class="num">§XIII</div>
+  <h1>优化与决策</h1>
+  <p class="deck">怎样安排成本最低？如何分配收益最大？在多个限制条件下，最佳选择是什么？优化问题的核心不是求解器——而是<strong>把自然语言翻译成决策变量、目标函数和约束条件</strong>。本章涵盖线性规划、整数规划、非线性规划、多目标优化和动态规划，以及竞赛中高频出现的背包、选址、排班、TSP/VRP 等经典模型。</p>
+</header>
+
+<div class="competition-box">
+<h4>竞赛真题场景</h4>
+<p><span class="q">Q：</span>国赛 2023 D 题：如何安排养殖场的饲料配比，使成本最低且满足营养需求？→ 线性规划 + 灵敏度分析。<br>
+<span class="q">Q：</span>美赛 MCM B 题：如何在多个地点中选址建设配送中心，使总运输成本最小？→ 整数规划 + 设施选址模型。<br>
+<span class="q">Q：</span>电工杯/华中赛：如何在有限资源下安排生产计划，使利润最大？→ 混合整数规划。<br>
+<span class="q">Q：</span>几乎所有优化题都会问：如果参数变化了，方案还最优吗？→ 灵敏度分析。<br>
+<strong>→ 优化题的真正难点不是调用求解器，而是把一段中文描述精准地翻译成数学语言。翻译错了，求解器再快也没用。</strong></p>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>13.1 核心技能：从自然语言到数学模型</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>优化建模的三要素</h4>
+<p>任何优化问题都由三个要素构成。建模的过程就是依次回答三个问题：</p>
+</div>
+
+<div class="form-step">
+  <div class="step-num">①</div>
+  <div class="step-content">
+    <strong>决策变量 (Decision Variables) —— 「我能控制什么？」</strong>
+    <span>这是建模的起点。决策变量必须是<strong>可量化、可控制</strong>的量。常见类型：连续变量（生产数量）、整数变量（车辆数）、0-1 变量（选/不选）。<br>
+    <em>竞赛技巧：</em>变量命名要清晰——x_ij 表示「从 i 到 j 的运输量」，不要用 x1, x2, x3。</span>
+  </div>
+</div>
+<div class="form-step">
+  <div class="step-num">②</div>
+  <div class="step-content">
+    <strong>目标函数 (Objective Function) —— 「我追求什么？」</strong>
+    <span>最大化利润、最小化成本、最小化时间、最大化满意度……目标函数是决策变量的线性或非线性表达式。竞赛中 90% 的优化题是 min 成本或 max 利润。<br>
+    <em>竞赛技巧：</em>如果题目同时要求「成本低」和「时间短」，这就是多目标优化——不要强行合并，用 §13.5 的方法。</span>
+  </div>
+</div>
+<div class="form-step">
+  <div class="step-num">③</div>
+  <div class="step-content">
+    <strong>约束条件 (Constraints) —— 「我被什么限制？」</strong>
+    <span>资源限制（预算、人力、原料）、物理限制（容量、距离）、逻辑限制（如果选了 A 就不能选 B）、政策限制（最低产量、环保标准）。每个约束都是一条不等式或等式。<br>
+    <em>竞赛技巧：</em>最容易遗漏的是「非负约束」和「整数约束」——检查每个变量是否 x ≥ 0，是否必须是整数。</span>
+  </div>
+</div>
+
+<h3>13.1.1 翻译实例：从一段话到数学模型</h3>
+
+<div class="derive-box">
+<h4>例题：饲料配比问题</h4>
+<p><strong>原题描述：</strong>「某养殖场需要配制饲料。有两种原料：玉米（每公斤 2 元，含蛋白质 8%、脂肪 4%）和豆粕（每公斤 3 元，含蛋白质 44%、脂肪 1%）。每公斤饲料至少需要 15% 的蛋白质和至少 3% 的脂肪。每天需要 100 公斤饲料。如何配比使成本最低？」</p>
+
+<p><strong>翻译过程：</strong></p>
+<p><strong>Step 1 — 决策变量：</strong>设 \(x_1\) = 玉米用量（公斤），\(x_2\) = 豆粕用量（公斤）。</p>
+<p><strong>Step 2 — 目标函数：</strong>\(\min\; Z = 2x_1 + 3x_2\)（总成本最小）。</p>
+<p><strong>Step 3 — 约束条件：</strong></p>
+<div class="math-block">
+\[
+\begin{aligned}
+\text{产量约束：}&\quad x_1 + x_2 = 100 \\
+\text{蛋白质约束：}&\quad 0.08x_1 + 0.44x_2 \geq 0.15 \times 100 = 15 \\
+\text{脂肪约束：}&\quad 0.04x_1 + 0.01x_2 \geq 0.03 \times 100 = 3 \\
+\text{非负约束：}&\quad x_1 \geq 0,\; x_2 \geq 0
+\end{aligned}
+\]
+</div>
+<p><strong>检查：</strong>变量可量化？✓ 目标线性？✓ 约束完整？产量、蛋白质、脂肪、非负——齐全。模型完成。</p>
+</div>
+
+<div class="note-box">
+<strong>建模自查清单：</strong>写完模型后逐条检查——□ 每个决策变量都有明确的定义和单位？□ 目标函数的方向（min/max）正确？□ 每个约束的左边是决策变量的函数，右边是常数？□ 所有变量都有非负约束？□ 需要整数的变量是否标记了整数约束？□ 检查是否有遗漏的约束（从题目中逐句翻译）。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>13.2 线性规划</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>标准形式</h4>
+<p>线性规划（Linear Programming, LP）是目标函数和所有约束条件都是<strong>决策变量的线性函数</strong>的优化问题。标准形式：</p>
+<div class="math-block">
+\[
+\begin{aligned}
+\min \; & \mathbf{c}^T \mathbf{x} \\
+\text{s.t.} \; & \mathbf{A}\mathbf{x} \leq \mathbf{b} \\
+& \mathbf{x} \geq \mathbf{0}
+\end{aligned}
+\]
+</div>
+<p>任何 LP 都可以转化为标准形式：max → min（取负号）、≥ 约束 → ≤ 约束（两边乘 -1）、等式 → 两个不等式（≤ 且 ≥）、无约束变量 → 两个非负变量之差。</p>
+</div>
+
+<h3>13.2.1 几何直觉：可行域与最优解</h3>
+
+<p>在二维空间中，每个线性约束是一个半平面。所有约束的交集构成<strong>可行域</strong>（feasible region）——一个凸多边形。目标函数 \(Z = c_1x_1 + c_2x_2\) 是一族平行线，沿着梯度方向 \(\nabla Z = (c_1, c_2)\) 平移，与可行域最后的接触点就是最优解。</p>
+
+<div class="derive-box">
+<h4>线性规划的基本定理</h4>
+<p><strong>1. 可行域是凸集：</strong>任意两个可行解的凸组合仍在可行域内。这保证了没有「局部最优陷阱」——LP 的任何局部最优就是全局最优。</p>
+<p><strong>2. 最优解在顶点取得：</strong>如果存在最优解，则至少有一个最优解位于可行域的顶点（极点）。这就是单纯形法的基础——只需检查顶点，不需要搜索内部。</p>
+<p><strong>3. 四种可能的结果：</strong>① 唯一最优解（顶点）。② 无穷多最优解（一条边上的所有点）。③ 无界解（目标函数可以无限优）。④ 无可行解（约束条件相互矛盾）。</p>
+</div>
+
+<h3>13.2.2 对偶理论与影子价格</h3>
+
+<div class="derive-box">
+<h4>对偶问题：从另一个角度看优化</h4>
+<p>每个线性规划（原始问题，Primal）都有一个对应的<strong>对偶问题</strong>（Dual）。对偶变量（影子价格）有深刻的经济学含义。</p>
+<p><strong>原始问题（P）：</strong></p>
+<div class="math-block">
+\[
+\min\; \mathbf{c}^T\mathbf{x} \quad \text{s.t.} \quad \mathbf{A}\mathbf{x} \geq \mathbf{b},\; \mathbf{x} \geq \mathbf{0}
+\]
+</div>
+<p><strong>对偶问题（D）：</strong></p>
+<div class="math-block">
+\[
+\max\; \mathbf{b}^T\mathbf{y} \quad \text{s.t.} \quad \mathbf{A}^T\mathbf{y} \leq \mathbf{c},\; \mathbf{y} \geq \mathbf{0}
+\]
+</div>
+<p><strong>弱对偶定理：</strong>对于任意可行解 \(\mathbf{x}\) 和 \(\mathbf{y}\)，有 \(\mathbf{c}^T\mathbf{x} \geq \mathbf{b}^T\mathbf{y}\)。原始目标值永远 ≥ 对偶目标值。<br>
+<strong>强对偶定理：</strong>如果原始问题有最优解 \(\mathbf{x}^*\)，则对偶问题也有最优解 \(\mathbf{y}^*\)，且 \(\mathbf{c}^T\mathbf{x}^* = \mathbf{b}^T\mathbf{y}^*\)。</p>
+<p><strong>影子价格：</strong>对偶变量 \(y_i\) 表示第 \(i\) 个资源约束的<strong>影子价格</strong>——如果增加 1 单位该资源，最优目标值改善 \(y_i\)。在竞赛中，影子价格告诉决策者「最值得投资增加哪种资源」。</p>
+</div>
+
+<h3>13.2.3 灵敏度分析</h3>
+
+<p>竞赛中几乎必问：「如果某个参数变化了，最优解还一样吗？」灵敏度分析回答的就是这个问题：</p>
+
+<table class="compact-table">
+<thead><tr><th>变化类型</th><th>分析内容</th><th>允许范围</th></tr></thead>
+<tbody>
+<tr><td>目标系数 \(c_j\) 变化</td><td>最优解不变的范围</td><td>在允许范围内，最优解不变；超出则需重新求解</td></tr>
+<tr><td>右端常数 \(b_i\) 变化</td><td>影子价格不变的范围</td><td>在允许范围内，影子价格有效；超出则约束可能不再紧</td></tr>
+<tr><td>增加新约束</td><td>当前解是否仍可行</td><td>如果满足新约束 → 最优解不变；否则需重新求解</td></tr>
+<tr><td>增加新变量</td><td>新变量是否值得引入</td><td>计算新变量的检验数（reduced cost）</td></tr>
+</tbody>
+</table>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>灵敏度分析是优化题论文的<strong>必写章节</strong>。核心句式：「当目标系数 \(c_1\) 在 \([a, b]\) 范围内变化时，最优解保持不变。当超出此范围时，需要重新求解。影子价格分析表明，增加 1 单位资源 R 可以降低成本约 X 元，因此建议优先增加资源 R 的投入。」
+</div>
+
+<h3>13.2.4 灵敏度分析：数值实例</h3>
+
+<div class="derive-box">
+<h4>实例：饲料配比问题的灵敏度分析</h4>
+<p>回顾 §13.1.1 的饲料配比问题。求解得到最优解：\(x_1^* = 60\) 公斤玉米，\(x_2^* = 40\) 公斤豆粕，最低成本 \(Z^* = 240\) 元。</p>
+<p><strong>目标系数灵敏度（玉米和豆粕价格的变化范围）：</strong></p>
+<p>玉米价格 \(c_1 = 2\) 的允许变化范围：\([1.2,\; 2.8]\)。在此范围内，最优解 \((60, 40)\) 不变，但最优值会线性变化。如果玉米价格超过 2.8 元/kg，最优解会转向多用豆粕。豆粕价格 \(c_2 = 3\) 的允许变化范围：\([2.1,\; 5.0]\)，在此范围内最优解保持不变。</p>
+<p><strong>右端常数灵敏度（影子价格）：</strong></p>
+<div class="math-block">
+\[
+\begin{aligned}
+\text{产量约束的影子价格：}&\quad y_1^* = 2.4 \quad \text{（增加 1 公斤产量需求，最低成本增加 2.4 元）} \\
+\text{蛋白质约束的影子价格：}&\quad y_2^* = 0 \quad \text{（蛋白质约束不紧，增加要求无影响）} \\
+\text{脂肪约束的影子价格：}&\quad y_3^* = 0 \quad \text{（脂肪约束不紧，增加要求无影响）}
+\end{aligned}
+\]
+</div>
+<p><strong>解读：</strong>蛋白质和脂肪约束的影子价格为 0，说明当前最优配方中蛋白质和脂肪含量<strong>超过</strong>了最低要求——这些约束是「松弛」的。只有产量约束是紧的。如果蛋白质最低要求从 15% 提高到 20%，影子价格可能变为非零（约束变紧）。</p>
+<p><strong>竞赛论文灵敏度分析模板：</strong></p>
+<div class="math-block">
+\[
+\begin{array}{c|c|c|c|c}
+\text{参数} & \text{当前值} & \text{允许下限} & \text{允许上限} & \text{影子价格} \\ \hline
+c_1\ \text{（玉米价格）} & 2.0 & 1.2 & 2.8 & — \\
+c_2\ \text{（豆粕价格）} & 3.0 & 2.1 & 5.0 & — \\
+b_1\ \text{（产量需求）} & 100 & 80 & 120 & 2.4 \\
+b_2\ \text{（蛋白质需求）} & 15 & — & 17.5 & 0 \\
+b_3\ \text{（脂肪需求）} & 3 & — & 4.2 & 0
+\end{array}
+\]
+</div>
+<p><strong>论文核心句式：</strong>「灵敏度分析表明，当玉米价格在 [1.2, 2.8] 元/kg 范围内波动时，最优配比方案保持稳定。产量约束的影子价格为 2.4 元/kg，意味着每增加 1 公斤产量需求，最低成本将增加 2.4 元。建议优先关注玉米价格波动和产量需求变化对方案的影响。」</p>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h3>13.2.5 鲁棒性分析</h3>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>灵敏度分析 vs 鲁棒性分析 —— 不要混淆</h4>
+<p><strong>灵敏度分析</strong>（Sensitivity Analysis）问的是「参数连续小幅变化时，最优解/目标值怎么变？」——它关注<strong>连续、局部</strong>的扰动。</p>
+<p><strong>鲁棒性分析</strong>（Robustness Analysis）问的是「如果假设被打破，方案还可行吗？」——它关注<strong>结构性、全局</strong>的变化：数据有噪声、约束条件变了、删掉一个变量、换一种建模方法。两者互补，竞赛论文中应同时出现。</p>
+</div>
+
+<div class="derive-box">
+<h4>鲁棒性分析的四个维度</h4>
+<p><strong>① 参数鲁棒性：</strong>在目标系数和约束右端项上引入随机扰动（如 ±5% 均匀噪声），重新求解 1000 次，统计最优解和最优值的分布。如果最优值方差很大，说明方案对参数敏感——需要在论文中讨论。</p>
+
+<div class="code-block" style="background:#1E2A24;border:1px solid #2D4A3E;border-radius:var(--radius);padding:14px 18px;margin:10px 0;overflow-x:auto;font-family:var(--mono);font-size:0.8rem;line-height:1.55;color:#D4E0D8">
+<span class="cm" style="color:#6A8A7A;font-style:italic"># 参数鲁棒性：蒙特卡洛扰动</span>
+<span class="kw" style="color:#7EC89C;font-weight:600">import</span> numpy <span class="kw" style="color:#7EC89C;font-weight:600">as</span> np
+<span class="kw" style="color:#7EC89C;font-weight:600">from</span> scipy.optimize <span class="kw" style="color:#7EC89C;font-weight:600">import</span> linprog
+
+obj_vals = []
+<span class="kw" style="color:#7EC89C;font-weight:600">for</span> _ <span class="kw" style="color:#7EC89C;font-weight:600">in</span> <span class="fn" style="color:#E8C56D">range</span>(<span class="num" style="color:#C792EA">1000</span>):
+    c_perturbed = c * (<span class="num" style="color:#C792EA">1</span> + np.random.<span class="fn" style="color:#E8C56D">uniform</span>(-<span class="num" style="color:#C792EA">0.05</span>, <span class="num" style="color:#C792EA">0.05</span>, <span class="fn" style="color:#E8C56D">len</span>(c)))
+    b_perturbed = b * (<span class="num" style="color:#C792EA">1</span> + np.random.<span class="fn" style="color:#E8C56D">uniform</span>(-<span class="num" style="color:#C792EA">0.05</span>, <span class="num" style="color:#C792EA">0.05</span>, <span class="fn" style="color:#E8C56D">len</span>(b)))
+    res = <span class="fn" style="color:#E8C56D">linprog</span>(c_perturbed, A_ub=A, b_ub=b_perturbed)
+    obj_vals.<span class="fn" style="color:#E8C56D">append</span>(res.fun)
+
+<span class="kw" style="color:#7EC89C;font-weight:600">print</span>(<span class="str" style="color:#D4956B">f'最优值: {np.mean(obj_vals):.2f} ± {np.std(obj_vals):.2f}'</span>)
+</div>
+
+<p><strong>② 约束鲁棒性：</strong>逐个放松或收紧约束（如 ±10%），检查最优解是否发生结构性变化。如果某约束稍微收紧就导致不可行，说明方案对该约束极为敏感——这是论文中需要讨论的风险点。</p>
+
+<p><strong>③ 数据鲁棒性：</strong>删除部分数据点（如随机删除 5% 的样本），重新建模，观察结论是否一致。这在数据量小或有异常值时尤为重要。</p>
+
+<p><strong>④ 方法鲁棒性：</strong>用不同的建模方法求解同一问题，比较结论是否一致。例如：线性规划 vs 目标规划、精确算法 vs 启发式算法。如果多种方法得出相似结论，方案的<strong>可信度</strong>大幅提升。</p>
+</div>
+
+<div class="toolkit-box">
+<h4>鲁棒性分析写作模板</h4>
+<p style="font-size:0.9rem">「为验证优化方案的鲁棒性，我们从以下两个维度进行了检验：(1) <strong>参数鲁棒性</strong>——在目标系数和约束右端项引入 ±5% 的随机扰动，经 1000 次蒙特卡洛模拟，最优值波动范围为 [X, Y]，变异系数为 Z%，表明方案在参数小幅波动下保持稳定；(2) <strong>约束鲁棒性</strong>——将关键约束分别放松和收紧 10%，最优解结构未发生本质变化，仅目标值相应调整。综上，优化方案具有良好的鲁棒性，对参数估计误差不敏感。」</p>
+</div>
+
+<div class="competition-box">
+<h4>竞赛中鲁棒性分析的常见扣分点</h4>
+<p><span class="q">Q：</span>「我们做了灵敏度分析」——但只分析了目标系数，没分析约束右端项。→ <strong>扣分</strong>：灵敏度分析不完整。<br>
+<span class="q">Q：</span>「模型具有良好的鲁棒性」——但这句话没有任何数据支撑。→ <strong>扣分</strong>：空口无凭，必须给出定量结果。<br>
+<span class="q">Q：</span>「灵敏度分析表明方案稳定」——但未说明「稳定」的判断标准是什么。→ <strong>扣分</strong>：需要定义什么算「稳定」（如最优解不变、目标值变化 &lt; 5%、排名不变等）。<br>
+<strong>→ 鲁棒性分析 ≠ 一句口号。它需要具体的数值实验、明确的判断标准和诚实的讨论。如果方案确实不鲁棒，诚实地说出来并讨论原因，比假装鲁棒要好得多。</strong></p>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>13.3 整数规划与 0-1 规划</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>为什么需要整数变量？</h4>
+<p>当决策变量表示「个数」「是否」「选择」时，小数解没有意义——你不能买 3.7 辆车或选 0.4 个地点。整数规划（Integer Programming, IP）在 LP 的基础上增加整数约束：\(x_j \in \mathbb{Z}\)。</p>
+<p><strong>0-1 规划</strong>是整数规划的特例：\(x_j \in \{0, 1\}\)，用于表示「选/不选」「开/关」「是/否」等二元决策。</p>
+</div>
+
+<h3>13.3.1 分支定界法 (Branch and Bound)</h3>
+
+<div class="derive-box">
+<h4>核心思想</h4>
+<p>整数规划是 NP-hard 的——没有多项式时间算法。分支定界法是求解 IP 的标准方法：</p>
+<p><strong>Step 1 — 松弛：</strong>先忽略整数约束，求解 LP 松弛问题。如果最优解恰好是整数 → 完成。</p>
+<p><strong>Step 2 — 分支：</strong>如果某个变量 \(x_j\) 在 LP 松弛解中是小数（如 \(x_j = 3.7\)），分成两个子问题：\(x_j \leq 3\) 和 \(x_j \geq 4\)。</p>
+<p><strong>Step 3 — 定界：</strong>LP 松弛的最优值提供下界（min 问题）。如果某分支的 LP 松弛值 ≥ 当前最好整数解的值 → 剪枝，不再继续分支。</p>
+<p><strong>Step 4 — 剪枝：</strong>三种剪枝条件：① 子问题不可行。② 子问题的 LP 松弛值不比当前最优整数解好。③ 子问题找到了整数解且比当前最优更好 → 更新最优解。</p>
+</div>
+
+<h3>13.3.2 0-1 变量的建模技巧</h3>
+
+<div class="toolkit-box">
+<h4>建模工具箱：0-1 逻辑约束</h4>
+<table class="compact-table">
+<thead><tr><th>逻辑关系</th><th>数学模型</th><th>含义</th></tr></thead>
+<tbody>
+<tr><td>如果选 A 则必选 B</td><td>\(x_A \leq x_B\)</td><td>A=1 ⇒ B=1</td></tr>
+<tr><td>A 和 B 互斥</td><td>\(x_A + x_B \leq 1\)</td><td>最多选一个</td></tr>
+<tr><td>A 和 B 至少选一个</td><td>\(x_A + x_B \geq 1\)</td><td>至少选一个</td></tr>
+<tr><td>如果选 A 则不能选 B</td><td>\(x_A + x_B \leq 1\)</td><td>同互斥</td></tr>
+<tr><td>选 A 当且仅当选 B</td><td>\(x_A = x_B\)</td><td>同时选或不选</td></tr>
+<tr><td>最多选 k 个</td><td>\(\sum x_j \leq k\)</td><td>基数约束</td></tr>
+<tr><td>恰好选 k 个</td><td>\(\sum x_j = k\)</td><td>精确基数</td></tr>
+<tr><td>如果 x > 0 则 y = 1</td><td>\(x \leq M y\)</td><td>Big-M 方法（M 是 x 的上界）</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="warn-box">
+<strong>竞赛陷阱：</strong>① 不要对小数解「四舍五入」——这不保证可行，也不保证最优。② Big-M 的 M 不要取太大（会导致数值问题），也不要取太小（会切断可行解）。M 取约束中变量能取到的最大值即可。③ 整数规划的求解时间随变量数指数增长——变量太多（>50）时，考虑启发式算法或松弛。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>13.4 非线性规划</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>当线性不够用时</h4>
+<p>如果目标函数或约束条件不是线性的——例如目标函数包含 \(x^2\)、\(\sqrt{x}\)、\(\ln x\) 或 \(\sin x\)——就进入了非线性规划（NLP）的领域。NLP 比 LP 难得多：可行域可能不是凸的，可能存在多个局部最优解。</p>
+</div>
+
+<h3>13.4.1 KKT 条件</h3>
+
+<div class="derive-box">
+<h4>非线性规划的「一阶必要条件」</h4>
+<p>对于 NLP：\(\min f(\mathbf{x})\) s.t. \(g_i(\mathbf{x}) \leq 0,\; h_j(\mathbf{x}) = 0\)，定义拉格朗日函数：</p>
+<div class="math-block">
+\[
+\mathcal{L}(\mathbf{x}, \boldsymbol{\mu}, \boldsymbol{\lambda}) = f(\mathbf{x}) + \sum_i \mu_i g_i(\mathbf{x}) + \sum_j \lambda_j h_j(\mathbf{x})
+\]
+</div>
+<p><strong>Karush-Kuhn-Tucker (KKT) 条件：</strong></p>
+<div class="math-block">
+\[
+\begin{aligned}
+\text{平稳性：}&\quad \nabla f(\mathbf{x}^*) + \sum_i \mu_i \nabla g_i(\mathbf{x}^*) + \sum_j \lambda_j \nabla h_j(\mathbf{x}^*) = 0 \\
+\text{原始可行性：}&\quad g_i(\mathbf{x}^*) \leq 0,\; h_j(\mathbf{x}^*) = 0 \\
+\text{对偶可行性：}&\quad \mu_i \geq 0 \\
+\text{互补松弛：}&\quad \mu_i g_i(\mathbf{x}^*) = 0 \quad \text{（对每个 } i \text{）}
+\end{aligned}
+\]
+</div>
+<p>互补松弛条件是最关键的部分：对于每个不等式约束，要么它是紧的（\(g_i = 0\)），要么它的乘子为 0（约束不起作用）。</p>
+<p><strong>竞赛中什么时候用 KKT？</strong>当 NLP 的解析解可能时（如二次规划、简单的非线性约束），KKT 给出了求解的方程组。但在大多数竞赛题中，直接调用求解器更实际。</p>
+</div>
+
+<h3>13.4.2 凸优化</h3>
+
+<p>如果目标函数是凸函数，约束定义凸可行域，则 NLP 的任何局部最优就是全局最优。竞赛中判断凸性：</p>
+<div class="math-block">
+\[
+f \text{ 是凸函数 } \iff \text{Hessian } \nabla^2 f(\mathbf{x}) \succeq 0 \text{（半正定）}
+\]
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>13.5 多目标优化</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>当「既要……又要……」时</h4>
+<p>竞赛中经常出现多个目标：成本最低、时间最短、质量最高、风险最小。这些目标通常<strong>相互冲突</strong>——降低成本可能牺牲质量，缩短时间可能增加风险。多目标优化的任务不是找到一个「最优解」，而是找到<strong>Pareto 最优解集</strong>——即无法在不损害其他目标的情况下改进任一目标的解。</p>
+</div>
+
+<h3>13.5.1 主要方法</h3>
+
+<table class="compact-table">
+<thead><tr><th>方法</th><th>公式</th><th>优点</th><th>缺点</th></tr></thead>
+<tbody>
+<tr><td><strong>加权和法</strong></td><td>\(\min \sum w_k f_k(\mathbf{x})\)</td><td>简单，退化到单目标</td><td>权重难以确定；不能到达非凸 Pareto 前沿</td></tr>
+<tr><td><strong>ε-约束法</strong></td><td>\(\min f_1(\mathbf{x})\) s.t. \(f_k(\mathbf{x}) \leq \varepsilon_k\)</td><td>可到达任何 Pareto 点</td><td>ε 的选择需要经验</td></tr>
+<tr><td><strong>目标规划</strong></td><td>\(\min \sum (d_i^+ + d_i^-)\) s.t. \(f_k + d_k^- - d_k^+ = T_k\)</td><td>直观：最小化偏差</td><td>需要设定目标值 \(T_k\)</td></tr>
+<tr><td><strong>TOPSIS</strong></td><td>选择离理想解最近、离负理想解最远的方案</td><td>不需要主观权重</td><td>仅适用于有限方案</td></tr>
+</tbody>
+</table>
+
+<div class="derive-box">
+<h4>目标规划 (Goal Programming) 的数学推导</h4>
+<p>目标规划为每个目标 \(f_k(\mathbf{x})\) 设定一个目标值 \(T_k\)，引入正偏差 \(d_k^+\)（超过目标）和负偏差 \(d_k^-\)（未达目标），并最小化加权的偏差之和：</p>
+<div class="math-block">
+\[
+\begin{aligned}
+\min \quad & \sum_{k} (w_k^+ d_k^+ + w_k^- d_k^-) \\
+\text{s.t.} \quad & f_k(\mathbf{x}) + d_k^- - d_k^+ = T_k, \quad \forall k \\
+& d_k^+, d_k^- \geq 0, \quad \mathbf{x} \in \text{可行域}
+\end{aligned}
+\]
+</div>
+<p>目标规划特别适合竞赛中「主要目标 + 次要目标」的场景——例如，首要目标是成本不超过 100 万，次要目标是时间尽量短。</p>
+</div>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>多目标优化的论文呈现：① 先展示 Pareto 前沿图（2D 或 3D 散点图）。② 解释为什么选择最终方案（在 Pareto 前沿上选一个折中点）。③ 用加权和法或 ε-约束法得到多个 Pareto 解，然后由决策者（或评价标准）选择。④ 不要简单地把所有目标加权组合成一个——评委会问「权重怎么来的？」。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>13.6 动态规划</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>化整为零，分层决策</h4>
+<p>动态规划（Dynamic Programming, DP）适用于具有<strong>最优子结构</strong>和<strong>重叠子问题</strong>的优化问题。核心思想：将原问题分解为阶段，每个阶段只做一次决策，通过递推关系（Bellman 方程）逐步求解。</p>
+</div>
+
+<h3>13.6.1 Bellman 最优性原理</h3>
+
+<div class="derive-box">
+<h4>Bellman 方程</h4>
+<p>设 \(V(s)\) 为从状态 \(s\) 出发到终止状态的最优值（值函数），\(a\) 为决策，\(r(s,a)\) 为即时收益，\(T(s,a)\) 为下一状态：</p>
+<div class="math-block">
+\[
+V(s) = \max_{a \in A(s)} \left\{ r(s, a) + \gamma V(T(s, a)) \right\}
+\]
+</div>
+<p><strong>最优性原理：</strong>「无论过去的状态和决策如何，对前面的决策形成的当前状态而言，余下的各个决策必须构成最优策略。」——这意味着整体最优策略的一部分，在子问题中也是最优的。</p>
+<p><strong>竞赛中 DP 的应用：</strong>背包问题、最短路径、资源分配、生产计划、排班问题。DP 的核心是写出<strong>状态转移方程</strong>——定义清楚状态（什么信息需要记住），然后写出递推关系。</p>
+</div>
+
+<h3>13.6.2 经典 DP 示例：0-1 背包</h3>
+
+<div class="math-block">
+\[
+\text{状态：} dp[i][w] = \text{前 } i \text{ 个物品，容量 } w \text{ 时的最大价值}
+\]
+\[
+\text{转移：} dp[i][w] = \max\begin{cases} dp[i-1][w] & \text{不选第 } i \text{ 个} \\ dp[i-1][w - w_i] + v_i & \text{选第 } i \text{ 个（如果 } w \geq w_i\text{）} \end{cases}
+\]
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>13.7 经典竞赛模型</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<table class="compact-table">
+<thead><tr><th>模型</th><th>类型</th><th>标准形式</th><th>典型场景</th></tr></thead>
+<tbody>
+<tr><td><strong>背包问题</strong></td><td>0-1 IP</td><td>\(\max \sum v_i x_i\) s.t. \(\sum w_i x_i \leq W,\; x_i \in \{0,1\}\)</td><td>项目选择、投资组合</td></tr>
+<tr><td><strong>设施选址</strong></td><td>MIP</td><td>\(\min \sum f_j y_j + \sum c_{ij} x_{ij}\) s.t. 需求满足、容量限制</td><td>配送中心、消防站、学校选址</td></tr>
+<tr><td><strong>运输问题</strong></td><td>LP</td><td>\(\min \sum c_{ij} x_{ij}\) s.t. 供需平衡</td><td>物资调运、任务分配</td></tr>
+<tr><td><strong>指派问题</strong></td><td>0-1 IP</td><td>\(\min \sum c_{ij} x_{ij}\) s.t. \(\sum_i x_{ij}=1, \sum_j x_{ij}=1, x_{ij}\in\{0,1\}\)</td><td>人员分配、机器调度</td></tr>
+<tr><td><strong>生产计划</strong></td><td>MIP</td><td>\(\min \sum (c_t x_t + h_t I_t)\) s.t. 库存平衡、产能约束</td><td>多周期生产排程</td></tr>
+<tr><td><strong>TSP/VRP</strong></td><td>0-1 IP</td><td>\(\min \sum c_{ij} x_{ij}\) s.t. 每个点进出一次 + 子环消除</td><td>路径规划、物流配送</td></tr>
+</tbody>
+</table>
+
+<h3>13.7.1 TSP（旅行商问题）</h3>
+
+<div class="derive-box">
+<h4>TSP 的整数规划表示</h4>
+<p>设 \(x_{ij} \in \{0,1\}\) 表示是否从 i 到 j，\(c_{ij}\) 为距离：</p>
+<div class="math-block">
+\[
+\begin{aligned}
+\min \quad & \sum_{i=1}^{n} \sum_{j=1}^{n} c_{ij} x_{ij} \\
+\text{s.t.} \quad & \sum_{j=1}^{n} x_{ij} = 1 \quad \forall i \quad \text{（每个点恰好离开一次）} \\
+& \sum_{i=1}^{n} x_{ij} = 1 \quad \forall j \quad \text{（每个点恰好到达一次）} \\
+& \sum_{i \in S} \sum_{j \notin S} x_{ij} \geq 1 \quad \forall S \subset \{1,\ldots,n\}, S \neq \emptyset \quad \text{（子环消除）} \\
+& x_{ij} \in \{0,1\}
+\end{aligned}
+\]
+</div>
+<p>子环消除约束的数量是指数级的（\(2^n\)），实际求解中通常使用割平面法——先求解不含子环消除的松弛问题，发现子环后再动态添加约束。</p>
+</div>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>TSP 在竞赛中通常用启发式算法求解（遗传算法、模拟退火、蚁群算法），而非精确求解。论文中应该说明「TSP 是 NP-hard 问题，我们使用 XX 启发式算法求解，并分析了算法的收敛性和解的质量」。VRP 是 TSP 的扩展——多辆车 + 容量约束，是物流竞赛题的标配模型。
+</div>
+
+<!-- ═══════════ 13.7.2 运输问题 ═══════════ -->
+<h2>13.7.2 运输问题</h2>
+
+<div class="concept-box">
+<h4>LP 的特殊结构——全幺模矩阵</h4>
+<p>运输问题（Transportation Problem）是线性规划的一个重要特例：\(m\) 个供应地（产量 \(s_i\)），\(n\) 个需求地（需求量 \(d_j\)），从 \(i\) 运到 \(j\) 的单位成本为 \(c_{ij}\)。目标是确定运输量 \(x_{ij}\) 使总成本最小。</p>
+</div>
+
+<div class="derive-box">
+<h4>标准形式</h4>
+<div class="math-block">
+\[
+\begin{aligned}
+\min \quad & \sum_{i=1}^{m} \sum_{j=1}^{n} c_{ij} x_{ij} \\
+\text{s.t.} \quad & \sum_{j=1}^{n} x_{ij} = s_i \quad \forall i \quad \text{（供应地 } i \text{ 的产量全部运出）} \\
+& \sum_{i=1}^{m} x_{ij} = d_j \quad \forall j \quad \text{（需求地 } j \text{ 的需求全部满足）} \\
+& x_{ij} \geq 0 \quad \forall i, j
+\end{aligned}
+\]
+</div>
+<p><strong>全幺模性（Totally Unimodular）：</strong>运输问题的约束矩阵是<strong>全幺模矩阵</strong>——每个子方阵的行列式为 0 或 ±1。这意味着：<strong>如果所有 \(s_i\) 和 \(d_j\) 都是整数，则最优解 \(x_{ij}^*\) 自动为整数</strong>——不需要显式添加整数约束！这是运输问题可以用 LP 求解的根本原因。</p>
+<p><strong>产销平衡条件：</strong>\(\sum s_i = \sum d_j\)。如果产销不平衡，需引入虚拟供应地或虚拟需求地将问题转化为平衡运输问题。</p>
+</div>
+
+<div class="toolkit-box">
+<h4>求解方法速览</h4>
+<table class="compact-table">
+<thead><tr><th>方法</th><th>用途</th><th>复杂度</th></tr></thead>
+<tbody>
+<tr><td><strong>最小元素法</strong></td><td>求初始基可行解</td><td>\(O(mn)\)</td></tr>
+<tr><td><strong>Vogel 法</strong></td><td>求更优的初始解（罚数法）</td><td>\(O(mn \cdot \min(m,n))\)</td></tr>
+<tr><td><strong>位势法（MODI）</strong></td><td>检验最优性 + 迭代改进</td><td>每次迭代 \(O(mn)\)</td></tr>
+</tbody>
+</table>
+<p>竞赛中直接调用 PuLP 或 scipy.optimize.linprog 即可，不需要手写运输表上作业法——但了解原理有助于论文中解释求解过程。</p>
+</div>
+
+<!-- ═══════════ 13.7.3 指派问题 ═══════════ -->
+<h2>13.7.3 指派问题</h2>
+
+<div class="concept-box">
+<h4>一对一的匹配优化</h4>
+<p>指派问题（Assignment Problem）是运输问题的特例：\(n\) 个任务分配给 \(n\) 个人（或机器），每人恰好完成一个任务，每个任务恰好由一人完成。目标是使总成本最小或总效率最大。</p>
+</div>
+
+<div class="derive-box">
+<h4>标准形式</h4>
+<div class="math-block">
+\[
+\begin{aligned}
+\min \quad & \sum_{i=1}^{n} \sum_{j=1}^{n} c_{ij} x_{ij} \\
+\text{s.t.} \quad & \sum_{j=1}^{n} x_{ij} = 1 \quad \forall i \quad \text{（每人恰好分配一个任务）} \\
+& \sum_{i=1}^{n} x_{ij} = 1 \quad \forall j \quad \text{（每个任务恰好由一人完成）} \\
+& x_{ij} \in \{0, 1\} \quad \forall i, j
+\end{aligned}
+\]
+</div>
+<p><strong>匈牙利算法（Hungarian Algorithm）：</strong>指派问题的约束矩阵也是全幺模的，但 Kuhn 在 1955 年提出的匈牙利算法可以在 \(O(n^3)\) 时间内精确求解。</p>
+<p><strong>算法步骤：</strong>① 行归约：每行减去该行最小值。② 列归约：每列减去该列最小值。③ 用最少的线覆盖所有零。④ 如果线数 = n → 找到最优分配（选 n 个不同行不同列的零）。否则 → 调整矩阵（未被覆盖元素减最小值，交叉点加最小值），重复步骤 ③。</p>
+</div>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>指派问题在竞赛中出现在「任务分配」「人员调度」「项目匹配」等场景。Python 中 scipy.optimize.linear_sum_assignment 直接实现匈牙利算法。如果任务数 ≠ 人数，引入虚拟任务或虚拟人（成本为 0 或无穷大）转化为标准指派问题。
+</div>
+
+<!-- ═══════════ 13.7.4 选址问题 ═══════════ -->
+<h2>13.7.4 选址问题</h2>
+
+<div class="concept-box">
+<h4>「在哪里建？」的数学模型</h4>
+<p>选址问题（Facility Location）是竞赛高频考点——美赛 MCM 几乎每年都有选址相关的题目。核心是：在候选位置中选若干设施，使服务需求点的总成本（或总距离）最小。</p>
+</div>
+
+<table class="compact-table">
+<thead><tr><th>模型</th><th>目标</th><th>数学形式</th><th>典型场景</th></tr></thead>
+<tbody>
+<tr><td><strong>P-Median</strong></td><td>最小化总加权距离</td><td>\(\min \sum_i \sum_j w_i d_{ij} x_{ij}\)，恰好选 \(p\) 个设施</td><td>配送中心、仓库选址</td></tr>
+<tr><td><strong>P-Center</strong></td><td>最小化最大服务距离</td><td>\(\min \max_{i,j} \{ d_{ij} x_{ij} \}\)，恰好选 \(p\) 个设施</td><td>消防站、急救中心（公平性优先）</td></tr>
+<tr><td><strong>最大覆盖</strong></td><td>最大化被覆盖的需求</td><td>\(\max \sum_i w_i y_i\)，设施数 ≤ \(p\)，覆盖半径 \(R\)</td><td>基站、零售店（服务半径有限）</td></tr>
+<tr><td><strong>集合覆盖</strong></td><td>最小化设施数量</td><td>\(\min \sum_j x_j\)，所有需求点都被覆盖</td><td>全覆盖要求（如信号塔）</td></tr>
+</tbody>
+</table>
+
+<div class="derive-box">
+<h4>P-Median 的完整公式</h4>
+<div class="math-block">
+\[
+\begin{aligned}
+\min \quad & \sum_{i \in I} \sum_{j \in J} w_i d_{ij} x_{ij} \\
+\text{s.t.} \quad & \sum_{j \in J} x_{ij} = 1 \quad \forall i \quad \text{（每个需求点恰好分配到一个设施）} \\
+& x_{ij} \leq y_j \quad \forall i, j \quad \text{（只能分配到已建设施）} \\
+& \sum_{j \in J} y_j = p \quad \text{（恰好建 } p \text{ 个设施）} \\
+& x_{ij}, y_j \in \{0, 1\}
+\end{aligned}
+\]
+</div>
+<p>其中 \(I\) = 需求点集合，\(J\) = 候选设施位置集合，\(w_i\) = 需求点 \(i\) 的权重（人口/需求量），\(d_{ij}\) = 距离，\(y_j = 1\) 表示在 \(j\) 处建设施，\(x_{ij} = 1\) 表示需求点 \(i\) 分配给设施 \(j\)。</p>
+</div>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>选址问题的关键是距离矩阵 \(d_{ij}\) 的计算——可以用欧氏距离、曼哈顿距离或实际路网距离。如果题目要求「公平性」（如急救站），首选 P-Center；如果要求「效率」（如物流中心），首选 P-Median；如果要求「全覆盖」，首选集合覆盖。论文中应当解释为什么选择这个模型。
+</div>
+
+<!-- ═══════════ 13.7.5 车辆路径问题 VRP ═══════════ -->
+<h2>13.7.5 车辆路径问题 VRP</h2>
+
+<div class="concept-box">
+<h4>TSP 的多车扩展——物流竞赛题标配</h4>
+<p>车辆路径问题（Vehicle Routing Problem, VRP）是 TSP 的推广：有 <strong>多辆车</strong>（每辆有容量限制 \(Q\)），它们从同一个仓库出发，服务所有客户后返回仓库，目标是最小化总行驶距离。</p>
+</div>
+
+<div class="derive-box">
+<h4>CVRP（容量约束 VRP）的整数规划模型</h4>
+<p>设 \(K\) 辆车，每辆容量 \(Q\)。客户 \(i\) 的需求量为 \(q_i\)。\(x_{ij}^k = 1\) 表示车辆 \(k\) 从 \(i\) 行驶到 \(j\)：</p>
+<div class="math-block">
+\[
+\begin{aligned}
+\min \quad & \sum_{k=1}^{K} \sum_{i=0}^{n} \sum_{j=0}^{n} c_{ij} x_{ij}^k \\
+\text{s.t.} \quad & \sum_{k=1}^{K} \sum_{j=0}^{n} x_{ij}^k = 1 \quad \forall i \in \{1,\ldots,n\} \quad \text{（每个客户被服务恰好一次）} \\
+& \sum_{j=1}^{n} x_{0j}^k = 1 \quad \forall k \quad \text{（每辆车从仓库出发）} \\
+& \sum_{i=0}^{n} x_{ij}^k = \sum_{i=0}^{n} x_{ji}^k \quad \forall j,k \quad \text{（流量守恒）} \\
+& \sum_{i=1}^{n} q_i \sum_{j=0}^{n} x_{ij}^k \leq Q \quad \forall k \quad \text{（容量约束）} \\
+& \text{子环消除约束} \\
+& x_{ij}^k \in \{0, 1\}
+\end{aligned}
+\]
+</div>
+<p>其中节点 0 是仓库，节点 1…n 是客户。</p>
+</div>
+
+<table class="compact-table">
+<thead><tr><th>变体</th><th>额外约束</th><th>竞赛场景</th></tr></thead>
+<tbody>
+<tr><td><strong>CVRP</strong></td><td>每辆车有容量限制</td><td>基础物流配送</td></tr>
+<tr><td><strong>VRPTW</strong></td><td>每个客户有服务时间窗 \([a_i, b_i]\)</td><td>快递配送、班车调度</td></tr>
+<tr><td><strong>MDVRP</strong></td><td>多个仓库</td><td>多区域配送</td></tr>
+<tr><td><strong>SDVRP</strong></td><td>一个客户的需求可由多辆车分次满足</td><td>大宗物资配送</td></tr>
+</tbody>
+</table>
+
+<div class="warn-box">
+<strong>竞赛警告：</strong>VRP 是 NP-hard 问题——精确求解通常只能处理 50 个客户左右。竞赛中大规模 VRP 一律用启发式算法（蚁群算法 ACO 是 VRP 最经典的启发式方法）。OR-Tools 内置了 VRP 求解器，支持 CVRP、VRPTW 等多种变体，是竞赛首选工具。
+</div>
+
+<!-- ═══════════ 13.7A 启发式算法 ═══════════ -->
+<h2>13.7A 启发式算法</h2>
+
+<div class="concept-box">
+<h4>当精确求解不可能时——NP-hard 问题的竞赛应对</h4>
+<p>TSP、VRP、大规模整数规划都是 NP-hard 问题——问题规模增大时，精确求解的时间指数增长。竞赛中面对这类问题，<strong>启发式算法 (Heuristics) 和元启发式算法 (Metaheuristics)</strong> 是实际可行的解决方案。它们不保证找到最优解，但能在合理时间内找到<strong>高质量的近似解</strong>。</p>
+</div>
+
+<h3>遗传算法 (Genetic Algorithm, GA)</h3>
+
+<div class="derive-box">
+<h4>模拟自然选择</h4>
+<p>遗传算法受达尔文进化论启发——通过选择、交叉、变异三个操作，在解空间中<strong>迭代进化</strong>出越来越好的解。</p>
+<p><strong>Step 1 — 编码：</strong>将解表示为「染色体」（如 TSP 中，染色体 = 城市访问顺序的排列）。<br>
+<strong>Step 2 — 初始化种群：</strong>随机生成 N 个可行解。<br>
+<strong>Step 3 — 适应度评估：</strong>计算每个解的适应度（目标函数值越大/越小 → 适应度越高）。<br>
+<strong>Step 4 — 选择：</strong>按适应度比例选择父代（轮盘赌、锦标赛选择）。<br>
+<strong>Step 5 — 交叉：</strong>两个父代染色体交换片段，产生子代（如 TSP 中的 PMX 交叉）。<br>
+<strong>Step 6 — 变异：</strong>以较小概率随机修改子代（如 TSP 中交换两个城市的位置）。<br>
+<strong>Step 7 — 迭代：</strong>重复 Step 3-6，直到达到最大代数或收敛。</p>
+</div>
+
+<h3>模拟退火 (Simulated Annealing, SA)</h3>
+
+<div class="derive-box">
+<h4>模拟金属退火过程</h4>
+<p>模拟退火模拟金属加热后缓慢冷却的物理过程——高温时原子可以自由移动（接受差解），低温时原子趋于稳定（只接受好解）。</p>
+<div class="math-block">
+\[
+P(\text{接受差解}) = \exp\left(-\frac{\Delta E}{T}\right)
+\]
+</div>
+<p>其中 \(\Delta E\) = 新解的目标值 - 当前解的目标值（如果新解更差，\(\Delta E > 0\)），\(T\) 是当前温度。温度按冷却计划递减：\(T_{k+1} = \alpha T_k\)，\(\alpha \in (0.9, 0.99)\)。高温时接受差解的概率大（探索），低温时接受差解的概率小（开发）。</p>
+<p><strong>SA 的关键优势：</strong>理论上可以<strong>逃离局部最优</strong>——因为有一定概率接受更差的解。这是 SA 与贪心算法最本质的区别。</p>
+</div>
+
+<h3>粒子群优化 (Particle Swarm Optimization, PSO)</h3>
+
+<div class="derive-box">
+<h4>模拟鸟群觅食</h4>
+<p>PSO 的每个「粒子」代表一个候选解，在搜索空间中移动。每个粒子记录自己的历史最优位置 (pbest) 和整个群体的历史最优位置 (gbest)，并据此调整速度：</p>
+<div class="math-block">
+\[
+v_i^{t+1} = w v_i^t + c_1 r_1 (\text{pbest}_i - x_i^t) + c_2 r_2 (\text{gbest} - x_i^t)
+\]
+\[
+x_i^{t+1} = x_i^t + v_i^{t+1}
+\]
+</div>
+<p>\(w\) 是惯性权重（保持原来的运动方向），\(c_1\) 是认知系数（向自己的历史最优学习），\(c_2\) 是社会系数（向群体的历史最优学习）。PSO 特别适合<strong>连续优化</strong>问题（如非线性规划的数值求解）。</p>
+</div>
+
+<h3>蚁群算法 (Ant Colony Optimization, ACO)</h3>
+
+<div class="derive-box">
+<h4>模拟蚂蚁觅食路径</h4>
+<p>蚂蚁在路径上释放信息素 (pheromone)——路径越短，蚂蚁往返越快，信息素积累越多，后续蚂蚁选择该路径的概率越大。正反馈机制使群体最终收敛到最短路径。</p>
+<div class="math-block">
+\[
+P_{ij}^k = \frac{[\tau_{ij}]^\alpha \cdot [\eta_{ij}]^\beta}{\sum_{l \in \text{allowed}} [\tau_{il}]^\alpha \cdot [\eta_{il}]^\beta}
+\]
+</div>
+<p>其中 \(\tau_{ij}\) 是边 (i,j) 上的信息素浓度，\(\eta_{ij} = 1/d_{ij}\) 是启发式信息（距离越短，可见度越高），α 和 β 控制信息素和启发式信息的相对重要性。ACO 是<strong>TSP/VRP 的经典启发式算法</strong>。</p>
+</div>
+
+<table class="compact-table">
+<thead><tr><th>算法</th><th>灵感来源</th><th>最适合</th><th>关键参数</th></tr></thead>
+<tbody>
+<tr><td>GA</td><td>自然选择</td><td>组合优化、调度</td><td>种群大小、交叉率、变异率</td></tr>
+<tr><td>SA</td><td>金属退火</td><td>组合优化、布局</td><td>初始温度、冷却速率</td></tr>
+<tr><td>PSO</td><td>鸟群觅食</td><td>连续优化、参数估计</td><td>种群大小、惯性权重</td></tr>
+<tr><td>ACO</td><td>蚂蚁觅食</td><td>TSP、VRP、路径规划</td><td>蚂蚁数、蒸发率、α/β</td></tr>
+</tbody>
+</table>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>① 启发式算法论文必写：算法原理 + 参数设置 + 收敛性分析（迭代曲线图）+ 与精确解（小规模）或其他启发式的对比。② 不要声称「找到了最优解」——只能说「找到了近似最优解」或「高质量的解」。③ 多次运行取平均——启发式算法有随机性，单次结果不可靠。④ 竞赛中最常见的组合：GA 解调度问题，SA 解布局问题，ACO 解 TSP/VRP。
+</div>
+
+<!-- ═══════════ 13.7B 网络流问题 ═══════════ -->
+<h2>13.7B 网络流问题</h2>
+
+<div class="concept-box">
+<h4>图论中的优化模型</h4>
+<p>网络流问题 (Network Flow) 研究<strong>在网络中如何最优地运输流量</strong>——从源点到汇点，经过有容量限制的边。三类经典问题：</p>
+</div>
+
+<table class="compact-table">
+<thead><tr><th>问题</th><th>目标</th><th>约束</th><th>竞赛应用</th></tr></thead>
+<tbody>
+<tr><td><strong>最大流</strong></td><td>最大化从源到汇的流量</td><td>每条边的容量限制</td><td>交通网络容量、通信带宽</td></tr>
+<tr><td><strong>最小费用流</strong></td><td>最小化运输总成本</td><td>每条边的容量 + 供需平衡</td><td>物资调运、物流配送</td></tr>
+<tr><td><strong>最小割</strong></td><td>找到割断后使源汇分离的最小容量边集</td><td>——</td><td>图像分割、社区检测</td></tr>
+</tbody>
+</table>
+
+<div class="derive-box">
+<h4>最大流-最小割定理</h4>
+<p>在任何网络中，<strong>最大流的值等于最小割的容量</strong>。这是网络流理论的核心定理——它建立了流和割之间的对偶关系。Ford-Fulkerson 算法和 Edmonds-Karp 算法是求解最大流的标准方法。</p>
+</div>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>网络流问题在竞赛中经常隐藏在「运输」「调度」「配送」的描述中——识别出它并建模为网络流，往往比整数规划更快求解。Python 的 networkx 库提供了 max_flow 和 min_cost_flow 的实现。
+</div>
+
+<!-- ═══════════ 13.7C 博弈论入门 ═══════════ -->
+<h2>13.7C 博弈论入门</h2>
+
+<div class="concept-box">
+<h4>当决策涉及多个理性主体时</h4>
+<p>前面的优化问题都假设<strong>只有一个决策者</strong>。但竞赛中有时涉及多个利益相关方——每个方的决策会影响其他方的收益。博弈论 (Game Theory) 研究<strong>多个理性决策者之间的策略互动</strong>。</p>
+</div>
+
+<h3>核心概念</h3>
+
+<div class="math-block">
+\[
+\text{纳什均衡 (Nash Equilibrium)：} \quad u_i(s_i^*, s_{-i}^*) \geq u_i(s_i, s_{-i}^*) \quad \forall s_i, \forall i
+\]
+</div>
+
+<p>在纳什均衡中，<strong>给定其他人的策略，没有人有动机单方面改变自己的策略</strong>。这是博弈论最基本的解概念。</p>
+
+<table class="compact-table">
+<thead><tr><th>博弈类型</th><th>特征</th><th>经典例子</th><th>竞赛应用</th></tr></thead>
+<tbody>
+<tr><td><strong>囚徒困境</strong></td><td>个体理性导致集体非理性</td><td>价格战、军备竞赛</td><td>企业竞争策略</td></tr>
+<tr><td><strong>零和博弈</strong></td><td>一方收益 = 另一方损失</td><td>石头剪刀布</td><td>资源争夺、拍卖</td></tr>
+<tr><td><strong>协调博弈</strong></td><td>多个均衡，需要协调</td><td>技术标准选择</td><td>行业标准制定</td></tr>
+</tbody>
+</table>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>博弈论在竞赛中不常见，但一旦出现就是区分度很高的题目——如美赛 ICM 中的政策制定、资源分配中的多方博弈。论文中：「我们建立非合作博弈模型分析各方的最优策略。纳什均衡分析表明，在当前的参数设置下，各方的最优策略是 (合作, 合作)，此时社会总福利达到最大。然而，如果监管力度不足，均衡可能偏离到 (背叛, 背叛)，导致囚徒困境。」<br>
+<strong>注意：</strong>如果题目没有明确涉及多方互动，不要强行使用博弈论——过度使用复杂方法会适得其反。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- INSTRUMENT No.13A: 线性规划可视化 -->
+<!-- ══════════════════════════════════════════════ -->
+<h2>仪器 No.13A — 线性规划可行域可视化</h2>
+<div class="panel">
+<div class="panel-label">INSTRUMENT No.13A · LP Feasible Region & Objective Contours</div>
+<p style="font-size:0.9rem;color:var(--slate);margin-bottom:12px">观察二维线性规划的几何结构。蓝色区域 = 可行域（所有约束的交集），红色虚线 = 目标函数等高线，红点 = 最优解。拖动滑块调整目标系数，观察最优解如何变化。</p>
+<div class="slider-row">
+  <label>目标 c₁ (x₁ 系数) = <span class="slider-val" id="lp-c1-val">-3.0</span></label>
+  <input type="range" id="lp-c1" min="-5" max="5" value="-3" step="0.1">
+</div>
+<div class="slider-row">
+  <label>目标 c₂ (x₂ 系数) = <span class="slider-val" id="lp-c2-val">-2.0</span></label>
+  <input type="range" id="lp-c2" min="-5" max="5" value="-2" step="0.1">
+</div>
+<div class="btn-group">
+  <button class="btn" id="lp-preset1">预设: max 利润</button>
+  <button class="btn" id="lp-preset2">预设: min 成本</button>
+</div>
+<div class="panel-grid">
+  <div class="chart-container" id="lp-chart"></div>
+  <div>
+    <div class="stat-cards" id="lp-info"></div>
+    <div style="font-family:var(--mono);font-size:0.78rem;color:var(--slate);margin-top:8px;line-height:1.6" id="lp-constraints-text"></div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- INSTRUMENT No.13B: 背包问题 DP 求解 -->
+<!-- ══════════════════════════════════════════════ -->
+<h2>仪器 No.13B — 0-1 背包问题</h2>
+<div class="panel">
+<div class="panel-label">INSTRUMENT No.13B · 0-1 Knapsack Dynamic Programming</div>
+<p style="font-size:0.9rem;color:var(--slate);margin-bottom:12px">给定 8 个物品（各有重量和价值），背包容量可调。DP 表格显示每个子问题的最优值。选中的物品高亮。观察 DP 的填表过程。</p>
+<div class="slider-row">
+  <label>背包容量 W = <span class="slider-val" id="kp-cap-val">15</span></label>
+  <input type="range" id="kp-cap" min="5" max="30" value="15" step="1">
+</div>
+<div class="btn-group">
+  <button class="btn" id="kp-reshuffle">重新生成物品</button>
+</div>
+<div class="panel-grid">
+  <div class="chart-container" id="kp-chart"></div>
+  <div class="chart-container" id="kp-dp-chart"></div>
+</div>
+<div class="stat-cards" id="kp-stats"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>13.8 竞赛实战流程</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="toolkit-box">
+<h4>优化题竞赛标准流程</h4>
+<p><strong>Step 1：读懂题目 → 列出所有约束。</strong>逐句翻译，不遗漏任何限制条件。用纸笔列出所有「不能超过」「至少」「必须满足」的条件。<br>
+<strong>Step 2：定义决策变量。</strong>明确每个变量的含义、单位和类型（连续/整数/0-1）。<br>
+<strong>Step 3：写出目标函数。</strong>确认是 max 还是 min。多个目标时，先列出所有目标，再选择处理方法（§13.5）。<br>
+<strong>Step 4：写出完整数学模型。</strong>用标准形式表述——目标 + s.t. + 变量类型。这是论文中最核心的公式。<br>
+<strong>Step 5：选择求解工具。</strong>小规模 LP → scipy.optimize.linprog；整数规划 → PuLP / OR-Tools；非线性 → scipy.optimize.minimize / cvxpy。<br>
+<strong>Step 6：求解 + 灵敏度分析。</strong>报告最优解、最优值、影子价格、灵敏度范围。<br>
+<strong>Step 7：结果解释。</strong>把数学解翻译回自然语言——「最优方案是：使用 X 公斤玉米和 Y 公斤豆粕，总成本为 Z 元」。<br>
+<strong>Step 8：模型验证。</strong>改变参数看结果是否合理；极端情况测试（如资源为零时模型是否报告不可行）。</p>
+</div>
+
+<h3>13.8.1 Python 工具速查</h3>
+
+<table class="compact-table">
+<thead><tr><th>工具</th><th>适用场景</th><th>安装</th><th>特点</th></tr></thead>
+<tbody>
+<tr><td><strong>scipy.optimize.linprog</strong></td><td>线性规划</td><td>内置</td><td>简单直接，不需要额外安装</td></tr>
+<tr><td><strong>scipy.optimize.minimize</strong></td><td>非线性规划</td><td>内置</td><td>支持多种算法（SLSQP, L-BFGS-B）</td></tr>
+<tr><td><strong>PuLP</strong></td><td>LP / IP / MIP</td><td>pip install pulp</td><td>语法简洁，支持多种求解器（CBC, GLPK）</td></tr>
+<tr><td><strong>cvxpy</strong></td><td>凸优化</td><td>pip install cvxpy</td><td>声明式建模，自动选择求解器</td></tr>
+<tr><td><strong>OR-Tools</strong></td><td>LP / IP / VRP / 排班</td><td>pip install ortools</td><td>Google 出品，内置 VRP/TSP 求解器</td></tr>
+<tr><td><strong>geatpy / DEAP</strong></td><td>遗传算法 / 启发式</td><td>pip install geatpy</td><td>大规模 NP-hard 问题的近似求解</td></tr>
+</tbody>
+</table>
+
+<div class="warn-box">
+<strong>一票否决的致命错误：</strong>① 决策变量定义不清晰——评委不知道 x₁ 代表什么。② 遗漏约束——特别是非负约束和整数约束。③ 约束条件写成「x₁ + x₂ &lt; 100」而不是「x₁ + x₂ ≤ 100」——严格不等号在优化中无法处理（除非是整数变量）。④ 对 NP-hard 问题（TSP, VRP）声称找到了「最优解」——实际上你只能找到近似解。⑤ 不做灵敏度分析——优化题论文的灵魂。⑥ 强行把多目标合并成单目标而不讨论权重的合理性。
+</div>
+
+<footer>
+  <p><a href="stats_12_prediction.html">← §XII 预测问题专论</a> &nbsp;|&nbsp; <a href="stats_tutorial.html">Field Station 总目录</a></p>
+  <p style="margin-top:8px">Statistical Field Station &copy; 2026 · KaTeX + D3.js</p>
+</footer>
+
+</div>
+
+<script>
+// ============ KaTeX Auto-Render ============
+renderMathInElement(document.body, {
+  delimiters: [
+    {left: '\\[', right: '\\]', display: true},
+    {left: '\\(', right: '\\)', display: false},
+    {left: '$$', right: '$$', display: true}
+  ],
+  throwOnError: false
+});
+
+// ============ INSTRUMENT No.13A: LP Visualization ============
+(function() {
+  const W = 460, H = 400, margin = {top:25, right:25, bottom:40, left:45};
+  const pw = W - margin.left - margin.right;
+  const ph = H - margin.top - margin.bottom;
+
+  const svg = d3.select('#lp-chart').append('svg').attr('width',W).attr('height',H).attr('viewBox',`0 0 ${W} ${H}`);
+
+  // Default constraints: x1 >= 0, x2 >= 0, x1 + x2 <= 8, 2x1 + x2 <= 12, x1 + 2x2 <= 12
+  // Feasible region vertices
+  const constraints = [
+    {name: 'x₁ + x₂ ≤ 8',  a:1, b:1, c:8,  color:'#2D6BA0'},
+    {name: '2x₁ + x₂ ≤ 12', a:2, b:1, c:12, color:'#5B8C3E'},
+    {name: 'x₁ + 2x₂ ≤ 12', a:1, b:2, c:12, color:'#8B6914'},
+  ];
+
+  function getVertices() {
+    // Collect all intersection points + axes intersections
+    const pts = [];
+    // x1=0, x2=0
+    pts.push([0,0]);
+    // Intersections with axes
+    constraints.forEach(con => {
+      if (con.c / con.a > 0) pts.push([con.c / con.a, 0]);
+      if (con.c / con.b > 0) pts.push([0, con.c / con.b]);
+    });
+    // Intersections between pairs of constraints
+    for (let i = 0; i < constraints.length; i++) {
+      for (let j = i+1; j < constraints.length; j++) {
+        const det = constraints[i].a * constraints[j].b - constraints[i].b * constraints[j].a;
+        if (Math.abs(det) < 1e-10) continue;
+        const x1 = (constraints[i].c * constraints[j].b - constraints[i].b * constraints[j].c) / det;
+        const x2 = (constraints[i].a * constraints[j].c - constraints[i].c * constraints[j].a) / det;
+        if (x1 >= -1e-9 && x2 >= -1e-9) pts.push([x1, x2]);
+      }
+    }
+    // Filter: keep only points that satisfy all constraints
+    const feasible = pts.filter(([x1,x2]) => {
+      if (x1 < -1e-9 || x2 < -1e-9) return false;
+      return constraints.every(c => c.a*x1 + c.b*x2 <= c.c + 1e-9);
+    });
+    // Remove duplicates
+    const uniq = [];
+    feasible.forEach(p => {
+      if (!uniq.some(q => Math.abs(p[0]-q[0])<1e-8 && Math.abs(p[1]-q[1])<1e-8)) uniq.push(p);
+    });
+    // Sort by polar angle around centroid
+    const cx = uniq.reduce((s,p)=>s+p[0],0)/uniq.length;
+    const cy = uniq.reduce((s,p)=>s+p[1],0)/uniq.length;
+    uniq.sort((a,b) => Math.atan2(a[1]-cy, a[0]-cx) - Math.atan2(b[1]-cy, b[0]-cx));
+    return uniq;
+  }
+
+  function update() {
+    const c1 = +d3.select('#lp-c1').property('value');
+    const c2 = +d3.select('#lp-c2').property('value');
+    d3.select('#lp-c1-val').text(c1.toFixed(1));
+    d3.select('#lp-c2-val').text(c2.toFixed(1));
+
+    const vertices = getVertices();
+    const xMax = d3.max(vertices, d => d[0]) * 1.4 || 10;
+    const yMax = d3.max(vertices, d => d[1]) * 1.4 || 10;
+    const xScale = d3.scaleLinear().domain([0, xMax]).range([margin.left, margin.left+pw]);
+    const yScale = d3.scaleLinear().domain([0, yMax]).range([margin.top+ph, margin.top]);
+
+    svg.selectAll('*').remove();
+
+    // Axes
+    svg.append('g').attr('transform',`translate(0,${margin.top+ph})`).call(d3.axisBottom(xScale).ticks(6));
+    svg.append('g').attr('transform',`translate(${margin.left},0)`).call(d3.axisLeft(yScale).ticks(6));
+    svg.selectAll('.axis text').attr('font-family','var(--mono)').attr('font-size','0.7rem').attr('fill','var(--slate)');
+    svg.selectAll('.axis line,.axis path').attr('stroke','var(--stone)');
+    svg.append('text').attr('x',W/2).attr('y',H-6).attr('text-anchor','middle')
+      .style('font-family','var(--mono)').style('font-size','0.7rem').style('fill','var(--slate)').text('x₁');
+    svg.append('text').attr('x',-H/2).attr('y',10).attr('transform','rotate(-90)').attr('text-anchor','middle')
+      .style('font-family','var(--mono)').style('font-size','0.7rem').style('fill','var(--slate)').text('x₂');
+
+    // Feasible region
+    if (vertices.length >= 3) {
+      const areaGen = d3.area().x(d => xScale(d[0])).y0(yScale(0)).y1(d => yScale(d[1]));
+      svg.append('path').datum(vertices).attr('d', areaGen)
+        .attr('fill','rgba(45,107,160,0.15)').attr('stroke','#2D6BA0').attr('stroke-width',1.5);
+    }
+
+    // Constraint lines
+    constraints.forEach(con => {
+      const x1End = con.a !== 0 ? con.c / con.a : xMax;
+      const x2End = con.b !== 0 ? con.c / con.b : yMax;
+      let x1A, x2A, x1B, x2B;
+      if (con.a !== 0 && con.b !== 0) {
+        x1A = 0; x2A = con.c / con.b;
+        x1B = con.c / con.a; x2B = 0;
+      } else if (con.a === 0) {
+        x1A = 0; x2A = con.c / con.b; x1B = xMax; x2B = con.c / con.b;
+      } else {
+        x1A = con.c / con.a; x2A = 0; x1B = con.c / con.a; x2B = yMax;
+      }
+      svg.append('line').attr('x1',xScale(x1A)).attr('x2',xScale(x1B))
+        .attr('y1',yScale(x2A)).attr('y2',yScale(x2B))
+        .attr('stroke',con.color).attr('stroke-width',1.5).attr('stroke-dasharray','6,3');
+      // Label near midpoint
+      const mx = (x1A + x1B) / 2, my = (x2A + x2B) / 2;
+      svg.append('text').attr('x',xScale(mx)).attr('y',yScale(my)-6)
+        .text(con.name).style('font-family','var(--mono)').style('font-size','0.6rem')
+        .style('fill',con.color).style('text-anchor','middle');
+    });
+
+    // Find optimal vertex (minimize c1*x1 + c2*x2)
+    let bestVal = Infinity, bestPt = null;
+    vertices.forEach(([x1,x2]) => {
+      const val = c1 * x1 + c2 * x2;
+      if (val < bestVal) { bestVal = val; bestPt = [x1, x2]; }
+    });
+
+    // Objective contours
+    if (bestPt && Math.abs(c1)+Math.abs(c2) > 0.01) {
+      const objVal = c1 * bestPt[0] + c2 * bestPt[1];
+      // Draw 3 contour lines
+      for (let k = -1; k <= 2; k++) {
+        const v = objVal + k * (objVal !== 0 ? Math.abs(objVal) * 0.3 : 1);
+        // Line: c1*x1 + c2*x2 = v
+        // x2 = (v - c1*x1) / c2
+        if (Math.abs(c2) > 1e-10) {
+          const x2At0 = v / c2;
+          const x2AtMax = (v - c1 * xMax) / c2;
+          svg.append('line').attr('x1',xScale(0)).attr('x2',xScale(xMax))
+            .attr('y1',yScale(x2At0)).attr('y2',yScale(x2AtMax))
+            .attr('stroke','var(--terracotta)').attr('stroke-width',1).attr('stroke-dasharray','3,3').attr('opacity',0.5);
+        } else if (Math.abs(c1) > 1e-10) {
+          const x1AtV = v / c1;
+          svg.append('line').attr('x1',xScale(x1AtV)).attr('x2',xScale(x1AtV))
+            .attr('y1',yScale(0)).attr('y2',yScale(yMax))
+            .attr('stroke','var(--terracotta)').attr('stroke-width',1).attr('stroke-dasharray','3,3').attr('opacity',0.5);
+        }
+      }
+    }
+
+    // Optimal point
+    if (bestPt) {
+      svg.append('circle').attr('cx',xScale(bestPt[0])).attr('cy',yScale(bestPt[1]))
+        .attr('r',7).attr('fill','var(--terracotta)').attr('stroke','#fff').attr('stroke-width',2);
+      svg.append('text').attr('x',xScale(bestPt[0])+10).attr('y',yScale(bestPt[1])-10)
+        .text(`(${bestPt[0].toFixed(2)}, ${bestPt[1].toFixed(2)})`)
+        .style('font-family','var(--mono)').style('font-size','0.7rem').style('fill','var(--terracotta)');
+    }
+
+    // Info
+    const isMin = true; // always min in this viz
+    d3.select('#lp-info').html(`
+      <div class="stat-card"><div class="lbl">最优解 x₁*</div><div class="val">${bestPt ? bestPt[0].toFixed(2) : '—'}</div></div>
+      <div class="stat-card"><div class="lbl">最优解 x₂*</div><div class="val">${bestPt ? bestPt[1].toFixed(2) : '—'}</div></div>
+      <div class="stat-card"><div class="lbl">最优值 Z*</div><div class="val" style="color:var(--terracotta)">${bestPt ? (c1*bestPt[0]+c2*bestPt[1]).toFixed(2) : '—'}</div></div>
+      <div class="stat-card"><div class="lbl">顶点数</div><div class="val">${vertices.length}</div></div>
+    `);
+    d3.select('#lp-constraints-text').html(`
+      min Z = ${c1.toFixed(1)}x₁ + ${c2.toFixed(1)}x₂<br>
+      s.t. x₁ ≥ 0, x₂ ≥ 0<br>
+      ${constraints.map(c => c.name).join('<br>')}
+    `);
+  }
+
+  d3.select('#lp-c1').on('input', update);
+  d3.select('#lp-c2').on('input', update);
+  d3.select('#lp-preset1').on('click', () => {
+    d3.select('#lp-c1').property('value', -3);
+    d3.select('#lp-c2').property('value', -2);
+    update();
+  });
+  d3.select('#lp-preset2').on('click', () => {
+    d3.select('#lp-c1').property('value', 2);
+    d3.select('#lp-c2').property('value', 3);
+    update();
+  });
+  update();
+})();
+
+// ============ INSTRUMENT No.13B: Knapsack DP ============
+(function() {
+  const W = 460, H = 320, margin = {top:20, right:20, bottom:35, left:40};
+  const pw = W - margin.left - margin.right;
+  const ph = H - margin.top - margin.bottom;
+
+  const kpSvg = d3.select('#kp-chart').append('svg').attr('width',W).attr('height',H).attr('viewBox',`0 0 ${W} ${H}`);
+  const dpSvg = d3.select('#kp-dp-chart').append('svg').attr('width',W).attr('height',H).attr('viewBox',`0 0 ${W} ${H}`);
+
+  let items = [];
+  const nItems = 8;
+
+  function generateItems() {
+    items = [];
+    for (let i = 0; i < nItems; i++) {
+      items.push({
+        name: `物品${i+1}`,
+        weight: Math.floor(Math.random() * 8) + 2,
+        value: Math.floor(Math.random() * 15) + 5
+      });
+    }
+  }
+
+  function solveKnapsack(capacity) {
+    const n = items.length;
+    const dp = Array.from({length: n+1}, () => new Array(capacity+1).fill(0));
+    const keep = Array.from({length: n+1}, () => new Array(capacity+1).fill(false));
+
+    for (let i = 1; i <= n; i++) {
+      const w = items[i-1].weight, v = items[i-1].value;
+      for (let j = 0; j <= capacity; j++) {
+        dp[i][j] = dp[i-1][j];
+        keep[i][j] = false;
+        if (j >= w && dp[i-1][j-w] + v > dp[i][j]) {
+          dp[i][j] = dp[i-1][j-w] + v;
+          keep[i][j] = true;
+        }
+      }
+    }
+
+    // Backtrack
+    const selected = [];
+    let j = capacity;
+    for (let i = n; i >= 1; i--) {
+      if (keep[i][j]) {
+        selected.push(i-1);
+        j -= items[i-1].weight;
+      }
+    }
+    selected.reverse();
+
+    const totalWeight = selected.reduce((s,i) => s + items[i].weight, 0);
+    const totalValue = dp[n][capacity];
+
+    return {dp, keep, selected, totalWeight, totalValue};
+  }
+
+  function update() {
+    const capacity = +d3.select('#kp-cap').property('value');
+    d3.select('#kp-cap-val').text(capacity);
+    const result = solveKnapsack(capacity);
+    const {dp, keep, selected, totalWeight, totalValue} = result;
+
+    // Items chart (bar chart)
+    kpSvg.selectAll('*').remove();
+    const barH = Math.min(30, (ph - 20) / nItems);
+    const yScale = d3.scaleBand().domain(d3.range(nItems)).range([margin.top, margin.top + nItems * barH]).padding(0.2);
+    const xMax = d3.max(items, d => Math.max(d.weight, d.value)) * 1.3;
+    const xScale = d3.scaleLinear().domain([0, xMax]).range([margin.left, margin.left + pw]);
+
+    kpSvg.append('g').attr('transform',`translate(0,${margin.top + nItems * barH})`).call(d3.axisBottom(xScale).ticks(5));
+    kpSvg.selectAll('.axis text').attr('font-family','var(--mono)').attr('font-size','0.65rem').attr('fill','var(--slate)');
+    kpSvg.selectAll('.axis line,.axis path').attr('stroke','var(--stone)');
+
+    items.forEach((item, i) => {
+      const y = yScale(i);
+      const isSel = selected.includes(i);
+      // Weight bar
+      kpSvg.append('rect').attr('x', margin.left).attr('y', y)
+        .attr('width', xScale(item.weight) - margin.left)
+        .attr('height', yScale.bandwidth()/2 - 1)
+        .attr('fill', isSel ? '#2D6BA0' : 'var(--stone)').attr('opacity', 0.8);
+      // Value bar
+      kpSvg.append('rect').attr('x', margin.left).attr('y', y + yScale.bandwidth()/2)
+        .attr('width', xScale(item.value) - margin.left)
+        .attr('height', yScale.bandwidth()/2 - 1)
+        .attr('fill', isSel ? 'var(--terracotta)' : 'var(--stone)').attr('opacity', 0.8);
+      // Label
+      kpSvg.append('text').attr('x', margin.left - 4).attr('y', y + yScale.bandwidth()/2 + 4)
+        .text(item.name).style('font-family','var(--mono)').style('font-size','0.6rem')
+        .style('fill', isSel ? 'var(--forest)' : 'var(--slate)').style('text-anchor','end');
+      // Weight & value text
+      kpSvg.append('text').attr('x', xScale(item.weight) + 4).attr('y', y + yScale.bandwidth()/4 + 4)
+        .text(`w=${item.weight}`).style('font-family','var(--mono)').style('font-size','0.55rem').style('fill','var(--slate)');
+      kpSvg.append('text').attr('x', xScale(item.value) + 4).attr('y', y + 3*yScale.bandwidth()/4 + 4)
+        .text(`v=${item.value}`).style('font-family','var(--mono)').style('font-size','0.55rem').style('fill','var(--slate)');
+    });
+
+    // Legend
+    kpSvg.append('rect').attr('x',margin.left).attr('y',margin.top + nItems * barH + 8).attr('width',10).attr('height',6).attr('fill','var(--stone)').attr('opacity',0.8);
+    kpSvg.append('text').attr('x',margin.left+14).attr('y',margin.top + nItems * barH + 15).text('重量').style('font-size','0.6rem').style('fill','var(--slate)');
+    kpSvg.append('rect').attr('x',margin.left+50).attr('y',margin.top + nItems * barH + 8).attr('width',10).attr('height',6).attr('fill','var(--stone)').attr('opacity',0.8);
+    kpSvg.append('text').attr('x',margin.left+64).attr('y',margin.top + nItems * barH + 15).text('价值').style('font-size','0.6rem').style('fill','var(--slate)');
+
+    // DP table visualization (simplified: show the last row)
+    dpSvg.selectAll('*').remove();
+    const dpW = W, dpH = H, dpM = {top:15, right:15, bottom:35, left:45};
+    const dpPw = dpW - dpM.left - dpM.right;
+    const dpPh = dpH - dpM.top - dpM.bottom;
+
+    // Show DP values as a heatmap (every few rows)
+    const step = Math.max(1, Math.floor(nItems / 6));
+    const rowsToShow = [];
+    for (let i = 0; i <= nItems; i += step) rowsToShow.push(i);
+    if (rowsToShow[rowsToShow.length-1] !== nItems) rowsToShow.push(nItems);
+
+    const cellW = dpPw / (capacity + 1);
+    const cellH = dpPh / rowsToShow.length;
+    const maxVal = dp[nItems][capacity] || 1;
+
+    const colorScale = d3.scaleSequential(d3.interpolateBlues).domain([0, maxVal]);
+
+    rowsToShow.forEach((i, ri) => {
+      for (let j = 0; j <= capacity; j++) {
+        const alpha = dp[i][j] / maxVal;
+        dpSvg.append('rect')
+          .attr('x', dpM.left + j * cellW).attr('y', dpM.top + ri * cellH)
+          .attr('width', cellW).attr('height', cellH)
+          .attr('fill', colorScale(dp[i][j])).attr('stroke','#fff').attr('stroke-width',0.5);
+        if (cellW > 18 && cellH > 12) {
+          dpSvg.append('text')
+            .attr('x', dpM.left + j * cellW + cellW/2).attr('y', dpM.top + ri * cellH + cellH/2 + 3)
+            .attr('text-anchor','middle').style('font-family','var(--mono)').style('font-size','0.5rem')
+            .style('fill', alpha > 0.5 ? '#fff' : 'var(--forest)').text(dp[i][j]);
+        }
+      }
+      // Row label
+      dpSvg.append('text').attr('x', dpM.left - 4).attr('y', dpM.top + ri * cellH + cellH/2 + 4)
+        .text(`i=${i}`).style('font-family','var(--mono)').style('font-size','0.55rem')
+        .style('fill','var(--slate)').style('text-anchor','end');
+    });
+    // Column labels (every few)
+    for (let j = 0; j <= capacity; j += Math.max(1, Math.floor(capacity/8))) {
+      dpSvg.append('text').attr('x', dpM.left + j * cellW + cellW/2).attr('y', dpM.top + rowsToShow.length * cellH + 12)
+        .text(`w=${j}`).style('font-family','var(--mono)').style('font-size','0.5rem')
+        .style('fill','var(--slate)').style('text-anchor','middle');
+    }
+
+    // Stats
+    const selItems = selected.map(i => items[i]);
+    d3.select('#kp-stats').html(`
+      <div class="stat-card"><div class="lbl">最大价值</div><div class="val" style="color:var(--terracotta)">${totalValue}</div></div>
+      <div class="stat-card"><div class="lbl">总重量</div><div class="val">${totalWeight} / ${capacity}</div></div>
+      <div class="stat-card"><div class="lbl">选中物品</div><div class="val" style="font-size:0.9rem">${selItems.map(it => it.name).join(', ') || '—'}</div></div>
+      <div class="stat-card"><div class="lbl">DP 子问题数</div><div class="val">${(nItems+1)*(capacity+1)}</div></div>
+    `);
+  }
+
+  d3.select('#kp-cap').on('input', update);
+  d3.select('#kp-reshuffle').on('click', () => { generateItems(); update(); });
+
+  generateItems();
+  update();
+})();
+</script>
+</body>
+</html>

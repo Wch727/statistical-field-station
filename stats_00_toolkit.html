@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>§0 数模实战工具箱 — Statistical Field Station</title>
+<link rel="stylesheet" href="assets/vendor/google-fonts.css">
+<link rel="stylesheet" href="assets/vendor/katex.min.css">
+<script src="assets/vendor/katex.min.js"></script>
+<script src="assets/vendor/auto-render.min.js"></script>
+<script src="assets/vendor/d3.v7.min.js"></script>
+<link rel="stylesheet" href="assets/css/site.css">
+<style>
+:root {
+  --parchment: #FDFBF5; --forest: #2D4A3E; --terracotta: #C75146;
+  --gold: #8B6914; --stone: #E8E0D5; --slate: #5B6E65; --surface: #FFFAF0;
+  --display: 'Noto Serif SC', 'Cormorant Garamond', 'STSong', serif;
+  --body: 'Noto Sans SC', 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Consolas', monospace;
+  --page-w: 1100px; --text-w: 72ch; --radius: 4px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:40px}
+body{background:var(--parchment);color:var(--forest);font-family:var(--body);font-size:1.08rem;line-height:1.72}
+p{margin-bottom:14px;max-width:var(--text-w)}
+a{color:var(--terracotta);text-decoration:none}a:hover{text-decoration:underline}
+strong{font-weight:600}
+
+.page{max-width:var(--page-w);margin:0 auto;padding:0 32px 64px}
+.top-nav{padding:16px 0;font-family:var(--mono);font-size:0.78rem;border-bottom:1px solid var(--stone);margin-bottom:40px}
+.top-nav a{color:var(--slate)}.top-nav span{color:var(--gold)}
+
+.hero{padding:32px 0 40px}
+.hero .num{font-family:var(--mono);font-size:0.7rem;letter-spacing:0.18em;color:var(--gold);margin-bottom:6px}
+.hero h1{font-family:var(--display);font-weight:700;font-size:clamp(2rem,5vw,3rem);line-height:1.1;color:var(--forest);margin-bottom:12px}
+.hero .deck{font-size:1.05rem;color:var(--slate);max-width:var(--text-w)}
+
+h2{font-family:var(--display);font-weight:600;font-size:1.6rem;color:var(--forest);margin:36px 0 14px;padding-top:20px;border-top:1px solid var(--stone)}
+h3{font-family:var(--display);font-weight:500;font-size:1.2rem;color:var(--forest);margin:24px 0 10px}
+h4{font-family:var(--display);font-weight:500;font-size:1.05rem;color:var(--forest);margin:16px 0 8px}
+
+.math-block{text-align:center;padding:16px;background:var(--surface);border:1px solid var(--stone);border-radius:var(--radius);margin:16px 0;overflow-x:auto}
+.derive-box{background:#F5F8F6;border:1px solid var(--stone);border-left:3px solid var(--forest);padding:16px 20px;border-radius:0 var(--radius) var(--radius) 0;margin:16px 0;font-size:0.92rem}
+.derive-box h4{color:var(--forest);font-family:var(--display);text-transform:none;letter-spacing:0;font-size:1rem;margin:0 0 8px}
+.concept-box{background:var(--surface);border:1px solid var(--stone);border-radius:var(--radius);padding:16px 20px;margin:16px 0;font-size:0.93rem}
+.concept-box h4{font-family:var(--display);font-size:1.05rem;font-weight:600;color:var(--forest);margin:0 0 8px}
+.toolkit-box{background:#FFF5F3;border:1px solid var(--stone);border-left:3px solid var(--terracotta);padding:14px 18px;border-radius:0 var(--radius) var(--radius) 0;margin:16px 0;font-size:0.92rem}
+.toolkit-box h4{color:var(--terracotta);font-family:var(--display);font-size:1rem;margin:0 0 8px}
+.note-box{background:#FFF8F0;border-left:3px solid var(--gold);padding:14px 18px;border-radius:0 var(--radius) var(--radius) 0;margin:16px 0;font-size:0.93rem}
+.note-box strong{color:var(--gold)}
+.warn-box{background:#FFFBF0;border:1px solid #E8D5A0;border-radius:var(--radius);padding:14px 18px;margin:16px 0;font-size:0.92rem}
+.warn-box::before{content:'⚠ ';font-size:1.1rem}
+.competition-box{background:#F0F7F5;border:1px solid var(--forest);border-left:4px solid var(--forest);padding:18px 22px;border-radius:0 var(--radius) var(--radius) 0;margin:20px 0;font-size:0.93rem}
+.competition-box h4{color:var(--forest);font-family:var(--display);font-size:1.05rem;margin:0 0 8px}
+.competition-box .q{color:var(--terracotta);font-weight:600}
+
+/* Code blocks */
+.code-block{background:#1E2A24;border:1px solid #2D4A3E;border-radius:var(--radius);padding:16px 20px;margin:14px 0;overflow-x:auto;font-family:var(--mono);font-size:0.82rem;line-height:1.65;color:#D4E0D8}
+.code-block .kw{color:#7EC89C;font-weight:600}
+.code-block .fn{color:#E8C56D}
+.code-block .str{color:#D4956B}
+.code-block .cm{color:#6A8A7A;font-style:italic}
+.code-block .num{color:#C792EA}
+.code-block .op{color:#89DDFF}
+.code-block .pkg{color:#F07178}
+
+/* Quick-ref table */
+.quick-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:0.85rem;margin:14px 0}
+.quick-table th,.quick-table td{padding:8px 12px;text-align:left;border-bottom:1px solid var(--stone)}
+.quick-table th{font-family:var(--body);font-size:0.72rem;letter-spacing:0.08em;color:var(--slate);border-bottom:2px solid var(--stone)}
+.quick-table td:first-child{color:var(--terracotta);font-weight:500}
+.quick-table code{background:var(--stone);padding:1px 6px;border-radius:2px;font-family:var(--mono);font-size:0.82em}
+
+.panel{background:var(--surface);border:1px solid var(--stone);border-radius:6px;box-shadow:inset 0 1px 0 rgba(255,255,255,0.7),0 2px 12px rgba(0,0,0,0.05);padding:24px;margin:20px 0;position:relative}
+.panel::before{content:'';position:absolute;top:0;left:12px;right:12px;height:1px;background:linear-gradient(to right,transparent,var(--gold),transparent);opacity:0.4}
+.panel-label{font-family:var(--mono);font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--stone)}
+.panel-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+
+.stat-cards{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.stat-card{background:var(--surface);border:1px solid var(--stone);border-radius:var(--radius);padding:10px 14px;text-align:center;min-width:72px}
+.stat-card .lbl{font-family:var(--mono);font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--slate);margin-bottom:3px}
+.stat-card .val{font-family:var(--mono);font-size:1.25rem;font-weight:600;color:var(--forest)}
+
+.slider-row{display:flex;align-items:center;gap:12px;margin:10px 0;flex-wrap:wrap}
+.slider-row label{font-family:var(--mono);font-size:0.85rem;color:var(--slate);min-width:100px}
+.slider-row input[type=range]{flex:1;min-width:100px;accent-color:var(--terracotta)}
+.slider-val{font-family:var(--mono);font-weight:600;color:var(--terracotta);min-width:36px;font-size:0.88rem}
+
+.chart-container{width:100%;overflow-x:auto}
+.chart-container svg{display:block;margin:0 auto}
+
+.compact-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:0.88rem;margin:16px 0}
+.compact-table th,.compact-table td{padding:7px 12px;text-align:left;border-bottom:1px solid var(--stone)}
+.compact-table th{font-family:var(--body);font-size:0.72rem;letter-spacing:0.08em;color:var(--slate);border-bottom:2px solid var(--stone)}
+
+.btn{font-family:var(--mono);font-size:0.75rem;border:1px solid var(--stone);border-radius:var(--radius);background:var(--surface);color:var(--forest);padding:6px 14px;cursor:pointer;transition:all 0.15s}
+.btn:hover{border-color:var(--terracotta);color:var(--terracotta)}
+.btn.active{background:var(--forest);color:#fff;border-color:var(--forest)}
+.btn-group{display:flex;gap:4px;flex-wrap:wrap;margin:8px 0}
+
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin:8px 0;font-family:var(--mono);font-size:0.78rem}
+.legend-item{display:flex;align-items:center;gap:6px}
+.legend-dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+
+/* Checklist styles */
+.checklist{margin:12px 0;padding:0;list-style:none}
+.checklist li{padding:6px 0 6px 28px;position:relative;font-size:0.95rem}
+.checklist li::before{content:'☐';position:absolute;left:0;color:var(--slate);font-size:1rem}
+.checklist li.done::before{content:'☑';color:var(--forest)}
+
+/* Six-question framework */
+.q6-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0}
+.q6-card{background:var(--surface);border:1px solid var(--stone);border-radius:var(--radius);padding:16px 18px}
+.q6-card .q6-num{font-family:var(--mono);font-size:0.7rem;color:var(--gold);letter-spacing:0.1em;margin-bottom:4px}
+.q6-card .q6-q{font-family:var(--display);font-weight:600;font-size:1.1rem;color:var(--forest);margin-bottom:8px}
+.q6-card .q6-hint{font-size:0.88rem;color:var(--slate)}
+
+footer{text-align:center;padding:32px 0;font-size:0.82rem;color:var(--slate);border-top:1px solid var(--stone);margin-top:40px}
+footer a{color:var(--slate);text-decoration:underline}
+</style>
+</head>
+<body>
+<div class="page">
+
+<nav class="top-nav"><a href="stats_tutorial.html">← Field Station</a> <span>|</span> §0 数模实战工具箱</nav>
+
+<header class="hero">
+  <div class="num">§0 · PREREQUISITE</div>
+  <h1>数模实战工具箱</h1>
+  <p class="deck">在开始任何建模之前，有三件事必须熟练：<strong>数据操作</strong>（Pandas 是你的手）、<strong>数值计算</strong>（NumPy 是你的脑）、<strong>可视化</strong>（Matplotlib 是你的眼）。本章是纯实操速查——不推导公式，只给代码。</p>
+</header>
+
+<div class="competition-box">
+<h4>📋 第一层能力清单</h4>
+<p>以下技能在竞赛中<strong>必须达到「肌肉记忆」级别</strong>——不能临时查文档，不能犹豫语法。每一条都是真实赛题中反复出现的基础操作。</p>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>0.1 Pandas 数据处理速查</h2>
+
+<p>Pandas 是数模竞赛的<strong>绝对核心</strong>。赛题数据几乎都是 Excel/CSV 格式，Pandas 是唯一的入口。以下 7 个操作覆盖了 80% 的竞赛数据处理需求。</p>
+
+<h3>0.1.1 读取数据</h3>
+
+<div class="code-block">
+<span class="cm"># 读取 Excel 和 CSV —— 竞赛数据最常见的两种格式</span>
+<span class="kw">import</span> pandas <span class="kw">as</span> pd
+
+<span class="cm"># Excel：注意 sheet_name 参数 —— 赛题数据经常分多个 sheet</span>
+df = pd.<span class="fn">read_excel</span>(<span class="str">'data.xlsx'</span>, sheet_name=<span class="str">'Sheet1'</span>)
+df = pd.<span class="fn">read_excel</span>(<span class="str">'data.xlsx'</span>, sheet_name=<span class="kw">None</span>)  <span class="cm"># 读所有 sheet → dict</span>
+
+<span class="cm"># CSV：注意 encoding —— 中文数据经常是 GBK</span>
+df = pd.<span class="fn">read_csv</span>(<span class="str">'data.csv'</span>, encoding=<span class="str">'utf-8'</span>)
+df = pd.<span class="fn">read_csv</span>(<span class="str">'data.csv'</span>, encoding=<span class="str">'gbk'</span>)   <span class="cm"># 中文 CSV 常用</span>
+
+<span class="cm"># 读完后第一件事：</span>
+df.<span class="fn">head</span>()       <span class="cm"># 前 5 行</span>
+df.<span class="fn">info</span>()       <span class="cm"># 列名 + 类型 + 缺失值</span>
+df.<span class="fn">describe</span>()   <span class="cm"># 数值列的五数概括</span>
+</div>
+
+<div class="warn-box">
+<strong>竞赛陷阱：</strong>中文 CSV 文件默认编码通常是 GBK，不是 UTF-8。如果 <code>read_csv</code> 报错 <code>UnicodeDecodeError</code>，先试 <code>encoding='gbk'</code>，再试 <code>'gb2312'</code>，最后试 <code>'latin-1'</code>（后者不会报错但中文会乱码，仅用于确认编码问题）。
+</div>
+
+<h3>0.1.2 数据合并</h3>
+
+<div class="code-block">
+<span class="cm"># merge —— 类似 SQL JOIN，按关键列连接两张表</span>
+df = pd.<span class="fn">merge</span>(left, right, on=<span class="str">'ID'</span>, how=<span class="str">'left'</span>)
+<span class="cm"># how: 'left' | 'right' | 'inner' | 'outer'</span>
+
+<span class="cm"># 多列连接</span>
+df = pd.<span class="fn">merge</span>(a, b, on=[<span class="str">'year'</span>, <span class="str">'city'</span>])
+
+<span class="cm"># concat —— 纵向堆叠或横向拼接</span>
+df = pd.<span class="fn">concat</span>([df1, df2], axis=<span class="num">0</span>)  <span class="cm"># 纵向：追加行</span>
+df = pd.<span class="fn">concat</span>([df1, df2], axis=<span class="num">1</span>)  <span class="cm"># 横向：追加列</span>
+</div>
+
+<div class="note-box">
+<strong>merge vs concat：</strong>merge 按「键」连接（需要共同的列），concat 按「位置」堆叠。赛题中多表关联用 merge，同一张表的分段数据用 concat。
+</div>
+
+<h3>0.1.3 分组聚合</h3>
+
+<div class="code-block">
+<span class="cm"># groupby —— 分组后聚合，数模中最常用的操作之一</span>
+df.<span class="fn">groupby</span>(<span class="str">'city'</span>)[<span class="str">'sales'</span>].<span class="fn">sum</span>()           <span class="cm"># 每个城市的销售额总和</span>
+df.<span class="fn">groupby</span>(<span class="str">'city'</span>)[<span class="str">'sales'</span>].<span class="fn">mean</span>()          <span class="cm"># 每个城市的平均销售额</span>
+
+<span class="cm"># agg —— 同时计算多个统计量</span>
+df.<span class="fn">groupby</span>(<span class="str">'city'</span>).<span class="fn">agg</span>({
+    <span class="str">'sales'</span>: [<span class="str">'sum'</span>, <span class="str">'mean'</span>, <span class="str">'count'</span>],
+    <span class="str">'price'</span>: [<span class="str">'min'</span>, <span class="str">'max'</span>]
+})
+
+<span class="cm"># transform —— 保持原形状的分组计算（用于特征工程）</span>
+df[<span class="str">'sales_z'</span>] = df.<span class="fn">groupby</span>(<span class="str">'city'</span>)[<span class="str">'sales'</span>].<span class="fn">transform</span>(
+    <span class="kw">lambda</span> x: (x - x.<span class="fn">mean</span>()) / x.<span class="fn">std</span>()
+)
+</div>
+
+<h3>0.1.4 数据透视</h3>
+
+<div class="code-block">
+<span class="cm"># pivot_table —— 从「长表」变「宽表」</span>
+pt = pd.<span class="fn">pivot_table</span>(df,
+    values=<span class="str">'sales'</span>,        <span class="cm"># 要聚合的值</span>
+    index=<span class="str">'city'</span>,          <span class="cm"># 行索引</span>
+    columns=<span class="str">'month'</span>,        <span class="cm"># 列索引</span>
+    aggfunc=<span class="str">'sum'</span>,          <span class="cm"># 聚合函数</span>
+    fill_value=<span class="num">0</span>           <span class="cm"># 缺失值填充</span>
+)
+
+<span class="cm"># crosstab —— 频数交叉表（分类变量专用）</span>
+ct = pd.<span class="fn">crosstab</span>(df[<span class="str">'gender'</span>], df[<span class="str">'outcome'</span>],
+                    normalize=<span class="str">'index'</span>)  <span class="cm"># 行百分比</span>
+</div>
+
+<div class="note-box">
+<strong>pivot_table vs crosstab：</strong>pivot_table 用于数值聚合（求和、平均等），crosstab 用于计数/频率。两者底层都是 groupby，但语法更简洁。
+</div>
+
+<h3>0.1.5 数据清洗</h3>
+
+<div class="code-block">
+<span class="cm"># 缺失值处理 —— 竞赛数据几乎都有缺失</span>
+df.<span class="fn">isnull</span>().<span class="fn">sum</span>()                    <span class="cm"># 每列缺失值计数</span>
+df = df.<span class="fn">fillna</span>(<span class="num">0</span>)                      <span class="cm"># 填充为 0</span>
+df = df.<span class="fn">fillna</span>(df.<span class="fn">mean</span>())              <span class="cm"># 填充为列均值</span>
+df = df.<span class="fn">fillna</span>(method=<span class="str">'ffill'</span>)         <span class="cm"># 前向填充（时间序列常用）</span>
+df = df.<span class="fn">fillna</span>(method=<span class="str">'bfill'</span>)         <span class="cm"># 后向填充</span>
+
+<span class="cm"># 插值（比简单填充更合理）</span>
+df[<span class="str">'col'</span>] = df[<span class="str">'col'</span>].<span class="fn">interpolate</span>()  <span class="cm"># 线性插值</span>
+
+<span class="cm"># 去重</span>
+df = df.<span class="fn">drop_duplicates</span>()               <span class="cm"># 完全重复的行</span>
+df = df.<span class="fn">drop_duplicates</span>(subset=[<span class="str">'ID'</span>])  <span class="cm"># 按某列去重，保留第一个</span>
+df = df.<span class="fn">drop_duplicates</span>(subset=[<span class="str">'ID'</span>], keep=<span class="str">'last'</span>)
+
+<span class="cm"># 异常值过滤（3σ 原则）</span>
+mean, std = df[<span class="str">'col'</span>].<span class="fn">mean</span>(), df[<span class="str">'col'</span>].<span class="fn">std</span>()
+df = df[(df[<span class="str">'col'</span>] > mean - <span class="num">3</span>*std) & (df[<span class="str">'col'</span>] < mean + <span class="num">3</span>*std)]
+</div>
+
+<div class="warn-box">
+<strong>竞赛陷阱：</strong>fillna(0) 是最危险的操作——如果该列是价格/销量，填 0 会严重扭曲均值和回归系数。优先考虑：插值 &gt; 中位数填充 &gt; 均值填充 &gt; 删除 &gt; 填 0。论文中必须说明缺失值处理方式及其合理性。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>0.2 NumPy 数值计算速查</h2>
+
+<h3>0.2.1 数组运算</h3>
+
+<div class="code-block">
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+
+<span class="cm"># 创建数组</span>
+a = np.<span class="fn">array</span>([<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>])
+b = np.<span class="fn">zeros</span>(<span class="num">10</span>)              <span class="cm"># 全零向量</span>
+c = np.<span class="fn">ones</span>(<span class="num">5</span>)                <span class="cm"># 全一向量</span>
+d = np.<span class="fn">arange</span>(<span class="num">0</span>, <span class="num">10</span>, <span class="num">0.1</span>)     <span class="cm"># 等差数列 [0, 0.1, ..., 9.9]</span>
+e = np.<span class="fn">linspace</span>(<span class="num">0</span>, <span class="num">1</span>, <span class="num">100</span>)     <span class="cm"># 等间距 [0, 0.0101..., ..., 1]</span>
+
+<span class="cm"># 向量化运算 —— NumPy 的核心优势</span>
+y = <span class="num">2</span>*a + <span class="num">3</span>                  <span class="cm"># 广播：每个元素 ×2+3</span>
+z = a * b                    <span class="cm"># 逐元素乘（不是点积！）</span>
+z = np.<span class="fn">dot</span>(a, b)              <span class="cm"># 点积 / 矩阵乘</span>
+z = a @ b                    <span class="cm"># 同上，Python 3.5+ 语法</span>
+</div>
+
+<h3>0.2.2 矩阵运算</h3>
+
+<div class="code-block">
+<span class="cm"># 矩阵创建与基本运算</span>
+A = np.<span class="fn">array</span>([[<span class="num">1</span>,<span class="num">2</span>],[<span class="num">3</span>,<span class="num">4</span>]])
+B = np.<span class="fn">eye</span>(<span class="num">3</span>)                 <span class="cm"># 3×3 单位阵</span>
+C = np.<span class="fn">diag</span>([<span class="num">1</span>,<span class="num">2</span>,<span class="num">3</span>])         <span class="cm"># 对角阵</span>
+
+<span class="cm"># 线性代数（竞赛高频）</span>
+invA = np.linalg.<span class="fn">inv</span>(A)       <span class="cm"># 逆矩阵</span>
+w, v = np.linalg.<span class="fn">eig</span>(A)       <span class="cm"># 特征值 + 特征向量</span>
+x = np.linalg.<span class="fn">solve</span>(A, b)     <span class="cm"># 解 Ax = b（比 inv(A)@b 更快更稳定）</span>
+detA = np.linalg.<span class="fn">det</span>(A)       <span class="cm"># 行列式</span>
+U, s, Vt = np.linalg.<span class="fn">svd</span>(A)   <span class="cm"># 奇异值分解（PCA 底层）</span>
+</div>
+
+<h3>0.2.3 统计函数与随机抽样</h3>
+
+<div class="code-block">
+<span class="cm"># 统计函数</span>
+np.<span class="fn">mean</span>(x); np.<span class="fn">median</span>(x); np.<span class="fn">std</span>(x); np.<span class="fn">var</span>(x)
+np.<span class="fn">min</span>(x); np.<span class="fn">max</span>(x); np.<span class="fn">percentile</span>(x, <span class="num">25</span>)
+np.<span class="fn">corrcoef</span>(x, y)            <span class="cm"># 相关系数矩阵</span>
+np.<span class="fn">histogram</span>(x, bins=<span class="num">20</span>)    <span class="cm"># 直方图计数</span>
+
+<span class="cm"># 随机抽样（蒙特卡洛、bootstrap 的基础）</span>
+np.random.<span class="fn">seed</span>(<span class="num">42</span>)          <span class="cm"># 固定随机种子（论文可复现）</span>
+np.random.<span class="fn">rand</span>(<span class="num">100</span>)           <span class="cm"># [0,1) 均匀分布</span>
+np.random.<span class="fn">randn</span>(<span class="num">100</span>)          <span class="cm"># 标准正态分布</span>
+np.random.<span class="fn">randint</span>(<span class="num">0</span>, <span class="num">10</span>, <span class="num">50</span>)  <span class="cm"># [0,10) 随机整数</span>
+np.random.<span class="fn">choice</span>(arr, size=<span class="num">30</span>, replace=<span class="kw">True</span>)  <span class="cm"># 有放回抽样</span>
+np.random.<span class="fn">permutation</span>(arr)   <span class="cm"># 随机排列（交叉验证打乱数据）</span>
+</div>
+
+<div class="note-box">
+<strong>竞赛提示：</strong>论文中涉及随机性的部分（蒙特卡洛、bootstrap、随机森林），必须写上 <code>np.random.seed(42)</code> 以保证结果可复现。评委可能会尝试复现你的结果。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>0.3 Matplotlib 绘图速查</h2>
+
+<p>数模论文的核心竞争力之一：<strong>图好看，分就高</strong>。以下六种图覆盖了 95% 的竞赛场景。</p>
+
+<div class="code-block">
+<span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt
+plt.rcParams[<span class="str">'font.sans-serif'</span>] = [<span class="str">'SimHei'</span>]  <span class="cm"># 中文显示</span>
+plt.rcParams[<span class="str">'axes.unicode_minus'</span>] = <span class="kw">False</span>   <span class="cm"># 负号显示</span>
+
+<span class="cm"># ① 折线图 —— 趋势、时间序列</span>
+plt.<span class="fn">plot</span>(x, y, <span class="str">'o-'</span>, color=<span class="str">'#2D4A3E'</span>, linewidth=<span class="num">1.5</span>, markersize=<span class="num">4</span>)
+
+<span class="cm"># ② 柱状图 —— 类别对比</span>
+plt.<span class="fn">bar</span>(categories, values, color=<span class="str">'#C75146'</span>, alpha=<span class="num">0.85</span>)
+
+<span class="cm"># ③ 散点图 —— 相关性、分布</span>
+plt.<span class="fn">scatter</span>(x, y, c=z, cmap=<span class="str">'RdYlGn'</span>, s=<span class="num">30</span>, alpha=<span class="num">0.7</span>)
+
+<span class="cm"># ④ 箱线图 —— 分布对比、异常值检测</span>
+plt.<span class="fn">boxplot</span>([group1, group2, group3], labels=[<span class="str">'A'</span>,<span class="str">'B'</span>,<span class="str">'C'</span>])
+
+<span class="cm"># ⑤ 直方图 —— 分布形态</span>
+plt.<span class="fn">hist</span>(data, bins=<span class="num">30</span>, color=<span class="str">'#2D4A3E'</span>, alpha=<span class="num">0.7</span>, edgecolor=<span class="str">'white'</span>)
+
+<span class="cm"># ⑥ 热力图 —— 矩阵可视化（相关性、混淆矩阵）</span>
+plt.<span class="fn">imshow</span>(matrix, cmap=<span class="str">'RdYlGn'</span>, aspect=<span class="str">'auto'</span>)
+plt.<span class="fn">colorbar</span>()
+</div>
+
+<div class="toolkit-box">
+<h4>数模论文绘图黄金法则</h4>
+<ol style="margin:8px 0 0 18px;font-size:0.92rem">
+  <li><strong>每张图必须有标题和轴标签</strong>——缺少标签的图直接扣分</li>
+  <li><strong>字体不能太小</strong>——论文中的图经常被缩小，确保 8pt 以上</li>
+  <li><strong>配色克制</strong>——不超过 4 种颜色，避免大红大绿的默认配色</li>
+  <li><strong>分辨率 300 dpi</strong>——<code>plt.savefig('fig.png', dpi=300, bbox_inches='tight')</code></li>
+  <li><strong>图不要截图</strong>——用 <code>savefig</code> 导出，不要用截图工具截 Matplotlib 窗口</li>
+  <li><strong>中文问题</strong>——SimHei 黑体是最稳妥的中文字体选择</li>
+</ol>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>0.4 模型验证完整流程</h2>
+
+<p>这是<strong>初学者最容易忽略的部分</strong>。建立一个模型只完成了 30% 的工作——证明这个模型可信、可靠、可推广，才是剩下的 70%。</p>
+
+<h3>0.4.1 训练集与测试集</h3>
+
+<div class="code-block">
+<span class="kw">from</span> sklearn.model_selection <span class="kw">import</span> train_test_split
+
+X_train, X_test, y_train, y_test = <span class="fn">train_test_split</span>(
+    X, y, test_size=<span class="num">0.3</span>, random_state=<span class="num">42</span>
+)
+<span class="cm"># 关键参数：</span>
+<span class="cm">#   test_size: 测试集比例（常用 0.2-0.3）</span>
+<span class="cm">#   random_state: 固定随机种子，保证可复现</span>
+<span class="cm">#   stratify=y: 分类问题保持类别比例</span>
+</div>
+
+<div class="warn-box">
+<strong>竞赛陷阱：</strong>数据量小时（n &lt; 200），单次划分的随机性很大——训练集和测试集的「运气」会影响结论。此时应该用交叉验证代替单次划分，或至少报告多次随机划分的平均结果。
+</div>
+
+<h3>0.4.2 误差指标</h3>
+
+<table class="compact-table">
+<tr><th>指标</th><th>公式</th><th>适用场景</th><th>特点</th></tr>
+<tr><td>MSE</td><td>\(\frac{1}{n}\sum (y_i-\hat{y}_i)^2\)</td><td>回归（通用）</td><td>对大误差敏感（平方惩罚）</td></tr>
+<tr><td>RMSE</td><td>\(\sqrt{\text{MSE}}\)</td><td>回归（通用）</td><td>与原数据同单位，更直观</td></tr>
+<tr><td>MAE</td><td>\(\frac{1}{n}\sum |y_i-\hat{y}_i|\)</td><td>回归（有离群值）</td><td>对异常值不敏感</td></tr>
+<tr><td>MAPE</td><td>\(\frac{100\%}{n}\sum \left|\frac{y_i-\hat{y}_i}{y_i}\right|\)</td><td>回归（可解释性）</td><td>百分比误差；\(y_i\) 接近 0 时失效</td></tr>
+<tr><td>R²</td><td>\(1-\frac{\sum (y_i-\hat{y}_i)^2}{\sum (y_i-\bar{y})^2}\)</td><td>回归（拟合优度）</td><td>越接近 1 越好；可能为负</td></tr>
+<tr><td>Accuracy</td><td>\(\frac{\text{TP+TN}}{\text{Total}}\)</td><td>分类（均衡）</td><td>类别不均衡时不可靠</td></tr>
+<tr><td>F1</td><td>\(\frac{2\cdot\text{Precision}\cdot\text{Recall}}{\text{Precision+Recall}}\)</td><td>分类（不均衡）</td><td>精确率与召回率的调和平均</td></tr>
+<tr><td>AUC</td><td>ROC 曲线下面积</td><td>二分类（排序质量）</td><td>0.5=随机, 1.0=完美</td></tr>
+</table>
+
+<div class="note-box">
+<strong>竞赛铁律：</strong>永远不要只报告一个指标。回归至少报告 RMSE + MAE + R²；分类至少报告 Accuracy + F1 + AUC。单一指标容易造假——比如在极度不均衡的数据上，Accuracy 可以很高但模型毫无用处。
+</div>
+
+<h3>0.4.3 交叉验证</h3>
+
+<div class="code-block">
+<span class="kw">from</span> sklearn.model_selection <span class="kw">import</span> cross_val_score, KFold, StratifiedKFold
+
+<span class="cm"># K 折交叉验证 —— 标准做法</span>
+scores = <span class="fn">cross_val_score</span>(model, X, y, cv=<span class="num">5</span>, scoring=<span class="str">'neg_mean_squared_error'</span>)
+<span class="kw">print</span>(<span class="str">f'CV MSE: {-scores.mean():.4f} ± {scores.std():.4f}'</span>)
+
+<span class="cm"># KFold —— 自定义折数</span>
+kf = <span class="fn">KFold</span>(n_splits=<span class="num">5</span>, shuffle=<span class="kw">True</span>, random_state=<span class="num">42</span>)
+<span class="kw">for</span> train_idx, test_idx <span class="kw">in</span> kf.<span class="fn">split</span>(X):
+    X_train, X_test = X[train_idx], X[test_idx]
+    <span class="cm"># ... 训练和评估 ...</span>
+
+<span class="cm"># StratifiedKFold —— 分类问题保持每折的类别比例</span>
+skf = <span class="fn">StratifiedKFold</span>(n_splits=<span class="num">5</span>, shuffle=<span class="kw">True</span>, random_state=<span class="num">42</span>)
+</div>
+
+<div class="derive-box">
+<h4>为什么用交叉验证而不是单次划分？</h4>
+<p>单次 train/test split 的评估结果依赖于随机种子的「运气」。5 折交叉验证给出 <strong>均值 ± 标准差</strong>，评委可以看到：① 模型平均表现如何；② 表现是否稳定（标准差小 = 稳定）。如果标准差很大，说明模型对数据划分敏感——这是需要讨论的问题，不是隐藏的 bug。</p>
+</div>
+
+<h3>0.4.4 残差分析</h3>
+
+<div class="code-block">
+<span class="cm"># 残差 = 真实值 - 预测值</span>
+residuals = y_test - y_pred
+
+<span class="cm"># 残差诊断三件套：</span>
+<span class="cm"># ① 残差 vs 拟合值图 —— 检查异方差和非线性</span>
+plt.<span class="fn">scatter</span>(y_pred, residuals, alpha=<span class="num">0.6</span>)
+plt.<span class="fn">axhline</span>(y=<span class="num">0</span>, color=<span class="str">'r'</span>, linestyle=<span class="str">'--'</span>)
+
+<span class="cm"># ② Q-Q 图 —— 检查残差正态性</span>
+<span class="kw">from</span> scipy <span class="kw">import</span> stats
+stats.<span class="fn">probplot</span>(residuals, dist=<span class="str">'norm'</span>, plot=plt)
+
+<span class="cm"># ③ 残差直方图 —— 检查分布形态</span>
+plt.<span class="fn">hist</span>(residuals, bins=<span class="num">30</span>, edgecolor=<span class="str">'white'</span>)
+</div>
+
+<div class="concept-box">
+<h4>残差诊断速查表</h4>
+<table class="compact-table" style="margin:8px 0 0">
+<tr><th>你看到的现象</th><th>说明的问题</th><th>应对方法</th></tr>
+<tr><td>残差随拟合值增大而扩散（喇叭形）</td><td>异方差</td><td>对 y 取对数 / 加权最小二乘</td></tr>
+<tr><td>残差呈 U 形曲线</td><td>遗漏非线性项</td><td>加二次项 / 换非线性模型</td></tr>
+<tr><td>残差有趋势</td><td>遗漏重要变量</td><td>检查是否有未纳入的变量</td></tr>
+<tr><td>Q-Q 图严重偏离直线</td><td>残差非正态</td><td>考虑稳健回归 / 变换</td></tr>
+<tr><td>个别点残差异常大</td><td>离群值 / 杠杆点</td><td>检查数据来源，决定是否删除</td></tr>
+</table>
+</div>
+
+<h3>0.4.5 敏感性分析</h3>
+
+<div class="derive-box">
+<h4>敏感性分析的核心思想</h4>
+<p>模型中的参数（权重、阈值、假设值）往往不是精确已知的。敏感性分析回答：<strong>如果参数变化 ±10%，结论会变吗？</strong>如果微调参数就导致结论翻转，说明模型不可靠——评委一定会指出这一点。</p>
+</div>
+
+<div class="code-block">
+<span class="cm"># 敏感性分析的标准做法：参数扫描</span>
+<span class="kw">def</span> <span class="fn">sensitivity_analysis</span>(model_fn, param_name, base_value, range_pct=<span class="num">0.2</span>, steps=<span class="num">21</span>):
+    <span class="str">"""对 model_fn 的某个参数做 ±range_pct 的扫描"""</span>
+    results = []
+    <span class="kw">for</span> pct <span class="kw">in</span> np.<span class="fn">linspace</span>(-range_pct, range_pct, steps):
+        param_value = base_value * (<span class="num">1</span> + pct)
+        result = <span class="fn">model_fn</span>(**{param_name: param_value})
+        results.<span class="fn">append</span>((pct, result))
+    <span class="kw">return</span> results
+
+<span class="cm"># 论文中必须报告：</span>
+<span class="cm"># ① 参数变化范围（±10%、±20% 等）</span>
+<span class="cm"># ② 输出指标的变化幅度</span>
+<span class="cm"># ③ 是否存在「临界点」（参数过某个值后结论翻转）</span>
+</div>
+
+<h3>0.4.6 鲁棒性分析</h3>
+
+<div class="concept-box">
+<h4>敏感性分析 vs 鲁棒性分析</h4>
+<p><strong>敏感性分析</strong>问的是「参数变了，结果变多少？」——它关注<strong>连续、小幅</strong>的参数扰动。<br>
+<strong>鲁棒性分析</strong>问的是「如果假设被打破，模型还成立吗？」——它关注<strong>结构性变化</strong>：数据分布变了、删掉一些变量、换一种建模方法、引入噪声。两者互补，论文中应同时出现。</p>
+</div>
+
+<div class="code-block">
+<span class="cm"># 鲁棒性分析工具箱</span>
+
+<span class="cm"># ① Bootstrap 鲁棒性 —— 重抽样看系数稳定性</span>
+<span class="kw">def</span> <span class="fn">bootstrap_coef</span>(X, y, model_class, n_boot=<span class="num">1000</span>):
+    coefs = []
+    <span class="kw">for</span> _ <span class="kw">in</span> <span class="fn">range</span>(n_boot):
+        idx = np.random.<span class="fn">choice</span>(<span class="fn">len</span>(X), <span class="fn">len</span>(X), replace=<span class="kw">True</span>)
+        model = <span class="fn">model_class</span>().<span class="fn">fit</span>(X[idx], y[idx])
+        coefs.<span class="fn">append</span>(model.coef_)
+    <span class="kw">return</span> np.<span class="fn">mean</span>(coefs, axis=<span class="num">0</span>), np.<span class="fn">std</span>(coefs, axis=<span class="num">0</span>)
+
+<span class="cm"># ② 加噪声鲁棒性 —— 给输入加随机扰动</span>
+X_noisy = X + np.random.<span class="fn">normal</span>(<span class="num">0</span>, noise_std, X.shape)
+score_noisy = model.<span class="fn">score</span>(X_noisy, y)
+
+<span class="cm"># ③ 变量删除鲁棒性 —— 逐个删除变量看影响</span>
+<span class="kw">for</span> col <span class="kw">in</span> X.columns:
+    X_drop = X.<span class="fn">drop</span>(columns=[col])
+    score = <span class="fn">cross_val_score</span>(model, X_drop, y, cv=<span class="num">5</span>).<span class="fn">mean</span>()
+    <span class="kw">print</span>(<span class="str">f'Drop {col}: score={score:.4f}'</span>)
+
+<span class="cm"># ④ 方法替换鲁棒性 —— 换一种模型看结论是否一致</span>
+<span class="kw">from</span> sklearn.linear_model <span class="kw">import</span> LinearRegression, Ridge, Lasso
+<span class="kw">for</span> name, model <span class="kw">in</span> [(<span class="str">'OLS'</span>, LinearRegression()),
+                     (<span class="str">'Ridge'</span>, Ridge()),
+                     (<span class="str">'Lasso'</span>, Lasso())]:
+    score = <span class="fn">cross_val_score</span>(model, X, y, cv=<span class="num">5</span>).<span class="fn">mean</span>()
+    <span class="kw">print</span>(<span class="str">f'{name}: {score:.4f}'</span>)
+</div>
+
+<div class="toolkit-box">
+<h4>鲁棒性分析写作模板</h4>
+<p style="font-size:0.9rem">「为验证模型的鲁棒性，我们从以下三个维度进行了检验：(1) <strong>数据鲁棒性</strong>——通过 Bootstrap 重抽样，模型系数的变异系数均小于 10%，表明估计稳定；(2) <strong>噪声鲁棒性</strong>——在输入数据中加入 5% 的高斯噪声后，预测误差仅上升 3.2%，表明模型对测量误差不敏感；(3) <strong>方法鲁棒性</strong>——改用 Ridge 回归和 Lasso 回归后，关键变量的符号和显著性均保持一致，表明结论不依赖于特定模型形式。」</p>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>0.5 论文表达六问框架</h2>
+
+<p>每个模型在论文中出现时，必须能回答以下六个问题。这是评委判断「这个模型是认真选的还是随便套的」的核心依据。</p>
+
+<div class="q6-grid">
+<div class="q6-card">
+  <div class="q6-num">QUESTION 01</div>
+  <div class="q6-q">为什么使用它？</div>
+  <div class="q6-hint">不能只说「因为它是经典方法」。要说明：你的数据特征、问题结构、假设条件，与这个模型的适用场景<strong>匹配在哪里</strong>。例如：「由于因变量是二分类且自变量间存在多重共线性，选择带 L2 正则化的 Logistic 回归而非普通线性回归。」</div>
+</div>
+<div class="q6-card">
+  <div class="q6-num">QUESTION 02</div>
+  <div class="q6-q">输入和输出是什么？</div>
+  <div class="q6-hint">用一张表或一段话说清楚：输入是什么（几个变量、什么类型、什么范围）、输出是什么（数值、分类、概率）。评委需要快速理解模型在做什么。</div>
+</div>
+<div class="q6-card">
+  <div class="q6-num">QUESTION 03</div>
+  <div class="q6-q">有哪些假设？</div>
+  <div class="q6-hint">每个模型都有假设。列出 2-4 条，并说明你的数据是否满足。不满足的部分要说明：「虽然假设 X 不完全满足，但通过 Y 方法做了缓解。」假装没看到假设是论文中最常见的扣分点。</div>
+</div>
+<div class="q6-card">
+  <div class="q6-num">QUESTION 04</div>
+  <div class="q6-q">公式中的变量代表什么？</div>
+  <div class="q6-hint">公式出现后，<strong>立即</strong>用一个表格解释每个符号的含义和单位。不要假设评委能猜到。尤其注意：数学符号和代码变量名要一一对应。</div>
+</div>
+<div class="q6-card">
+  <div class="q6-num">QUESTION 05</div>
+  <div class="q6-q">结果是否可信？</div>
+  <div class="q6-hint">用交叉验证、残差分析、敏感性分析、鲁棒性分析来支撑。不能只说「R²=0.92」，而要展示：「5 折交叉验证 R²=0.92±0.03；参数 ±20% 扰动后结论不变。」</div>
+</div>
+<div class="q6-card">
+  <div class="q6-num">QUESTION 06</div>
+  <div class="q6-q">模型有什么缺点？怎么说？</div>
+  <div class="q6-hint">主动承认缺点比被动被发现更好。用「局限性」而非「缺陷」这个词。例如：「本模型的局限性在于：(1) 假设线性关系，对非线性模式捕捉能力有限；(2) 对异常值敏感，已在预处理中做了 Winsorize 处理。未来可考虑引入非线性项或使用集成方法。」</div>
+</div>
+</div>
+
+<div class="competition-box">
+<h4>「局限性」写作的黄金法则</h4>
+<p>每个局限性 = <strong>一个具体问题 + 一个已做的缓解措施 + 一个未来的改进方向</strong>。不要只写「模型可能不够好」——这等于什么都没说。正确的写法是：「模型假设残差独立，但时间序列数据可能存在自相关（问题）。我们通过 Durbin-Watson 检验确认了残差独立性（缓解）。若 DW 统计量不理想，可采用 GLS 或引入滞后项（改进）。」</p>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>Instrument 0A · 交叉验证交互演示</h2>
+
+<div class="panel">
+<div class="panel-label">Instrument 0A — Cross-Validation Visualizer</div>
+<p style="font-size:0.9rem;color:var(--slate);margin-bottom:12px">理解 K 折交叉验证的最直观方式：看到每一折的训练集（蓝色）和测试集（红色）是如何划分的。拖动滑块切换折数，点击「下一折」查看不同划分。</p>
+
+<div class="slider-row">
+  <label>K (折数)</label>
+  <input type="range" id="cv-k" min="3" max="10" value="5" step="1">
+  <span class="slider-val" id="cv-k-val">5</span>
+</div>
+
+<div class="btn-group">
+  <button class="btn" id="cv-prev">◀ 上一折</button>
+  <button class="btn active" id="cv-next">下一折 ▶</button>
+  <button class="btn" id="cv-shuffle">🔀 重新打乱</button>
+</div>
+
+<div class="stat-cards" id="cv-stats">
+  <div class="stat-card"><div class="lbl">当前折</div><div class="val" id="cv-fold-num">1/5</div></div>
+  <div class="stat-card"><div class="lbl">训练集</div><div class="val" id="cv-train-n">24</div></div>
+  <div class="stat-card"><div class="lbl">测试集</div><div class="val" id="cv-test-n">6</div></div>
+  <div class="stat-card"><div class="lbl">训练 MSE</div><div class="val" id="cv-train-mse">—</div></div>
+  <div class="stat-card"><div class="lbl">测试 MSE</div><div class="val" id="cv-test-mse">—</div></div>
+</div>
+
+<div class="chart-container" id="cv-chart"></div>
+
+<div class="legend">
+  <span class="legend-item"><span class="legend-dot" style="background:#2D4A3E"></span> 训练集</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#C75146"></span> 测试集</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#8B6914;opacity:0.5"></span> 回归线 (训练)</span>
+</div>
+
+<p style="font-size:0.85rem;color:var(--slate);margin-top:12px">提示：观察测试 MSE 在各折之间的波动——波动大说明模型对数据划分敏感，可能需要更多数据或更简单的模型。</p>
+</div>
+
+<footer>
+<p>Statistical Field Station · §0 数模实战工具箱</p>
+<p style="margin-top:8px"><a href="stats_tutorial.html">← 返回目录</a> · <a href="stats_01_descriptive.html">§I 描述统计 →</a></p>
+</footer>
+
+</div><!-- .page -->
+
+<script>
+// === KaTeX ===
+document.addEventListener('DOMContentLoaded', () => {
+  if (typeof renderMathInElement !== 'undefined') {
+    renderMathInElement(document.body, {
+      delimiters: [
+        {left: '\\[', right: '\\]', display: true},
+        {left: '\\(', right: '\\)', display: false},
+        {left: '$$', right: '$$', display: true}
+      ],
+      throwOnError: false
+    });
+  }
+});
+
+// === Instrument 0A: Cross-Validation Visualizer ===
+(function() {
+  if (typeof d3 === 'undefined') return;
+
+  const container = d3.select('#cv-chart');
+  const W = 720, H = 320;
+  const margin = {top: 30, right: 30, bottom: 40, left: 50};
+  const pw = W - margin.left - margin.right;
+  const ph = H - margin.top - margin.bottom;
+
+  const svg = container.append('svg').attr('viewBox', `0 0 ${W} ${H}`).style('max-width','100%');
+  const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+
+  // Generate synthetic data: y = 2x + 1 + noise
+  const N = 30;
+  let data = [];
+  let currentFold = 0;
+  let K = 5;
+
+  function generateData() {
+    data = [];
+    for (let i = 0; i < N; i++) {
+      const x = Math.random() * 10;
+      const y = 2 * x + 1 + (Math.random() - 0.5) * 4;
+      data.push({x, y, idx: i});
+    }
+  }
+
+  function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function getFolds() {
+    const shuffled = shuffle(data);
+    const folds = [];
+    const foldSize = Math.floor(N / K);
+    const remainder = N % K;
+    let start = 0;
+    for (let i = 0; i < K; i++) {
+      const size = foldSize + (i < remainder ? 1 : 0);
+      folds.push(shuffled.slice(start, start + size));
+      start += size;
+    }
+    return folds;
+  }
+
+  let folds = [];
+
+  function linearRegression(points) {
+    const n = points.length;
+    if (n < 2) return {slope: 0, intercept: 0, mse: 0};
+    const sx = points.reduce((s, d) => s + d.x, 0);
+    const sy = points.reduce((s, d) => s + d.y, 0);
+    const sxx = points.reduce((s, d) => s + d.x * d.x, 0);
+    const sxy = points.reduce((s, d) => s + d.x * d.y, 0);
+    const slope = (n * sxy - sx * sy) / (n * sxx - sx * sx);
+    const intercept = (sy - slope * sx) / n;
+    const mse = points.reduce((s, d) => {
+      const err = d.y - (slope * d.x + intercept);
+      return s + err * err;
+    }, 0) / n;
+    return {slope, intercept, mse};
+  }
+
+  function draw() {
+    g.selectAll('*').remove();
+
+    const xExt = d3.extent(data, d => d.x);
+    const yExt = d3.extent(data, d => d.y);
+    const xPad = (xExt[1] - xExt[0]) * 0.1;
+    const yPad = (yExt[1] - yExt[0]) * 0.1;
+    const xScale = d3.scaleLinear().domain([xExt[0] - xPad, xExt[1] + xPad]).range([0, pw]);
+    const yScale = d3.scaleLinear().domain([yExt[0] - yPad, yExt[1] + yPad]).range([ph, 0]);
+
+    // Axes
+    const xAxis = d3.axisBottom(xScale).ticks(6);
+    const yAxis = d3.axisLeft(yScale).ticks(5);
+    g.append('g').attr('transform', `translate(0,${ph})`).call(xAxis)
+      .selectAll('text').attr('font-family','var(--mono)').attr('font-size','0.7rem').attr('fill','var(--slate)');
+    g.selectAll('.axis line,.axis path').attr('stroke','var(--stone)');
+    g.append('g').call(yAxis)
+      .selectAll('text').attr('font-family','var(--mono)').attr('font-size','0.7rem').attr('fill','var(--slate)');
+
+    // Axis labels
+    g.append('text').attr('x', pw/2).attr('y', ph + 32).attr('text-anchor','middle')
+      .style('font-family','var(--mono)').style('font-size','0.7rem').style('fill','var(--slate)').text('x');
+    g.append('text').attr('x', -ph/2).attr('y', -38).attr('transform','rotate(-90)')
+      .attr('text-anchor','middle').style('font-family','var(--mono)')
+      .style('font-size','0.7rem').style('fill','var(--slate)').text('y');
+
+    if (folds.length === 0) return;
+
+    const testSet = folds[currentFold];
+    const testIdx = new Set(testSet.map(d => d.idx));
+    const trainSet = [];
+    for (let i = 0; i < K; i++) {
+      if (i !== currentFold) trainSet.push(...folds[i]);
+    }
+
+    // Train points
+    g.selectAll('.train-pt').data(trainSet).join('circle')
+      .attr('cx', d => xScale(d.x)).attr('cy', d => yScale(d.y))
+      .attr('r', 5).attr('fill', 'var(--forest)').attr('fill-opacity', 0.7)
+      .attr('stroke', 'var(--forest)').attr('stroke-width', 1);
+
+    // Test points
+    g.selectAll('.test-pt').data(testSet).join('circle')
+      .attr('cx', d => xScale(d.x)).attr('cy', d => yScale(d.y))
+      .attr('r', 6).attr('fill', 'var(--terracotta)').attr('fill-opacity', 0.85)
+      .attr('stroke', 'var(--terracotta)').attr('stroke-width', 2);
+
+    // Regression line (fitted on training data)
+    const lr = linearRegression(trainSet);
+    const x0 = xExt[0] - xPad;
+    const x1 = xExt[1] + xPad;
+    g.append('line')
+      .attr('x1', xScale(x0)).attr('y1', yScale(lr.slope * x0 + lr.intercept))
+      .attr('x2', xScale(x1)).attr('y2', yScale(lr.slope * x1 + lr.intercept))
+      .attr('stroke', 'var(--gold)').attr('stroke-width', 2).attr('stroke-dasharray', '6,3')
+      .attr('stroke-opacity', 0.6);
+
+    // Test MSE
+    const testMSE = testSet.reduce((s, d) => {
+      const err = d.y - (lr.slope * d.x + lr.intercept);
+      return s + err * err;
+    }, 0) / testSet.length;
+
+    // Update stats
+    d3.select('#cv-fold-num').text(`${currentFold + 1}/${K}`);
+    d3.select('#cv-train-n').text(trainSet.length);
+    d3.select('#cv-test-n').text(testSet.length);
+    d3.select('#cv-train-mse').text(lr.mse.toFixed(3));
+    d3.select('#cv-test-mse').text(testMSE.toFixed(3));
+  }
+
+  function init() {
+    generateData();
+    folds = getFolds();
+    currentFold = 0;
+    draw();
+    updateFoldDisplay();
+  }
+
+  function updateFoldDisplay() {
+    d3.select('#cv-fold-num').text(`${currentFold + 1}/${K}`);
+  }
+
+  d3.select('#cv-k').on('input', function() {
+    K = +this.value;
+    d3.select('#cv-k-val').text(K);
+    currentFold = 0;
+    folds = getFolds();
+    draw();
+    updateFoldDisplay();
+  });
+
+  d3.select('#cv-next').on('click', () => {
+    currentFold = (currentFold + 1) % K;
+    draw();
+    updateFoldDisplay();
+  });
+
+  d3.select('#cv-prev').on('click', () => {
+    currentFold = (currentFold - 1 + K) % K;
+    draw();
+    updateFoldDisplay();
+  });
+
+  d3.select('#cv-shuffle').on('click', () => {
+    generateData();
+    currentFold = 0;
+    folds = getFolds();
+    draw();
+    updateFoldDisplay();
+  });
+
+  init();
+})();
+</script>
+</body>
+</html>

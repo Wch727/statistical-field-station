@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>§XII 预测问题专论 — Statistical Field Station</title>
+<link rel="stylesheet" href="assets/vendor/google-fonts.css">
+<link rel="stylesheet" href="assets/vendor/katex.min.css">
+<script src="assets/vendor/katex.min.js"></script>
+<script src="assets/vendor/auto-render.min.js"></script>
+<script src="assets/vendor/d3.v7.min.js"></script>
+<link rel="stylesheet" href="assets/css/site.css">
+<style>
+:root {
+  --parchment: #FDFBF5; --forest: #2D4A3E; --terracotta: #C75146;
+  --gold: #8B6914; --stone: #E8E0D5; --slate: #5B6E65; --surface: #FFFAF0;
+  --display: 'Noto Serif SC', 'Cormorant Garamond', 'STSong', serif;
+  --body: 'Noto Sans SC', 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Consolas', monospace;
+  --page-w: 1100px; --text-w: 72ch; --radius: 4px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:40px}
+body{background:var(--parchment);color:var(--forest);font-family:var(--body);font-size:1.08rem;line-height:1.72}
+p{margin-bottom:14px;max-width:var(--text-w)}
+a{color:var(--terracotta);text-decoration:none}a:hover{text-decoration:underline}
+strong{font-weight:600}
+
+.page{max-width:var(--page-w);margin:0 auto;padding:0 32px 64px}
+.top-nav{padding:16px 0;font-family:var(--mono);font-size:0.78rem;border-bottom:1px solid var(--stone);margin-bottom:40px}
+.top-nav a{color:var(--slate)}.top-nav span{color:var(--gold)}
+
+.hero{padding:32px 0 40px}
+.hero .num{font-family:var(--mono);font-size:0.7rem;letter-spacing:0.18em;color:var(--gold);margin-bottom:6px}
+.hero h1{font-family:var(--display);font-weight:700;font-size:clamp(2rem,5vw,3rem);line-height:1.1;color:var(--forest);margin-bottom:12px}
+.hero .deck{font-size:1.05rem;color:var(--slate);max-width:var(--text-w)}
+
+h2{font-family:var(--display);font-weight:600;font-size:1.6rem;color:var(--forest);margin:36px 0 14px;padding-top:20px;border-top:1px solid var(--stone)}
+h3{font-family:var(--display);font-weight:500;font-size:1.2rem;color:var(--forest);margin:24px 0 10px}
+
+.math-block{text-align:center;padding:16px;background:var(--surface);border:1px solid var(--stone);border-radius:var(--radius);margin:16px 0;overflow-x:auto}
+.derive-box{background:#F5F8F6;border:1px solid var(--stone);border-left:3px solid var(--forest);padding:16px 20px;border-radius:0 var(--radius) var(--radius) 0;margin:16px 0;font-size:0.92rem}
+.derive-box h4{color:var(--forest);font-family:var(--display);text-transform:none;letter-spacing:0;font-size:1rem;margin:0 0 8px}
+.concept-box{background:var(--surface);border:1px solid var(--stone);border-radius:var(--radius);padding:16px 20px;margin:16px 0;font-size:0.93rem}
+.concept-box h4{font-family:var(--display);font-size:1.05rem;font-weight:600;color:var(--forest);margin:0 0 8px}
+.toolkit-box{background:#FFF5F3;border:1px solid var(--stone);border-left:3px solid var(--terracotta);padding:14px 18px;border-radius:0 var(--radius) var(--radius) 0;margin:16px 0;font-size:0.92rem}
+.toolkit-box h4{color:var(--terracotta);font-family:var(--display);font-size:1rem;margin:0 0 8px}
+.note-box{background:#FFF8F0;border-left:3px solid var(--gold);padding:14px 18px;border-radius:0 var(--radius) var(--radius) 0;margin:16px 0;font-size:0.93rem}
+.note-box strong{color:var(--gold)}
+.warn-box{background:#FFFBF0;border:1px solid #E8D5A0;border-radius:var(--radius);padding:14px 18px;margin:16px 0;font-size:0.92rem}
+.warn-box::before{content:'⚠ ';font-size:1.1rem}
+.competition-box{background:#F0F7F5;border:1px solid var(--forest);border-left:4px solid var(--forest);padding:18px 22px;border-radius:0 var(--radius) var(--radius) 0;margin:20px 0;font-size:0.93rem}
+.competition-box h4{color:var(--forest);font-family:var(--display);font-size:1.05rem;margin:0 0 8px}
+.competition-box .q{color:var(--terracotta);font-weight:600}
+
+.panel{background:var(--surface);border:1px solid var(--stone);border-radius:6px;box-shadow:inset 0 1px 0 rgba(255,255,255,0.7),0 2px 12px rgba(0,0,0,0.05);padding:24px;margin:20px 0;position:relative}
+.panel::before{content:'';position:absolute;top:0;left:12px;right:12px;height:1px;background:linear-gradient(to right,transparent,var(--gold),transparent);opacity:0.4}
+.panel-label{font-family:var(--mono);font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--stone)}
+.panel-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+
+.stat-cards{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.stat-card{background:var(--surface);border:1px solid var(--stone);border-radius:var(--radius);padding:10px 14px;text-align:center;min-width:72px}
+.stat-card .lbl{font-family:var(--mono);font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--slate);margin-bottom:3px}
+.stat-card .val{font-family:var(--mono);font-size:1.25rem;font-weight:600;color:var(--forest)}
+
+.slider-row{display:flex;align-items:center;gap:12px;margin:10px 0;flex-wrap:wrap}
+.slider-row label{font-family:var(--mono);font-size:0.85rem;color:var(--slate);min-width:100px}
+.slider-row input[type=range]{flex:1;min-width:100px;accent-color:var(--terracotta)}
+.slider-val{font-family:var(--mono);font-weight:600;color:var(--terracotta);min-width:36px;font-size:0.88rem}
+
+.chart-container{width:100%;overflow-x:auto}
+.chart-container svg{display:block;margin:0 auto}
+
+.compact-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:0.88rem;margin:16px 0}
+.compact-table th,.compact-table td{padding:7px 12px;text-align:left;border-bottom:1px solid var(--stone)}
+.compact-table th{font-family:var(--body);font-size:0.72rem;letter-spacing:0.08em;color:var(--slate);border-bottom:2px solid var(--stone)}
+
+.btn{font-family:var(--mono);font-size:0.75rem;border:1px solid var(--stone);border-radius:var(--radius);background:var(--surface);color:var(--forest);padding:6px 14px;cursor:pointer;transition:all 0.15s}
+.btn:hover{border-color:var(--terracotta);color:var(--terracotta)}
+.btn.active{background:var(--forest);color:#fff;border-color:var(--forest)}
+.btn-group{display:flex;gap:4px;flex-wrap:wrap;margin:8px 0}
+
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin:8px 0;font-family:var(--mono);font-size:0.78rem}
+.legend-item{display:flex;align-items:center;gap:6px}
+.legend-dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+
+footer{text-align:center;padding:32px 0;font-size:0.82rem;color:var(--slate);border-top:1px solid var(--stone);margin-top:40px}
+footer a{color:var(--slate);text-decoration:underline}
+</style>
+</head>
+<body>
+<div class="page">
+
+<nav class="top-nav"><a href="stats_tutorial.html">← Field Station</a> <span>|</span> §XII 预测问题专论</nav>
+
+<header class="hero">
+  <div class="num">§XII</div>
+  <h1>预测问题专论</h1>
+  <p class="deck">预测是数学建模竞赛中最常见的任务之一——下一天销量是多少？未来趋势如何？小样本下怎么预测？本章汇聚<strong>回归预测评估指标</strong>、<strong>预测区间</strong>、<strong>灰色预测 GM(1,1)</strong>、<strong>多模型比较框架</strong>和<strong>数据泄漏防御</strong>五大核心模块，是连接「模型训练」与「竞赛论文」的桥梁。</p>
+</header>
+
+<div class="competition-box">
+<h4>竞赛真题场景</h4>
+<p><span class="q">Q：</span>国赛 2023 B 题：根据历史数据预测未来 7 天的蔬菜销量——要求报告预测精度（RMSE、MAPE），并给出预测区间。<br>
+<span class="q">Q：</span>美赛 MCM C 题：预测黄金价格走势，要求比较至少 3 种模型的预测效果——ARIMA、随机森林、灰色预测 GM(1,1)。<br>
+<span class="q">Q：</span>华中赛/电工杯：小样本（n=10~20）电力负荷预测——数据太少，传统时序方法不能用，灰色预测 GM(1,1) 是最佳选择。<br>
+<strong>→ 预测问题的核心不只是「预测准不准」，而是「预测的可信度有多高」——预测区间和模型比较是论文的必答题。</strong></p>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>12.1 回归预测评估指标</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>从「预测值 vs 真实值」到评估指标</h4>
+<p>设 \(y_i\) 为第 \(i\) 个观测的真实值，\(\hat{y}_i\) 为预测值，\(n\) 为样本量。所有的回归预测评估指标都基于预测误差 \(e_i = y_i - \hat{y}_i\)：</p>
+</div>
+
+<h3>12.1.1 MSE 与 RMSE</h3>
+
+<div class="math-block">
+\[
+\text{MSE} = \frac{1}{n}\sum_{i=1}^{n} (y_i - \hat{y}_i)^2 \qquad
+\text{RMSE} = \sqrt{\text{MSE}} = \sqrt{\frac{1}{n}\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}
+\]
+</div>
+
+<p><strong>RMSE 是竞赛中最常用的回归评估指标。</strong>它的单位与 y 相同，便于解释（「平均预测误差约为 X 单位」）。RMSE 对大误差施加平方惩罚——一个偏差很大的预测会比多个偏差小的预测更严重地拉高 RMSE。</p>
+
+<h3>12.1.2 MAE</h3>
+
+<div class="math-block">
+\[
+\text{MAE} = \frac{1}{n}\sum_{i=1}^{n} |y_i - \hat{y}_i|
+\]
+</div>
+
+<p>MAE 对异常值不敏感（线性惩罚而非平方惩罚）。如果数据中有异常值但你不希望它们主导评估，MAE 是更好的选择。RMSE ≥ MAE，且 RMSE 和 MAE 之间的差距越大，说明预测误差的方差越大。</p>
+
+<h3>12.1.3 MAPE 与 sMAPE</h3>
+
+<div class="math-block">
+\[
+\text{MAPE} = \frac{100\%}{n}\sum_{i=1}^{n} \left|\frac{y_i - \hat{y}_i}{y_i}\right|
+\qquad
+\text{sMAPE} = \frac{100\%}{n}\sum_{i=1}^{n} \frac{|y_i - \hat{y}_i|}{(|y_i| + |\hat{y}_i|)/2}
+\]
+</div>
+
+<p><strong>MAPE（平均绝对百分比误差）</strong>是最直观的指标——「预测误差平均为 X%」。但 MAPE 有两个致命缺陷：① 当 \(y_i = 0\) 时无定义；② 对低估的惩罚比高估轻（\(y_i=100, \hat{y}_i=50\) → APE=50%；\(y_i=100, \hat{y}_i=150\) → APE=50%——看似对称，但当 \(y_i=50, \hat{y}_i=100\) 时 APE=100%）。<strong>sMAPE（对称 MAPE）</strong>修正了不对称问题，取值在 0%~200% 之间。</p>
+
+<div class="derive-box">
+<h4>推导：MSE 的偏差-方差分解</h4>
+<p>MSE 可以分解为三个部分——这对理解模型误差至关重要：</p>
+<div class="math-block">
+\[
+\begin{aligned}
+\mathbb{E}[(Y - \hat{f}(X))^2] &= \mathbb{E}[(Y - f(X) + f(X) - \mathbb{E}[\hat{f}(X)] + \mathbb{E}[\hat{f}(X)] - \hat{f}(X))^2] \\
+&= \underbrace{(\mathbb{E}[\hat{f}(X)] - f(X))^2}_{\text{Bias}^2} + \underbrace{\text{Var}(\hat{f}(X))}_{\text{Variance}} + \underbrace{\sigma^2_{\varepsilon}}_{\text{Irreducible Noise}}
+\end{aligned}
+\]
+</div>
+<p>竞赛启示：<strong>训练集上的 MSE 总是低估泛化 MSE</strong>（因为模型已经「见过」训练数据）。必须用交叉验证或测试集来估计真实的预测误差。</p>
+</div>
+
+<h3>12.1.4 指标选择决策表</h3>
+
+<table class="compact-table">
+<thead><tr><th>场景</th><th>推荐指标</th><th>原因</th></tr></thead>
+<tbody>
+<tr><td>竞赛通用（回归）</td><td>RMSE + MAE</td><td>RMSE 是标准，MAE 作为补充</td></tr>
+<tr><td>评委易理解</td><td>MAPE</td><td>百分比直观，但需注意 y≈0</td></tr>
+<tr><td>有异常值</td><td>MAE + MedAE</td><td>对异常值稳健</td></tr>
+<tr><td>大误差代价高</td><td>RMSE</td><td>平方惩罚放大误差</td></tr>
+<tr><td>多尺度比较</td><td>MAPE / sMAPE</td><td>消除量纲影响</td></tr>
+<tr><td>模型选择</td><td>AIC / BIC / AICc</td><td>惩罚模型复杂度</td></tr>
+</tbody>
+</table>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>论文中永远不要只报告一个指标。标准组合 = <strong>RMSE + MAE + MAPE + R²</strong>。如果评委看到你只报告了 R²=0.95 就宣称模型好，他们会立刻质疑——R² 高可能只是因为数据有趋势，而不是模型预测能力强。对于时间序列预测，额外报告 <strong>sMAPE</strong> 和 <strong>MASE</strong>（Mean Absolute Scaled Error）。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>12.2 预测区间 vs 置信区间</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>两个不同的「区间」</h4>
+<p><strong>置信区间（Confidence Interval）：</strong>对 \(\mathbb{E}[Y \mid X=x_0]\) 的区间估计——即「给定 \(x_0\)，所有可能的预测值的<strong>均值</strong>落在什么范围？」<br>
+<strong>预测区间（Prediction Interval）：</strong>对单个新观测 \(Y \mid X=x_0\) 的区间估计——即「给定 \(x_0\)，下一个<strong>具体观测</strong>落在什么范围？」<br>
+<strong>预测区间总是比置信区间宽</strong>——因为它多了一个「个体随机波动」的不确定性。</p>
+</div>
+
+<div class="derive-box">
+<h4>推导：OLS 框架下的两种区间</h4>
+<p>对于一个新的观测点 \(x_0\)，预测值 \(\hat{y}_0 = x_0^T\hat{\beta}\)。</p>
+<p><strong>置信区间（均值）：</strong></p>
+<div class="math-block">
+\[
+\text{Var}(\hat{y}_0) = \sigma^2 \cdot x_0^T (X^T X)^{-1} x_0
+\]
+</div>
+<p><strong>预测区间（个体）：</strong>单个观测 \(y_0 = x_0^T\beta + \varepsilon_0\)，预测误差为 \(y_0 - \hat{y}_0 = x_0^T(\beta - \hat{\beta}) + \varepsilon_0\)。由于 \(\hat{\beta}\) 和 \(\varepsilon_0\) 独立：</p>
+<div class="math-block">
+\[
+\text{Var}(y_0 - \hat{y}_0) = \sigma^2 + \sigma^2 \cdot x_0^T (X^T X)^{-1} x_0 = \sigma^2\left(1 + x_0^T (X^T X)^{-1} x_0\right)
+\]
+</div>
+<p>因此，\(1-\alpha\) 的预测区间为：</p>
+<div class="math-block">
+\[
+\hat{y}_0 \pm t_{n-p, 1-\alpha/2} \cdot \hat{\sigma} \sqrt{1 + x_0^T (X^T X)^{-1} x_0}
+\]
+</div>
+<p>与置信区间相比，根号内多了「+1」——这就是个体随机波动的贡献。而且当 \(x_0\) 远离 \(\bar{x}\) 时，\(x_0^T(X^T X)^{-1}x_0\) 增大，预测区间变得更宽。<strong>外推预测的区间远宽于内插预测。</strong></p>
+</div>
+
+<h3>12.2.1 时间序列预测区间</h3>
+
+<p>ARIMA 模型的预测区间随预测步数增加而扩大。对于 ARIMA(0,1,0)（随机游走）：</p>
+<div class="math-block">
+\[
+\text{Var}(y_{t+h} \mid y_1,\ldots,y_t) = h\sigma^2
+\]
+</div>
+<p>预测区间宽度与 \(\sqrt{h}\) 成正比——预测越远，不确定性越大。这是竞赛论文中必须展示的：<strong>预测曲线 + 95% 置信带（蝴蝶形）</strong>。</p>
+
+<div class="warn-box">
+<strong>竞赛常见错误：</strong>① 只报告点预测，不报告预测区间——评委无法判断预测的可靠性。② 混淆置信区间和预测区间——论文中写「95% 置信区间」但画的是预测区间（或反之）。③ 预测区间没有随预测步数增加而变宽——说明你在用错误的公式。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>12.3 灰色预测 GM(1,1)</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>灰色系统理论的核心思想</h4>
+<p>灰色系统理论由邓聚龙教授于 1982 年提出。在控制论中，「白」表示信息完全已知，「黑」表示信息完全未知，「灰」表示部分已知、部分未知。GM(1,1) 是灰色预测的核心模型：<strong>G</strong>rey <strong>M</strong>odel，<strong>1</strong> 阶微分方程，<strong>1</strong> 个变量。</p>
+<p><strong>为什么竞赛中需要 GM(1,1)？</strong>传统统计方法（ARIMA、回归）需要较大样本量（n ≥ 30）才能可靠估计参数。而竞赛中经常遇到 n = 8~15 的小样本预测问题——GM(1,1) 在 n ≥ 4 时就能工作，是小样本预测的首选方法。</p>
+</div>
+
+<h3>12.3.1 GM(1,1) 完整推导</h3>
+
+<div class="derive-box">
+<h4>Step 1：原始序列与级比检验</h4>
+<p>设原始非负序列 \(X^{(0)} = \{x^{(0)}(1), x^{(0)}(2), \ldots, x^{(0)}(n)\}\)，\(n \geq 4\)。</p>
+<p>首先计算级比 \(\lambda(k) = \frac{x^{(0)}(k-1)}{x^{(0)}(k)}\)，\(k=2,3,\ldots,n\)。如果所有 \(\lambda(k) \in (e^{-2/(n+1)}, e^{2/(n+1)})\)，则序列适合 GM(1,1) 建模。否则需要对原始数据做平移变换（加常数 c）使级比落入可容覆盖区间。</p>
+
+<h4>Step 2：一次累加生成 (1-AGO)</h4>
+<p>对 \(X^{(0)}\) 做一次累加生成，得到 \(X^{(1)}\)：</p>
+<div class="math-block">
+\[
+x^{(1)}(k) = \sum_{i=1}^{k} x^{(0)}(i), \quad k = 1, 2, \ldots, n
+\]
+</div>
+<p>累加生成的目的是<strong>将无规律的原始数据转化为有规律（近似指数增长）的序列</strong>——这是灰色预测的核心思想。原始序列可能是杂乱无章的，但累加后往往呈现平滑的上升趋势。</p>
+
+<h4>Step 3：紧邻均值生成</h4>
+<p>定义背景值（紧邻均值生成序列）\(Z^{(1)}\)：</p>
+<div class="math-block">
+\[
+z^{(1)}(k) = 0.5\left[x^{(1)}(k) + x^{(1)}(k-1)\right], \quad k = 2, 3, \ldots, n
+\]
+</div>
+
+<h4>Step 4：白化微分方程</h4>
+<p>GM(1,1) 的基本形式是灰微分方程：</p>
+<div class="math-block">
+\[
+x^{(0)}(k) + a z^{(1)}(k) = b, \quad k = 2, 3, \ldots, n
+\]
+</div>
+<p>对应的白化微分方程（看作连续时间 t 的微分方程）：</p>
+<div class="math-block">
+\[
+\frac{dx^{(1)}}{dt} + a x^{(1)}(t) = b
+\]
+</div>
+<p>其中 \(a\) 是<strong>发展系数</strong>（反映趋势的强弱），\(b\) 是<strong>灰色作用量</strong>（反映数据变化的幅度）。</p>
+
+<h4>Step 5：最小二乘参数估计</h4>
+<p>将灰微分方程写成矩阵形式 \(Y = B \cdot [a, b]^T\)：</p>
+<div class="math-block">
+\[
+Y = \begin{bmatrix} x^{(0)}(2) \\ x^{(0)}(3) \\ \vdots \\ x^{(0)}(n) \end{bmatrix}, \quad
+B = \begin{bmatrix} -z^{(1)}(2) & 1 \\ -z^{(1)}(3) & 1 \\ \vdots & \vdots \\ -z^{(1)}(n) & 1 \end{bmatrix}
+\]
+</div>
+<p>由最小二乘法：</p>
+<div class="math-block">
+\[
+\begin{bmatrix} \hat{a} \\ \hat{b} \end{bmatrix} = (B^T B)^{-1} B^T Y
+\]
+</div>
+
+<h4>Step 6：时间响应函数</h4>
+<p>解白化微分方程，得到 \(X^{(1)}\) 的时间响应函数：</p>
+<div class="math-block">
+\[
+\hat{x}^{(1)}(k+1) = \left(x^{(0)}(1) - \frac{\hat{b}}{\hat{a}}\right) e^{-\hat{a}k} + \frac{\hat{b}}{\hat{a}}, \quad k = 0, 1, 2, \ldots
+\]
+</div>
+
+<h4>Step 7：累减还原 (IAGO)</h4>
+<p>对预测的 \(\hat{X}^{(1)}\) 做一次累减（逆 AGO），还原为原始尺度的预测值：</p>
+<div class="math-block">
+\[
+\hat{x}^{(0)}(k+1) = \hat{x}^{(1)}(k+1) - \hat{x}^{(1)}(k) = (1 - e^{\hat{a}})\left(x^{(0)}(1) - \frac{\hat{b}}{\hat{a}}\right) e^{-\hat{a}k}
+\]
+</div>
+<p>特别地，\(\hat{x}^{(0)}(1) = x^{(0)}(1)\)（第一个点保持原值）。</p>
+</div>
+
+<h3>12.3.2 精度检验</h3>
+
+<p>灰色预测有四级精度检验标准：</p>
+
+<table class="compact-table">
+<thead><tr><th>精度等级</th><th>相对误差</th><th>后验差比值 C</th><th>小误差概率 P</th></tr></thead>
+<tbody>
+<tr><td><strong>一级（好）</strong></td><td>&lt; 1%</td><td>&lt; 0.35</td><td>&gt; 0.95</td></tr>
+<tr><td><strong>二级（合格）</strong></td><td>&lt; 5%</td><td>&lt; 0.50</td><td>&gt; 0.80</td></tr>
+<tr><td><strong>三级（勉强）</strong></td><td>&lt; 10%</td><td>&lt; 0.65</td><td>&gt; 0.70</td></tr>
+<tr><td><strong>四级（不合格）</strong></td><td>≥ 10%</td><td>≥ 0.65</td><td>≤ 0.70</td></tr>
+</tbody>
+</table>
+
+<div class="math-block">
+\[
+\text{后验差比值 } C = \frac{S_2}{S_1}, \quad
+\text{小误差概率 } P = P\left\{|\varepsilon(k) - \bar{\varepsilon}| < 0.6745 S_1\right\}
+\]
+</div>
+<p>其中 \(S_1\) 是原始序列的标准差，\(S_2\) 是残差序列的标准差，\(\varepsilon(k)\) 是残差。</p>
+
+<h3>12.3.3 GM(1,N) 扩展</h3>
+
+<p>当有多个影响因素时，GM(1,N) 模型同时建模 N 个变量：</p>
+<div class="math-block">
+\[
+x_1^{(0)}(k) + a z_1^{(1)}(k) = \sum_{j=2}^{N} b_j x_j^{(1)}(k)
+\]
+</div>
+<p>其中 \(x_1\) 是目标变量，\(x_2, \ldots, x_N\) 是影响因素。GM(1,N) 既可以预测，也可以分析各因素对目标变量的影响程度。</p>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>GM(1,1) 适用于<strong>短期预测</strong>（通常预测 1-5 步）。预测步数越多，误差越大——因为指数模型假设趋势无限延续。在论文中，① 先做级比检验确认数据适合 GM(1,1)；② 报告精度等级（最好达到一级或二级）；③ 不要只用一个模型——GM(1,1) 通常作为小样本预测的基线，与线性回归、ARIMA（如果数据够）比较。④ 如果原始数据不满足级比检验，做平移变换：\(x'(k) = x(k) + c\)，选择适当的 c 使级比落入可容区间。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>12.4 多模型比较与集成</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>为什么竞赛必须比较多模型？</h4>
+<p>单一模型的结果没有说服力——评委无法判断这个模型是「最好的选择」还是「唯一的选择」。多模型比较是竞赛论文的<strong>标准要求</strong>，展示了建模手对工具的理解深度和批判性思维。</p>
+</div>
+
+<h3>12.4.1 比较框架</h3>
+
+<table class="compact-table">
+<thead><tr><th>比较维度</th><th>具体内容</th><th>论文呈现</th></tr></thead>
+<tbody>
+<tr><td>预测精度</td><td>RMSE / MAE / MAPE / sMAPE</td><td>对比表格 + 柱状图</td></tr>
+<tr><td>预测稳定性</td><td>交叉验证分数（均值 ± 标准差）</td><td>箱线图</td></tr>
+<tr><td>计算复杂度</td><td>训练时间 / 参数数量</td><td>表格</td></tr>
+<tr><td>可解释性</td><td>能否给出预测的理由</td><td>文字说明</td></tr>
+<tr><td>不确定性</td><td>预测区间宽度</td><td>预测区间图</td></tr>
+</tbody>
+</table>
+
+<div class="toolkit-box">
+<h4>竞赛工具箱：预测模型对比模板</h4>
+<p>竞赛中至少比较 3 个模型：</p>
+<p><strong>基线模型（简单）：</strong>均值预测（naive）或线性回归——如果复杂模型不比基线好很多，说明复杂度不必要。<br>
+<strong>标准模型（常规）：</strong>ARIMA / 随机森林 / XGBoost —— 根据数据特征选择。<br>
+<strong>特色模型（加分）：</strong>灰色预测 GM(1,1)（小样本）/ LSTM（大量时序数据）/ 贝叶斯方法（需要不确定性量化）。</p>
+<p><strong>论文中必须呈现：</strong>① 一张对比表（所有模型在所有指标上的表现）。② 一张预测曲线图（最佳模型 vs 真实值 vs 基线）。③ 为什么最佳模型最适合这个具体问题——不是泛泛地说「因为 RMSE 最低」，而是结合数据特征解释（如「GM(1,1) 适合小样本」或「ARIMA 捕捉了自相关结构」）。</p>
+</div>
+
+<h3>12.4.2 简单集成方法</h3>
+
+<p>当多个模型各有优劣时，简单集成（ensemble）往往能降低预测方差：</p>
+
+<div class="math-block">
+\[
+\hat{y}_{\text{ensemble}} = \frac{1}{M}\sum_{m=1}^{M} \hat{y}_m \quad \text{（简单平均）}
+\qquad
+\hat{y}_{\text{weighted}} = \sum_{m=1}^{M} w_m \hat{y}_m, \quad \sum w_m = 1
+\]
+</div>
+
+<p>权重的选择：① 基于交叉验证性能的倒数：\(w_m \propto 1/\text{RMSE}_m\)。② 基于 AIC 的指数权重：\(w_m \propto \exp(-\text{AIC}_m/2)\)。③ 通过一个外层模型（如线性回归）学习最优权重——这就是 Stacking。</p>
+
+<div class="warn-box">
+<strong>竞赛陷阱：</strong>① 集成不等于万能的——如果所有模型都犯了同样的系统性偏差（如都低估了峰值），集成也无法修正。② 不要为了「比较」而强行加入不合适的模型——如果数据是纯时间序列，不要加入随机森林（它不处理时间依赖）。③ 比较模型时，<strong>必须使用相同的训练/测试划分</strong>——否则比较不公平。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>12.5 数据泄漏防御</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>数据泄漏：竞赛中最隐蔽的错误</h4>
+<p><strong>数据泄漏（Data Leakage）</strong>是指在模型训练过程中，使用了在真实预测场景下<strong>不可获得的信息</strong>。泄漏导致交叉验证分数虚高，但模型在真正的新数据上表现糟糕。在竞赛中，数据泄漏是最常见的「模型看起来很好但评委打低分」的原因。</p>
+</div>
+
+<h3>12.5.1 泄漏的四种类型</h3>
+
+<table class="compact-table">
+<thead><tr><th>类型</th><th>典型错误</th><th>正确做法</th></tr></thead>
+<tbody>
+<tr><td><strong>时间泄漏</strong></td><td>用未来数据预测过去（如用 12 月的数据预测 11 月）</td><td>严格按时间顺序划分：训练集全部在测试集之前</td></tr>
+<tr><td><strong>预处理泄漏</strong></td><td>在全数据集上做标准化/填充缺失值/PCA，再划分训练/测试</td><td>在交叉验证<strong>每一折内部</strong>独立计算标准化参数</td></tr>
+<tr><td><strong>特征泄漏</strong></td><td>特征中包含目标变量的未来信息（如「距期末还有 X 天」→ 已知期末日期）</td><td>检查每个特征：预测时这个信息是否可获得？</td></tr>
+<tr><td><strong>目标泄漏</strong></td><td>用目标变量构造特征（如用「总销量」除以「天数」得到「日均销量」作为特征预测「总销量」）</td><td>任何与目标变量有确定性关系的变量都不能作为特征</td></tr>
+</tbody>
+</table>
+
+<h3>12.5.2 时间序列防泄漏检查清单</h3>
+
+<div class="toolkit-box">
+<h4>竞赛时序数据防泄漏清单</h4>
+<p>□ 训练集最早的日期 < 验证集最早的日期 < 测试集最早的日期<br>
+□ 没有使用任何未来日期的数据作为特征（如「本月总销量」不能用于预测「本月第 15 天的销量」）<br>
+□ 标准化参数（均值、标准差）只在训练集上计算<br>
+□ 缺失值填补只用训练集的信息（如训练集的均值，而非全数据集的均值）<br>
+□ 特征选择在整个流程中只在训练集上进行<br>
+□ 如果用滑动窗口，确保窗口不跨越训练/测试边界<br>
+□ 交叉验证使用 TimeSeriesSplit（按时间顺序），而非随机 K-Fold</p>
+</div>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>在论文中主动展示你考虑了数据泄漏问题——这会增加评委的信任。例如：「为保证模型评估的可靠性，我们使用 TimeSeriesSplit 进行交叉验证，所有预处理参数均从训练集计算后再应用于验证集，确保不存在数据泄漏。」这样的表述是竞赛论文的加分项。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- INSTRUMENT No.12A: 回归预测仪表盘 -->
+<!-- ══════════════════════════════════════════════ -->
+<h2>仪器 No.12A — 回归预测仪表盘</h2>
+<div class="panel">
+<div class="panel-label">INSTRUMENT No.12A · Regression Prediction Dashboard</div>
+<p style="font-size:0.9rem;color:var(--slate);margin-bottom:12px">生成带噪声的线性数据，拟合 OLS 回归，观察预测区间（阴影带）随 x 远离 x̄ 而变宽。拖动噪声滑块改变数据离散度，查看 RMSE/MAE/MAPE 的实时变化。右侧虚线 = 95% 预测区间。</p>
+<div class="slider-row">
+  <label>噪声水平 σ = <span class="slider-val" id="pred-noise-val">8.0</span></label>
+  <input type="range" id="pred-noise" min="1" max="20" value="8" step="0.5">
+</div>
+<div class="slider-row">
+  <label>样本量 n = <span class="slider-val" id="pred-n-val">30</span></label>
+  <input type="range" id="pred-n" min="10" max="80" value="30" step="5">
+</div>
+<div class="btn-group">
+  <button class="btn" id="pred-reshuffle">重新生成数据</button>
+</div>
+<div class="chart-container" id="pred-main-chart"></div>
+<div class="stat-cards" id="pred-metrics"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- INSTRUMENT No.12B: GM(1,1) 灰色预测 -->
+<!-- ══════════════════════════════════════════════ -->
+<h2>仪器 No.12B — 灰色预测 GM(1,1)</h2>
+<div class="panel">
+<div class="panel-label">INSTRUMENT No.12B · Grey Model GM(1,1) Predictor</div>
+<p style="font-size:0.9rem;color:var(--slate);margin-bottom:12px">上排：原始序列（点）与 GM(1,1) 拟合/预测（线），虚线后为预测期。下排：1-AGO 累加序列（原始杂乱 → 累加后平滑近似指数）。观察灰色预测如何从小样本（n=8~12）中提取趋势。</p>
+<div class="slider-row">
+  <label>预测步数 = <span class="slider-val" id="gm-steps-val">3</span></label>
+  <input type="range" id="gm-steps" min="1" max="6" value="3" step="1">
+</div>
+<div class="btn-group">
+  <button class="btn" id="gm-reshuffle">重新生成数据</button>
+  <button class="btn" id="gm-add-noise">增加噪声</button>
+</div>
+<div class="panel-grid">
+  <div class="chart-container" id="gm-original-chart"></div>
+  <div class="chart-container" id="gm-ago-chart"></div>
+</div>
+<div class="stat-cards" id="gm-stats"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>12.5A 预测精度比较的统计检验：Diebold-Mariano</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>模型 A 的 RMSE 比模型 B 低 0.3——这个差异是显著的吗？</h4>
+<p>当两个模型的预测误差差异很小时，仅仅比较 RMSE/MAE 的数值是不够的——你需要一个<strong>统计检验</strong>来判断差异是否显著。Diebold-Mariano (DM) 检验是预测精度比较的标准方法。</p>
+</div>
+
+<div class="derive-box">
+<h4>DM 检验的推导</h4>
+<p>设 \(e_{A,t}\) 和 \(e_{B,t}\) 分别是模型 A 和 B 在第 t 期的预测误差。定义损失差异：</p>
+<div class="math-block">
+\[
+d_t = g(e_{A,t}) - g(e_{B,t})
+\]
+</div>
+<p>其中 \(g(\cdot)\) 是损失函数——平方误差 \(g(e)=e^2\)（对应 MSE）或绝对误差 \(g(e)=|e|\)（对应 MAE）。</p>
+<p>\(H_0: \mathbb{E}[d_t] = 0\)（两个模型的预测精度无显著差异）。DM 统计量：</p>
+<div class="math-block">
+\[
+\text{DM} = \frac{\bar{d}}{\sqrt{\text{Var}(\bar{d})}} \sim N(0,1)
+\]
+</div>
+<p>其中 \(\bar{d} = \frac{1}{T}\sum_{t=1}^{T} d_t\)，\(\text{Var}(\bar{d})\) 需要使用异方差和自相关一致 (HAC) 的标准误估计（因为预测误差通常有自相关）。如果 |DM| > 1.96 → 在 5% 水平下显著 → 两个模型的预测精度确实不同。</p>
+</div>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>论文中：「DM 检验表明，ARIMA 模型的预测精度显著优于朴素预测 (DM = 2.34, p = 0.019)，但与 GM(1,1) 的差异不显著 (DM = 0.87, p = 0.384)。考虑到 GM(1,1) 的数据需求更少，我们选择 GM(1,1) 作为最终预测模型。」——这种统计检验支持的模型选择在竞赛中非常有说服力。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>12.6 竞赛实战流程</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="toolkit-box">
+<h4>预测问题竞赛标准流程</h4>
+<p><strong>Step 1：数据探索</strong>——画时序图，判断趋势、季节性、异常值。计算基本统计量。<br>
+<strong>Step 2：数据预处理</strong>——缺失值填补（用训练集信息）、标准化、级比检验（如用 GM(1,1)）。<br>
+<strong>Step 3：模型选择</strong>——根据数据特征选择 3+ 个候选模型：<br>
+&nbsp;&nbsp;· n ≥ 30，有明显趋势/季节 → ARIMA / SARIMA<br>
+&nbsp;&nbsp;· n ≥ 30，无明显时序结构 → 随机森林回归 / XGBoost<br>
+&nbsp;&nbsp;· n < 20 → 灰色预测 GM(1,1)（必选）<br>
+&nbsp;&nbsp;· 任何情况 → 线性回归（基线）<br>
+<strong>Step 4：训练与验证</strong>——时间序列用 TimeSeriesSplit，其他用 5 折交叉验证。确保无数据泄漏。<br>
+<strong>Step 5：模型比较</strong>——对比表（RMSE + MAE + MAPE + 训练时间）。选出最佳模型。<br>
+<strong>Step 6：预测 + 区间</strong>——用最佳模型预测，给出 95% 预测区间。<br>
+<strong>Step 7：残差诊断</strong>——残差应为白噪声（Ljung-Box 检验），无趋势，无自相关。<br>
+<strong>Step 8：敏感性分析</strong>——改变关键参数（如 ARIMA 的 p/d/q），观察预测变化。</p>
+</div>
+
+<div class="warn-box">
+<strong>一票否决的致命错误：</strong>① 用随机 K-Fold 做时间序列的交叉验证。② 标准化用了全数据的均值和方差。③ 预测期包含训练期的时间点。④ 只报告训练集上的指标。⑤ 不报告预测区间。⑥ 小样本（n=10）跑去用 ARIMA(3,1,2)——参数比数据还多。
+</div>
+
+<footer>
+  <p><a href="stats_11_timeseries.html">← §XI 时间序列分析</a> &nbsp;|&nbsp; <a href="stats_tutorial.html">Field Station 总目录</a></p>
+  <p style="margin-top:8px">Statistical Field Station &copy; 2026 · KaTeX + D3.js</p>
+</footer>
+
+</div>
+
+<script>
+// ============ KaTeX Auto-Render ============
+renderMathInElement(document.body, {
+  delimiters: [
+    {left: '\\[', right: '\\]', display: true},
+    {left: '\\(', right: '\\)', display: false},
+    {left: '$$', right: '$$', display: true}
+  ],
+  throwOnError: false
+});
+
+// ============ INSTRUMENT No.12A: Regression Prediction Dashboard ============
+(function() {
+  const W = 700, H = 380, margin = {top:20, right:40, bottom:40, left:50};
+  const pw = W - margin.left - margin.right;
+  const ph = H - margin.top - margin.bottom;
+
+  const svg = d3.select('#pred-main-chart').append('svg').attr('width',W).attr('height',H)
+    .attr('viewBox',`0 0 ${W} ${H}`);
+
+  let predData = [];
+  let noise = 8, nPts = 30;
+
+  function generateData() {
+    predData = [];
+    for (let i = 0; i < nPts; i++) {
+      const x = 10 + Math.random() * 80;
+      const y = 0.7 * x + 5 + (Math.random() + Math.random() + Math.random())/3 * noise * 2 - noise;
+      predData.push({x, y});
+    }
+  }
+
+  function fitOLS() {
+    const xs = predData.map(d => d.x), ys = predData.map(d => d.y);
+    const mx = d3.mean(xs), my = d3.mean(ys);
+    let num = 0, den = 0;
+    for (let i = 0; i < xs.length; i++) {
+      num += (xs[i] - mx) * (ys[i] - my);
+      den += (xs[i] - mx) ** 2;
+    }
+    const b1 = den === 0 ? 0 : num / den;
+    const b0 = my - b1 * mx;
+    // Residual variance
+    let rss = 0;
+    for (let i = 0; i < xs.length; i++) {
+      rss += (ys[i] - (b0 + b1 * xs[i])) ** 2;
+    }
+    const sigma2 = rss / (xs.length - 2);
+    const sigma = Math.sqrt(sigma2);
+    const Sxx = den;
+    return {b0, b1, sigma, sigma2, mx, Sxx, xs, ys};
+  }
+
+  function update() {
+    const ols = fitOLS();
+    const {b0, b1, sigma, mx, Sxx, xs, ys} = ols;
+    const n = xs.length;
+
+    // Compute metrics
+    let mae = 0, mape = 0, rmse = 0, ssRes = 0, ssTot = 0;
+    const my = d3.mean(ys);
+    for (let i = 0; i < n; i++) {
+      const yHat = b0 + b1 * xs[i];
+      const err = Math.abs(ys[i] - yHat);
+      mae += err;
+      mape += ys[i] !== 0 ? err / Math.abs(ys[i]) : 0;
+      ssRes += (ys[i] - yHat) ** 2;
+      ssTot += (ys[i] - my) ** 2;
+    }
+    mae /= n;
+    mape = mape / n * 100;
+    rmse = Math.sqrt(ssRes / n);
+    const r2 = ssTot === 0 ? 0 : 1 - ssRes / ssTot;
+
+    // Chart
+    svg.selectAll('*').remove();
+
+    const xExt = [d3.min(xs) - 5, d3.max(xs) + 5];
+    const xAll = d3.range(Math.floor(xExt[0]), Math.ceil(xExt[1]) + 1, 0.5);
+    const yHats = xAll.map(x => b0 + b1 * x);
+
+    const yMin = d3.min(ys) - 10, yMax = d3.max(ys) + 10;
+    const xScale = d3.scaleLinear().domain(xExt).range([margin.left, margin.left + pw]);
+    const yScale = d3.scaleLinear().domain([yMin, yMax]).range([margin.top + ph, margin.top]);
+
+    // Prediction interval band
+    const tVal = 1.96; // approximate t_{n-2, 0.975} for n >= 30
+    const piUpper = xAll.map((x, i) => {
+      const se = sigma * Math.sqrt(1 + 1/n + (x - mx)**2 / Sxx);
+      return yHats[i] + tVal * se;
+    });
+    const piLower = xAll.map((x, i) => {
+      const se = sigma * Math.sqrt(1 + 1/n + (x - mx)**2 / Sxx);
+      return yHats[i] - tVal * se;
+    });
+
+    // PI band
+    const area = d3.area()
+      .x((d, i) => xScale(xAll[i]))
+      .y0((d, i) => yScale(piLower[i]))
+      .y1((d, i) => yScale(piUpper[i]));
+    svg.append('path').datum(piUpper).attr('d', area)
+      .attr('fill', 'rgba(199,81,70,0.12)').attr('stroke','none');
+
+    // Confidence interval band (narrower)
+    const ciUpper = xAll.map((x, i) => {
+      const se = sigma * Math.sqrt(1/n + (x - mx)**2 / Sxx);
+      return yHats[i] + tVal * se;
+    });
+    const ciLower = xAll.map((x, i) => {
+      const se = sigma * Math.sqrt(1/n + (x - mx)**2 / Sxx);
+      return yHats[i] - tVal * se;
+    });
+    const ciArea = d3.area()
+      .x((d, i) => xScale(xAll[i]))
+      .y0((d, i) => yScale(ciLower[i]))
+      .y1((d, i) => yScale(ciUpper[i]));
+    svg.append('path').datum(ciUpper).attr('d', ciArea)
+      .attr('fill', 'rgba(45,107,160,0.15)').attr('stroke','none');
+
+    // Regression line
+    const line = d3.line().x(d => xScale(d[0])).y(d => yScale(d[1]));
+    const linePts = xAll.map((x, i) => [x, yHats[i]]);
+    svg.append('path').datum(linePts).attr('d', line)
+      .attr('fill','none').attr('stroke','var(--terracotta)').attr('stroke-width',2.5);
+
+    // PI boundary lines
+    const piUpLine = d3.line().x((d,i) => xScale(xAll[i])).y((d,i) => yScale(piUpper[i]));
+    const piLoLine = d3.line().x((d,i) => xScale(xAll[i])).y((d,i) => yScale(piLower[i]));
+    svg.append('path').datum(piUpper).attr('d', piUpLine)
+      .attr('fill','none').attr('stroke','var(--terracotta)').attr('stroke-width',1).attr('stroke-dasharray','6,3').attr('opacity',0.5);
+    svg.append('path').datum(piLower).attr('d', piLoLine)
+      .attr('fill','none').attr('stroke','var(--terracotta)').attr('stroke-width',1).attr('stroke-dasharray','6,3').attr('opacity',0.5);
+
+    // Data points
+    svg.selectAll('.data-pt').data(predData).join('circle').attr('class','data-pt')
+      .attr('cx', d => xScale(d.x)).attr('cy', d => yScale(d.y))
+      .attr('r', 4.5).attr('fill','var(--forest)').attr('opacity',0.7).attr('stroke','#fff').attr('stroke-width',1);
+
+    // Axes
+    svg.append('g').attr('transform',`translate(0,${margin.top+ph})`).call(d3.axisBottom(xScale).ticks(6));
+    svg.append('g').attr('transform',`translate(${margin.left},0)`).call(d3.axisLeft(yScale).ticks(6));
+    svg.selectAll('.axis text').attr('font-family','var(--mono)').attr('font-size','0.7rem').attr('fill','var(--slate)');
+    svg.selectAll('.axis line,.axis path').attr('stroke','var(--stone)');
+
+    // Legend
+    const lx = margin.left + 8, ly = margin.top + 4;
+    svg.append('rect').attr('x',lx).attr('y',ly).attr('width',12).attr('height',12).attr('fill','var(--terracotta)').attr('opacity',0.3);
+    svg.append('text').attr('x',lx+16).attr('y',ly+10).text('95% 预测区间').style('font-size','0.65rem').style('fill','var(--slate)').style('font-family','var(--mono)');
+    svg.append('rect').attr('x',lx+110).attr('y',ly).attr('width',12).attr('height',12).attr('fill','rgba(45,107,160,0.3)');
+    svg.append('text').attr('x',lx+126).attr('y',ly+10).text('95% 置信区间').style('font-size','0.65rem').style('fill','var(--slate)').style('font-family','var(--mono)');
+
+    // Metrics
+    d3.select('#pred-metrics').html(`
+      <div class="stat-card"><div class="lbl">RMSE</div><div class="val" style="color:var(--terracotta)">${rmse.toFixed(3)}</div></div>
+      <div class="stat-card"><div class="lbl">MAE</div><div class="val">${mae.toFixed(3)}</div></div>
+      <div class="stat-card"><div class="lbl">MAPE</div><div class="val">${mape.toFixed(1)}%</div></div>
+      <div class="stat-card"><div class="lbl">R²</div><div class="val" style="color:var(--gold)">${r2.toFixed(4)}</div></div>
+      <div class="stat-card"><div class="lbl">β₁ (斜率)</div><div class="val">${b1.toFixed(3)}</div></div>
+      <div class="stat-card"><div class="lbl">σ̂ (残差SE)</div><div class="val">${sigma.toFixed(3)}</div></div>
+    `);
+  }
+
+  d3.select('#pred-noise').on('input', function() {
+    noise = +this.value;
+    d3.select('#pred-noise-val').text(noise.toFixed(1));
+    generateData();
+    update();
+  });
+  d3.select('#pred-n').on('input', function() {
+    nPts = +this.value;
+    d3.select('#pred-n-val').text(nPts);
+    generateData();
+    update();
+  });
+  d3.select('#pred-reshuffle').on('click', () => { generateData(); update(); });
+
+  generateData();
+  update();
+})();
+
+// ============ INSTRUMENT No.12B: GM(1,1) Grey Prediction ============
+(function() {
+  const W = 480, H = 280, margin = {top:15, right:20, bottom:35, left:45};
+  const pw = W - margin.left - margin.right;
+  const ph = H - margin.top - margin.bottom;
+
+  const origSvg = d3.select('#gm-original-chart').append('svg').attr('width',W).attr('height',H).attr('viewBox',`0 0 ${W} ${H}`);
+  const agoSvg = d3.select('#gm-ago-chart').append('svg').attr('width',W).attr('height',H).attr('viewBox',`0 0 ${W} ${H}`);
+
+  let gmData = [];
+  const nHist = 10;
+  let forecastSteps = 3;
+
+  function generateGMData() {
+    gmData = [];
+    // Generate data with an underlying exponential trend + noise
+    const base = 20 + Math.random() * 30;
+    const growth = 0.08 + Math.random() * 0.12;
+    for (let i = 0; i < nHist; i++) {
+      const trend = base * Math.exp(growth * i);
+      const noise = (Math.random() - 0.5) * trend * 0.08;
+      gmData.push(Math.max(1, trend + noise));
+    }
+  }
+
+  function gm11(data, steps) {
+    const n = data.length;
+    // Step 1: 1-AGO
+    const ago = [];
+    let sum = 0;
+    for (let i = 0; i < n; i++) { sum += data[i]; ago.push(sum); }
+
+    // Step 2: Background values Z
+    const Z = [];
+    for (let k = 1; k < n; k++) {
+      Z.push(0.5 * (ago[k] + ago[k-1]));
+    }
+
+    // Step 3: Build B and Y
+    // B = [-Z(k), 1], Y = [x^(0)(k)], k=2..n
+    let BtB00 = 0, BtB01 = 0, BtB11 = 0;
+    let BtY0 = 0, BtY1 = 0;
+    for (let k = 1; k < n; k++) {
+      const z = Z[k-1];
+      const y = data[k];
+      BtB00 += z * z;
+      BtB01 += -z;
+      BtB11 += 1;
+      BtY0 += -z * y;
+      BtY1 += y;
+    }
+    BtB01 = BtB01; // sum of -z
+    // Actually B = [[-z1, 1], [-z2, 1], ...]
+    // B^T B = [[sum(z^2), -sum(z)], [-sum(z), n-1]]
+    const BtB00v = BtB00;
+    const BtB01v = -BtB01; // -sum(z)
+    const BtB10v = BtB01v;
+    const BtB11v = n - 1;
+
+    const det = BtB00v * BtB11v - BtB01v * BtB10v;
+    if (Math.abs(det) < 1e-12) return null;
+
+    // Invert 2x2
+    const inv00 = BtB11v / det;
+    const inv01 = -BtB01v / det;
+    const inv10 = -BtB10v / det;
+    const inv11 = BtB00v / det;
+
+    const BtY0v = BtY0;
+    const BtY1v = BtY1;
+
+    const a = inv00 * BtY0v + inv01 * BtY1v;
+    const b = inv10 * BtY0v + inv11 * BtY1v;
+
+    if (Math.abs(a) < 1e-12) return null;
+
+    // Step 4: Time response
+    const x0_1 = data[0];
+    const C = x0_1 - b / a;
+
+    const fittedAgo = [];
+    const fittedOrig = [x0_1];
+    for (let k = 0; k < n + steps; k++) {
+      const agoVal = C * Math.exp(-a * k) + b / a;
+      fittedAgo.push(agoVal);
+      if (k > 0) {
+        fittedOrig.push(agoVal - fittedAgo[k-1]);
+      }
+    }
+
+    // Compute residuals and precision
+    const residuals = [];
+    let relErrSum = 0;
+    for (let i = 0; i < n; i++) {
+      const err = data[i] - fittedOrig[i];
+      residuals.push(err);
+      relErrSum += Math.abs(err) / data[i];
+    }
+    const mape = relErrSum / n * 100;
+
+    const meanOrig = d3.mean(data);
+    const S1 = Math.sqrt(d3.sum(data, d => (d - meanOrig)**2) / (n - 1));
+    const meanRes = d3.mean(residuals);
+    const S2 = Math.sqrt(d3.sum(residuals, r => (r - meanRes)**2) / (n - 1));
+    const C = S1 > 0 ? S2 / S1 : 0;
+
+    const threshold = 0.6745 * S1;
+    let pCount = 0;
+    for (let i = 0; i < n; i++) {
+      if (Math.abs(residuals[i] - meanRes) < threshold) pCount++;
+    }
+    const P = pCount / n;
+
+    let grade = '一级（好）';
+    if (mape > 10 || C > 0.65 || P < 0.70) grade = '四级（不合格）';
+    else if (mape > 5 || C > 0.50 || P < 0.80) grade = '三级（勉强）';
+    else if (mape > 1 || C > 0.35 || P < 0.95) grade = '二级（合格）';
+
+    return {a, b, ago, fittedAgo, fittedOrig, residuals, mape, C, P, grade, n};
+  }
+
+  function updateGM() {
+    const result = gm11(gmData, forecastSteps);
+    if (!result) { d3.select('#gm-stats').html('<div class="stat-card"><div class="lbl">错误</div><div class="val" style="color:var(--terracotta)">模型不可拟合</div></div>'); return; }
+    const {a, b, ago, fittedAgo, fittedOrig, mape, C, P, grade, n} = result;
+
+    // Original chart
+    origSvg.selectAll('*').remove();
+    const xExt = [0, n + forecastSteps - 1];
+    const yExt = d3.extent([...gmData, ...fittedOrig.slice(0, n + forecastSteps)]);
+    const yPad = (yExt[1] - yExt[0]) * 0.15 || 5;
+    const xScale = d3.scaleLinear().domain(xExt).range([margin.left, margin.left + pw]);
+    const yScale = d3.scaleLinear().domain([yExt[0] - yPad, yExt[1] + yPad]).range([margin.top + ph, margin.top]);
+
+    origSvg.append('g').attr('transform',`translate(0,${margin.top+ph})`).call(d3.axisBottom(xScale).ticks(Math.min(10, n+forecastSteps)).tickFormat(d3.format('d')));
+    origSvg.append('g').attr('transform',`translate(${margin.left},0)`).call(d3.axisLeft(yScale).ticks(5).tickFormat(d3.format('.1f')));
+    origSvg.selectAll('.axis text').attr('font-family','var(--mono)').attr('font-size','0.7rem').attr('fill','var(--slate)');
+    origSvg.selectAll('.axis line,.axis path').attr('stroke','var(--stone)');
+
+    // Forecast divider
+    const divX = xScale(n - 0.5);
+    origSvg.append('line').attr('x1',divX).attr('x2',divX)
+      .attr('y1',margin.top).attr('y2',margin.top+ph)
+      .attr('stroke','var(--gold)').attr('stroke-width',1.5).attr('stroke-dasharray','6,4');
+
+    // Fitted + forecast line
+    const fitLine = d3.line().x((d,i) => xScale(i)).y(d => yScale(d));
+    origSvg.append('path').datum(fittedOrig).attr('d',fitLine)
+      .attr('fill','none').attr('stroke','var(--terracotta)').attr('stroke-width',2);
+
+    // Fitted part (historical) - solid
+    origSvg.append('path').datum(fittedOrig.slice(0, n)).attr('d',fitLine)
+      .attr('fill','none').attr('stroke','var(--terracotta)').attr('stroke-width',2.5);
+
+    // Forecast part - dashed
+    origSvg.append('path').datum(fittedOrig.slice(n-1)).attr('d',fitLine)
+      .attr('fill','none').attr('stroke','var(--terracotta)').attr('stroke-width',2.5).attr('stroke-dasharray','5,4');
+
+    // Original data points
+    origSvg.selectAll('.gm-pt').data(gmData).join('circle').attr('class','gm-pt')
+      .attr('cx', (d,i) => xScale(i)).attr('cy', d => yScale(d))
+      .attr('r', 4.5).attr('fill','var(--forest)').attr('stroke','#fff').attr('stroke-width',1);
+
+    // Forecast points
+    for (let i = n; i < n + forecastSteps; i++) {
+      origSvg.append('circle')
+        .attr('cx', xScale(i)).attr('cy', yScale(fittedOrig[i]))
+        .attr('r', 4.5).attr('fill','none').attr('stroke','var(--terracotta)').attr('stroke-width',2);
+    }
+
+    // Labels
+    origSvg.append('text').attr('x',xScale(n/2)).attr('y',margin.top+14)
+      .text('训练期').style('font-family','var(--mono)').style('font-size','0.6rem').style('fill','var(--forest)').style('text-anchor','middle');
+    origSvg.append('text').attr('x',xScale(n + forecastSteps/2 - 0.5)).attr('y',margin.top+14)
+      .text('预测期').style('font-family','var(--mono)').style('font-size','0.6rem').style('fill','var(--terracotta)').style('text-anchor','middle');
+
+    // AGO chart
+    agoSvg.selectAll('*').remove();
+    const agoExt = [0, n + forecastSteps - 1];
+    const agoYExt = d3.extent(fittedAgo);
+    const agoYPad = (agoYExt[1] - agoYExt[0]) * 0.1 || 5;
+    const agoXScale = d3.scaleLinear().domain(agoExt).range([margin.left, margin.left + pw]);
+    const agoYScale = d3.scaleLinear().domain([agoYExt[0] - agoYPad, agoYExt[1] + agoYPad]).range([margin.top + ph, margin.top]);
+
+    agoSvg.append('g').attr('transform',`translate(0,${margin.top+ph})`).call(d3.axisBottom(agoXScale).ticks(Math.min(10, n+forecastSteps)).tickFormat(d3.format('d')));
+    agoSvg.append('g').attr('transform',`translate(${margin.left},0)`).call(d3.axisLeft(agoYScale).ticks(5).tickFormat(d3.format('.1f')));
+    agoSvg.selectAll('.axis text').attr('font-family','var(--mono)').attr('font-size','0.7rem').attr('fill','var(--slate)');
+    agoSvg.selectAll('.axis line,.axis path').attr('stroke','var(--stone)');
+
+    // AGO fitted line
+    const agoLine = d3.line().x((d,i) => agoXScale(i)).y(d => agoYScale(d));
+    agoSvg.append('path').datum(fittedAgo).attr('d',agoLine)
+      .attr('fill','none').attr('stroke','#2D6BA0').attr('stroke-width',2);
+
+    // AGO actual points
+    agoSvg.selectAll('.ago-pt').data(ago).join('circle').attr('class','ago-pt')
+      .attr('cx', (d,i) => agoXScale(i)).attr('cy', d => agoYScale(d))
+      .attr('r', 4.5).attr('fill','#2D6BA0').attr('stroke','#fff').attr('stroke-width',1);
+
+    // Stats
+    const gradeColor = grade.includes('一') ? 'var(--forest)' : (grade.includes('二') ? '#2D6BA0' : (grade.includes('三') ? 'var(--gold)' : 'var(--terracotta)'));
+    d3.select('#gm-stats').html(`
+      <div class="stat-card"><div class="lbl">发展系数 â</div><div class="val">${a.toFixed(4)}</div></div>
+      <div class="stat-card"><div class="lbl">灰色作用量 b̂</div><div class="val">${b.toFixed(3)}</div></div>
+      <div class="stat-card"><div class="lbl">MAPE</div><div class="val">${mape.toFixed(2)}%</div></div>
+      <div class="stat-card"><div class="lbl">后验差比 C</div><div class="val">${C.toFixed(3)}</div></div>
+      <div class="stat-card"><div class="lbl">小误差概率 P</div><div class="val">${P.toFixed(3)}</div></div>
+      <div class="stat-card"><div class="lbl">精度等级</div><div class="val" style="font-size:0.9rem;color:${gradeColor}">${grade}</div></div>
+    `);
+  }
+
+  d3.select('#gm-steps').on('input', function() {
+    forecastSteps = +this.value;
+    d3.select('#gm-steps-val').text(forecastSteps);
+    updateGM();
+  });
+  d3.select('#gm-reshuffle').on('click', () => { generateGMData(); updateGM(); });
+  d3.select('#gm-add-noise').on('click', () => {
+    for (let i = 0; i < gmData.length; i++) {
+      gmData[i] += (Math.random() - 0.5) * gmData[i] * 0.12;
+      gmData[i] = Math.max(1, gmData[i]);
+    }
+    updateGM();
+  });
+
+  generateGMData();
+  updateGM();
+})();
+</script>
+</body>
+</html>

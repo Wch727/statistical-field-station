@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>§XI 时间序列分析 — Statistical Field Station</title>
+<link rel="stylesheet" href="assets/vendor/google-fonts.css">
+<link rel="stylesheet" href="assets/vendor/katex.min.css">
+<script src="assets/vendor/katex.min.js"></script>
+<script src="assets/vendor/auto-render.min.js"></script>
+<script src="assets/vendor/d3.v7.min.js"></script>
+<link rel="stylesheet" href="assets/css/site.css">
+<style>
+:root {
+  --parchment: #FDFBF5; --forest: #2D4A3E; --terracotta: #C75146;
+  --gold: #8B6914; --stone: #E8E0D5; --slate: #5B6E65; --surface: #FFFAF0;
+  --display: 'Noto Serif SC', 'Cormorant Garamond', 'STSong', serif;
+  --body: 'Noto Sans SC', 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Consolas', monospace;
+  --page-w: 1100px; --text-w: 72ch; --radius: 4px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:40px}
+body{background:var(--parchment);color:var(--forest);font-family:var(--body);font-size:1.08rem;line-height:1.72}
+p{margin-bottom:14px;max-width:var(--text-w)}
+a{color:var(--terracotta);text-decoration:none}a:hover{text-decoration:underline}
+strong{font-weight:600}
+
+.page{max-width:var(--page-w);margin:0 auto;padding:0 32px 64px}
+.top-nav{padding:16px 0;font-family:var(--mono);font-size:0.78rem;border-bottom:1px solid var(--stone);margin-bottom:40px}
+.top-nav a{color:var(--slate)}.top-nav span{color:var(--gold)}
+
+.hero{padding:32px 0 40px}
+.hero .num{font-family:var(--mono);font-size:0.7rem;letter-spacing:0.18em;color:var(--gold);margin-bottom:6px}
+.hero h1{font-family:var(--display);font-weight:700;font-size:clamp(2rem,5vw,3rem);line-height:1.1;color:var(--forest);margin-bottom:12px}
+.hero .deck{font-size:1.05rem;color:var(--slate);max-width:var(--text-w)}
+
+h2{font-family:var(--display);font-weight:600;font-size:1.6rem;color:var(--forest);margin:36px 0 14px;padding-top:20px;border-top:1px solid var(--stone)}
+h3{font-family:var(--display);font-weight:500;font-size:1.2rem;color:var(--forest);margin:24px 0 10px}
+
+.math-block{text-align:center;padding:16px;background:var(--surface);border:1px solid var(--stone);border-radius:var(--radius);margin:16px 0;overflow-x:auto}
+.derive-box{background:#F5F8F6;border:1px solid var(--stone);border-left:3px solid var(--forest);padding:16px 20px;border-radius:0 var(--radius) var(--radius) 0;margin:16px 0;font-size:0.92rem}
+.derive-box h4{color:var(--forest);font-family:var(--display);text-transform:none;letter-spacing:0;font-size:1rem;margin:0 0 8px}
+.concept-box{background:var(--surface);border:1px solid var(--stone);border-radius:var(--radius);padding:16px 20px;margin:16px 0;font-size:0.93rem}
+.concept-box h4{font-family:var(--display);font-size:1.05rem;font-weight:600;color:var(--forest);margin:0 0 8px}
+.toolkit-box{background:#FFF5F3;border:1px solid var(--stone);border-left:3px solid var(--terracotta);padding:14px 18px;border-radius:0 var(--radius) var(--radius) 0;margin:16px 0;font-size:0.92rem}
+.toolkit-box h4{color:var(--terracotta);font-family:var(--display);font-size:1rem;margin:0 0 8px}
+.note-box{background:#FFF8F0;border-left:3px solid var(--gold);padding:14px 18px;border-radius:0 var(--radius) var(--radius) 0;margin:16px 0;font-size:0.93rem}
+.note-box strong{color:var(--gold)}
+.warn-box{background:#FFFBF0;border:1px solid #E8D5A0;border-radius:var(--radius);padding:14px 18px;margin:16px 0;font-size:0.92rem}
+.warn-box::before{content:'⚠ ';font-size:1.1rem}
+.competition-box{background:#F0F7F5;border:1px solid var(--forest);border-left:4px solid var(--forest);padding:18px 22px;border-radius:0 var(--radius) var(--radius) 0;margin:20px 0;font-size:0.93rem}
+.competition-box h4{color:var(--forest);font-family:var(--display);font-size:1.05rem;margin:0 0 8px}
+.competition-box .q{color:var(--terracotta);font-weight:600}
+
+.panel{background:var(--surface);border:1px solid var(--stone);border-radius:6px;box-shadow:inset 0 1px 0 rgba(255,255,255,0.7),0 2px 12px rgba(0,0,0,0.05);padding:24px;margin:20px 0;position:relative}
+.panel::before{content:'';position:absolute;top:0;left:12px;right:12px;height:1px;background:linear-gradient(to right,transparent,var(--gold),transparent);opacity:0.4}
+.panel-label{font-family:var(--mono);font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--stone)}
+.panel-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+
+.stat-cards{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.stat-card{background:var(--surface);border:1px solid var(--stone);border-radius:var(--radius);padding:10px 14px;text-align:center;min-width:72px}
+.stat-card .lbl{font-family:var(--mono);font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--slate);margin-bottom:3px}
+.stat-card .val{font-family:var(--mono);font-size:1.25rem;font-weight:600;color:var(--forest)}
+
+.slider-row{display:flex;align-items:center;gap:12px;margin:10px 0;flex-wrap:wrap}
+.slider-row label{font-family:var(--mono);font-size:0.85rem;color:var(--slate);min-width:100px}
+.slider-row input[type=range]{flex:1;min-width:100px;accent-color:var(--terracotta)}
+.slider-val{font-family:var(--mono);font-weight:600;color:var(--terracotta);min-width:36px;font-size:0.88rem}
+
+.chart-container{width:100%;overflow-x:auto}
+.chart-container svg{display:block;margin:0 auto}
+
+.compact-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:0.88rem;margin:16px 0}
+.compact-table th,.compact-table td{padding:7px 12px;text-align:left;border-bottom:1px solid var(--stone)}
+.compact-table th{font-family:var(--body);font-size:0.72rem;letter-spacing:0.08em;color:var(--slate);border-bottom:2px solid var(--stone)}
+
+.btn{font-family:var(--mono);font-size:0.75rem;border:1px solid var(--stone);border-radius:var(--radius);background:var(--surface);color:var(--forest);padding:6px 14px;cursor:pointer;transition:all 0.15s}
+.btn:hover{border-color:var(--terracotta);color:var(--terracotta)}
+.btn-group{display:flex;gap:4px;flex-wrap:wrap;margin:8px 0}
+
+footer{text-align:center;padding:32px 0;font-size:0.82rem;color:var(--slate);border-top:1px solid var(--stone);margin-top:40px}
+footer a{color:var(--slate);text-decoration:underline}
+</style>
+</head>
+<body>
+<div class="page">
+
+<nav class="top-nav"><a href="stats_tutorial.html">← Field Station</a> <span>|</span> §XI 时间序列分析</nav>
+
+<header class="hero">
+  <div class="num">§XI</div>
+  <h1>时间序列分析</h1>
+  <p class="deck">当数据按时间顺序排列时，相邻观测之间不再独立——今天的气温与昨天相关，本月的销售额与上月相关。时间序列分析专门处理这种自相关结构，涵盖分解、平稳性检验、ARIMA 建模和预测。这是竞赛中处理经济、环境、交通等时序数据不可或缺的工具。</p>
+</header>
+
+<div class="competition-box">
+<h4>竞赛真题场景</h4>
+<p><span class="q">Q：</span>国赛常考：根据历史数据预测未来趋势——如城市人口增长、污染物浓度变化、交通流量预测。<br>
+<span class="q">Q：</span>美赛 MCM A 题：利用时间序列分析海洋温度变化趋势，预测未来气候变化。<br>
+<span class="q">Q：</span>华中赛/电工杯：电力负荷预测、股票价格走势分析——ARIMA + 季节分解是标准答案。<br>
+<strong>→ 竞赛中，时间序列分析的核心不只是预测，更是「趋势+季节性+随机波动」的分解与解释。</strong></p>
+</div>
+
+<h2>11.1 时间序列的组成</h2>
+
+<div class="concept-box">
+<h4>经典分解模型</h4>
+<p>时间序列 \(y_t\) 通常被认为由四个成分组成：</p>
+<div class="math-block">
+\[
+y_t = T_t + S_t + C_t + R_t
+\]
+</div>
+<p>其中 \(T_t\) = 趋势（长期方向），\(S_t\) = 季节性（固定周期的波动），\(C_t\) = 循环（非固定周期的波动，经济学中常与趋势合并），\(R_t\) = 残差（随机噪声）。</p>
+<p><strong>加法模型：</strong>\(y_t = T_t + S_t + R_t\)（波动的幅度不随趋势变化）<br>
+<strong>乘法模型：</strong>\(y_t = T_t \times S_t \times R_t\)（波动的幅度随趋势增大，取对数可转为加法）</p>
+</div>
+
+<h3>11.1.1 移动平均平滑</h3>
+
+<p>消除噪声、提取趋势的最简单方法：</p>
+<div class="math-block">
+\[
+\hat{T}_t = \frac{1}{2m+1} \sum_{j=-m}^{m} y_{t+j}
+\]
+</div>
+<p>对于季节性数据，使用等权重的 \(m\) 期移动平均（\(m\) = 季节周期长度）。</p>
+
+<h2>11.2 平稳性</h2>
+
+<div class="concept-box">
+<h4>严格平稳 vs 弱平稳</h4>
+<p><strong>严格平稳：</strong>任意时间平移后，联合分布不变。<br>
+<strong>弱平稳（协方差平稳，竞赛中默认的「平稳」）：</strong></p>
+<ol style="margin:0 0 0 24px;max-width:var(--text-w)">
+  <li>均值恒定：\(\mathbb{E}[y_t] = \mu\)，不随时间变化</li>
+  <li>方差恒定：\(\text{Var}(y_t) = \sigma^2\)，不随时间变化</li>
+  <li>自协方差只依赖于时间间隔：\(\text{Cov}(y_t, y_{t-k}) = \gamma_k\)，只与滞后 \(k\) 有关</li>
+</ol>
+</div>
+
+<h3>11.2.1 单位根检验 (ADF Test)</h3>
+
+<p>Augmented Dickey-Fuller 检验是判断序列是否平稳的标准方法。回归模型：</p>
+<div class="math-block">
+\[
+\Delta y_t = \alpha + \beta t + \gamma y_{t-1} + \sum_{i=1}^{p} \delta_i \Delta y_{t-i} + \varepsilon_t
+\]
+</div>
+
+<p>原假设 \(H_0: \gamma = 0\)（存在单位根，非平稳）vs 备择假设 \(H_1: \gamma < 0\)（平稳）。如果 p-value < 0.05，拒绝 \(H_0\)，序列是平稳的。</p>
+
+<div class="derive-box">
+<h4>推导：为什么单位根意味着非平稳？</h4>
+<p>考虑最简单的 AR(1) 过程：\(y_t = \phi y_{t-1} + \varepsilon_t\)，其中 \(\varepsilon_t \sim N(0,\sigma^2)\)。</p>
+<p>迭代展开：\(y_t = \phi^t y_0 + \sum_{j=0}^{t-1} \phi^j \varepsilon_{t-j}\)。</p>
+<p>当 \(|\phi| < 1\)：\(\phi^t \to 0\)，\(\text{Var}(y_t) = \frac{\sigma^2}{1-\phi^2}\) 有限且恒定 → <strong>平稳</strong>。<br>
+当 \(\phi = 1\)（单位根）：\(y_t = y_0 + \sum_{j=1}^{t} \varepsilon_j\)，\(\text{Var}(y_t) = t\sigma^2 \to \infty\) → <strong>非平稳</strong>。<br>
+当 \(|\phi| > 1\)：方差指数增长 → <strong>爆炸性非平稳</strong>。</p>
+<p>因此 ADF 检验中 \(\gamma = \phi - 1\)，检验 \(\gamma = 0\) 就是检验 \(\phi = 1\)（单位根）。</p>
+</div>
+
+<h3>11.2.2 差分：使非平稳序列平稳</h3>
+
+<div class="math-block">
+\[
+\text{一阶差分：}\ \Delta y_t = y_t - y_{t-1}
+\]
+\[
+\text{季节性差分：}\ \Delta_s y_t = y_t - y_{t-s} \quad (s = \text{季节周期})
+\]
+</div>
+
+<p>大多数经济时间序列经过一次差分后变为平稳，称为 I(1)（一阶单整）。ARIMA 中的「I」就是差分阶数。</p>
+
+<h2>11.3 自相关与偏自相关</h2>
+
+<h3>11.3.1 自相关函数 (ACF)</h3>
+
+<div class="math-block">
+\[
+\rho_k = \frac{\text{Cov}(y_t, y_{t-k})}{\text{Var}(y_t)} = \frac{\sum_{t=k+1}^{n} (y_t - \bar{y})(y_{t-k} - \bar{y})}{\sum_{t=1}^{n} (y_t - \bar{y})^2}
+\]
+</div>
+
+<p>ACF 衡量相隔 \(k\) 期的观测之间的相关性，包括<strong>直接和间接</strong>的传递效应。例如，\(y_t\) 与 \(y_{t-2}\) 的相关可能完全是通过 \(y_{t-1}\) 传递的。</p>
+
+<h3>11.3.2 偏自相关函数 (PACF)</h3>
+
+<p>PACF 衡量相隔 \(k\) 期的观测之间的<strong>直接</strong>相关性，<strong>剔除</strong>了中间期的影响。PACF 是 AR(p) 模型阶数选择的关键工具。</p>
+
+<div class="note-box">
+<strong>ACF/PACF 快速识别法则：</strong><br>
+<strong>AR(p) 过程：</strong>ACF 呈指数衰减或正弦波衰减（拖尾），PACF 在滞后 \(p\) 后截尾（变为 0）。<br>
+<strong>MA(q) 过程：</strong>ACF 在滞后 \(q\) 后截尾，PACF 呈指数衰减（拖尾）。<br>
+<strong>ARMA(p,q)：</strong>ACF 和 PACF 都拖尾。<br>
+这是 Box-Jenkins 建模方法的核心——通过 ACF/PACF 图选 p 和 q。
+</div>
+
+<h2>11.4 ARIMA 模型</h2>
+
+<h3>11.4.1 AR(p)：自回归模型</h3>
+
+<div class="math-block">
+\[
+y_t = c + \phi_1 y_{t-1} + \phi_2 y_{t-2} + \cdots + \phi_p y_{t-p} + \varepsilon_t, \quad \varepsilon_t \sim N(0,\sigma^2)
+\]
+</div>
+
+<p>AR(1) 是最简单的形式：\(y_t = c + \phi y_{t-1} + \varepsilon_t\)。\(|\phi| < 1\) 时平稳，\(\phi\) 接近 1 时有强持续性。</p>
+
+<h3>11.4.2 MA(q)：移动平均模型</h3>
+
+<div class="math-block">
+\[
+y_t = \mu + \varepsilon_t + \theta_1 \varepsilon_{t-1} + \theta_2 \varepsilon_{t-2} + \cdots + \theta_q \varepsilon_{t-q}
+\]
+</div>
+
+<p>MA(q) 总是平稳的。MA(1) 模型 \(y_t = \mu + \varepsilon_t + \theta \varepsilon_{t-1}\) 中，\(\theta\) 捕捉了冲击的持续影响。</p>
+
+<h3>11.4.3 ARIMA(p,d,q) 完整模型</h3>
+
+<div class="derive-box">
+<h4>ARIMA 的三步构建</h4>
+<p><strong>I(d) — 差分：</strong>对原始序列做 \(d\) 次差分使其平稳。\(d=0\) 时 ARIMA 退化为 ARMA。<br>
+<strong>AR(p) — 自回归：</strong>用过去 \(p\) 期的观测值预测当前值。<br>
+<strong>MA(q) — 移动平均：</strong>用过去 \(q\) 期的预测误差修正当前预测。</p>
+<p>ARIMA(1,1,1) 的完整形式：</p>
+<div class="math-block">
+\[
+\underbrace{(1 - \phi_1 B)}_{\text{AR(1)}} \underbrace{(1-B)}_{\text{I(1)}} y_t = c + \underbrace{(1 + \theta_1 B)}_{\text{MA(1)}} \varepsilon_t
+\]
+</div>
+<p>其中 \(B\) 是后移算子：\(B y_t = y_{t-1}\)。</p>
+</div>
+
+<h3>11.4.4 SARIMA：季节性 ARIMA</h3>
+
+<p>当数据有季节性模式时（如每 12 个月的周期性），SARIMA(p,d,q)(P,D,Q)ₛ 同时建模非季节性和季节性成分：</p>
+
+<div class="math-block">
+\[
+\Phi_P(B^s)\ \phi_p(B)\ (1-B)^d\ (1-B^s)^D\ y_t = \Theta_Q(B^s)\ \theta_q(B)\ \varepsilon_t
+\]
+</div>
+
+<p>其中 \(s\) 是季节周期（如月度数据 \(s=12\)，季度数据 \(s=4\)），\(P,D,Q\) 是季节性 AR/I/MA 的阶数。</p>
+
+<h3>11.4.5 模型选择：AIC vs BIC</h3>
+
+<table class="compact-table">
+<thead><tr><th>准则</th><th>公式</th><th>特点</th></tr></thead>
+<tbody>
+<tr><td>AIC</td><td>\(\text{AIC} = -2\ln L + 2k\)</td><td>倾向于选择更复杂的模型（\(2k\) 惩罚轻）</td></tr>
+<tr><td>AICc</td><td>\(\text{AICc} = \text{AIC} + \frac{2k(k+1)}{n-k-1}\)</td><td>小样本修正，竞赛推荐</td></tr>
+<tr><td>BIC</td><td>\(\text{BIC} = -2\ln L + k\ln n\)</td><td>倾向于选择更简单的模型（\(\ln n\) 惩罚重）</td></tr>
+</tbody>
+</table>
+
+<div class="toolkit-box">
+<h4>竞赛工具箱：ARIMA 建模流程</h4>
+<p><strong>Step 1：</strong>画时序图，判断趋势和季节性 → 选择是否需要差分和季节差分。<br>
+<strong>Step 2：</strong>ADF 检验 → 确定差分阶数 \(d\)（通常 \(d=0\) 或 \(d=1\)）。<br>
+<strong>Step 3：</strong>画 ACF/PACF 图 → 初步确定 \(p\) 和 \(q\) 的范围。<br>
+<strong>Step 4：</strong>网格搜索 \(p,q \in \{0,1,2,3\}\)，用 AICc 选择最优模型。<br>
+<strong>Step 5：</strong>残差诊断——残差应为白噪声（Ljung-Box 检验 p > 0.05）。<br>
+<strong>Step 6：</strong>预测 + 预测区间（95% 置信带）。<br>
+<strong>竞赛技巧：</strong>如果数据有明显的季节性，优先考虑 SARIMA 而非简单 ARIMA。另外，对数变换可以稳定方差（乘法模型 → 加法模型）。</p>
+</div>
+
+<div class="warn-box">
+<strong>常见陷阱：</strong>① 不检验平稳性就直接建模——非平稳序列的 ACF 衰减极慢，会导致虚假回归。② 过度差分——差分次数超过必要，会引入不必要的 MA 结构，增加模型复杂度。③ 不检查残差——残差若有自相关，说明模型未充分捕捉数据结构。④ 在竞赛中报告 R² 而非 AICc——时间序列的 R² 通常很高（因为趋势），不代表模型好。
+</div>
+
+<h2>11.5 指数平滑与 ETS</h2>
+
+<p>ARIMA 的替代方案——指数平滑系列模型（ETS = Error-Trend-Seasonality）：</p>
+
+<table class="compact-table">
+<thead><tr><th>模型</th><th>适用场景</th><th>趋势</th><th>季节性</th></tr></thead>
+<tbody>
+<tr><td>简单指数平滑 (SES)</td><td>无趋势、无季节</td><td>无</td><td>无</td></tr>
+<tr><td>Holt 线性趋势</td><td>有线性趋势</td><td>加法</td><td>无</td></tr>
+<tr><td>Holt-Winters 加法</td><td>趋势 + 加法季节</td><td>加法</td><td>加法</td></tr>
+<tr><td>Holt-Winters 乘法</td><td>趋势 + 乘法季节</td><td>加法</td><td>乘法</td></tr>
+</tbody>
+</table>
+
+<div class="math-block">
+\[
+\begin{aligned}
+\text{水平：} & \ell_t = \alpha y_t + (1-\alpha)(\ell_{t-1} + b_{t-1}) \\
+\text{趋势：} & b_t = \beta(\ell_t - \ell_{t-1}) + (1-\beta)b_{t-1} \\
+\text{季节：} & s_t = \gamma(y_t - \ell_{t-1} - b_{t-1}) + (1-\gamma)s_{t-m}
+\end{aligned}
+\]
+</div>
+
+<!-- ═══════════ 11.5A VAR (向量自回归) ═══════════ -->
+<h2>11.5A VAR：向量自回归</h2>
+
+<div class="concept-box">
+<h4>当多个时间序列互相影响时</h4>
+<p>ARIMA 只能建模<strong>单个</strong>时间序列。但竞赛中经常遇到多个相关的序列——例如 GDP、利率、通胀三者互相影响。VAR (Vector AutoRegression) 是 AR 模型的多变量推广：每个变量不仅依赖自己的过去值，还依赖<strong>其他变量的过去值</strong>。</p>
+</div>
+
+<div class="math-block">
+\[
+\mathbf{y}_t = \mathbf{c} + \mathbf{\Phi}_1 \mathbf{y}_{t-1} + \mathbf{\Phi}_2 \mathbf{y}_{t-2} + \cdots + \mathbf{\Phi}_p \mathbf{y}_{t-p} + \boldsymbol{\varepsilon}_t
+\]
+</div>
+
+<p>其中 \(\mathbf{y}_t\) 是 \(k \times 1\) 向量（k 个变量），\(\mathbf{\Phi}_i\) 是 \(k \times k\) 系数矩阵，\(\boldsymbol{\varepsilon}_t \sim N(0, \mathbf{\Sigma})\)。</p>
+
+<div class="derive-box">
+<h4>VAR 的关键分析工具</h4>
+<p><strong>脉冲响应函数 (IRF)：</strong>给变量 j 一个单位冲击 → 观察变量 i 在后续各期的响应。IRF 揭示了变量之间的动态传导机制。<br>
+<strong>方差分解 (FEVD)：</strong>变量 i 的预测误差方差中，有多大比例来自变量 j 的冲击？——量化了各变量之间的「解释力」。<br>
+<strong>滞后阶数选择：</strong>用 AIC、BIC、HQ 选择最优 p。VAR(p) 的参数量 = \(k + k^2 \times p\)——随 k 和 p 增长极快，需要足够的样本量。</p>
+</div>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>VAR 适用于宏观经济、金融、环境等多变量时序问题。论文中：「我们建立 VAR(2) 模型分析 GDP、CPI 和 M2 之间的动态关系。脉冲响应分析表明，M2 的一个正冲击在 3 个季度后对 CPI 产生约 0.3% 的正向影响，持续约 6 个季度。」——这种分析在竞赛中非常出彩。但注意：VAR 要求所有序列都<strong>平稳</strong>——非平稳序列需要先差分或使用 VECM（见 11.5B）。
+</div>
+
+<!-- ═══════════ 11.5B 协整与误差修正模型 ═══════════ -->
+<h2>11.5B 协整与误差修正模型 (ECM)</h2>
+
+<div class="concept-box">
+<h4>当多个非平稳序列有「长期均衡关系」</h4>
+<p>两个非平稳序列（如 GDP 和消费）各自都是 I(1)，但它们的某个线性组合可能是 I(0)（平稳）——这就是<strong>协整 (Cointegration)</strong>。协整意味着两个序列之间存在<strong>长期均衡关系</strong>——它们不会「漂移」得太远。</p>
+</div>
+
+<div class="derive-box">
+<h4>Engle-Granger 两步法</h4>
+<p><strong>Step 1 — 协整回归：</strong>\(y_t = \beta_0 + \beta_1 x_t + u_t\)（OLS 估计长期关系）。<br>
+<strong>Step 2 — 残差检验：</strong>对残差 \(\hat{u}_t\) 做 ADF 检验（使用专门的临界值，比标准 ADF 更严格）。如果残差平稳 → 存在协整。<br>
+<strong>Step 3 — 误差修正模型 (ECM)：</strong></p>
+<div class="math-block">
+\[
+\Delta y_t = \alpha (y_{t-1} - \beta_0 - \beta_1 x_{t-1}) + \gamma \Delta x_t + \varepsilon_t
+\]
+</div>
+<p>其中 \(\alpha\) 是<strong>误差修正系数</strong>（-1 < α < 0）——衡量偏离均衡后向均衡「拉回」的速度。α 越接近 -1，修正越快。\(y_{t-1} - \beta_0 - \beta_1 x_{t-1}\) 是<strong>误差修正项</strong>——上一期的偏离量。</p>
+</div>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>协整 + ECM 是竞赛中处理多变量非平稳序列的标准方法。论文中：「Johansen 协整检验表明，GDP 和电力消费之间存在一个协整关系 (Trace Statistic = 18.3, p = 0.017)。ECM 估计显示，误差修正系数 α = -0.23——意味着偏离长期均衡后，每期约 23% 的偏离被修正。短期来看，电力消费增长 1% 伴随 GDP 增长 0.4%。」<br>
+<strong>Johansen 检验 vs Engle-Granger：</strong>Johansen 检验可以同时检验多个协整关系，且不预设哪个变量是「因变量」——是竞赛中更推荐的方法。
+</div>
+
+<!-- ═══════════ 11.5C 格兰杰因果检验 ═══════════ -->
+<h2>11.5C 格兰杰因果检验</h2>
+
+<div class="concept-box">
+<h4>「预测」意义上的因果，不是哲学意义上的因果</h4>
+<p>格兰杰因果 (Granger Causality) 的定义：如果<strong>加入 X 的过去值能显著改善对 Y 的预测</strong>（在已经包含 Y 的过去值的基础上），则 X 是 Y 的格兰杰原因。注意：这不是真正的因果关系——它只是说 X 的过去值对预测 Y 有帮助。</p>
+</div>
+
+<div class="math-block">
+\[
+\text{无约束模型：} \quad y_t = \alpha_0 + \sum_{i=1}^{p} \alpha_i y_{t-i} + \sum_{i=1}^{p} \beta_i x_{t-i} + \varepsilon_t
+\]
+\[
+\text{约束模型：} \quad y_t = \alpha_0 + \sum_{i=1}^{p} \alpha_i y_{t-i} + \varepsilon_t
+\]
+</div>
+
+<p>检验 \(H_0: \beta_1 = \beta_2 = \cdots = \beta_p = 0\)（X 不格兰杰导致 Y）。用 F 检验比较两个模型的 RSS。如果 p < 0.05 → 拒绝 H₀ → X 是 Y 的格兰杰原因。</p>
+
+<div class="warn-box">
+<strong>关键警告：</strong>格兰杰因果 ≠ 真正因果！「公鸡打鸣」格兰杰导致「太阳升起」——因为打鸣在前，太阳升起在后。但这不意味着打鸣<strong>导致</strong>了太阳升起。在竞赛论文中，正确的表述是：「格兰杰因果检验表明，X 的过去值对预测 Y 具有显著的信息增量 (F = 4.32, p = 0.012)，但这一统计关系可能反映的是共同趋势或第三变量的影响，而非直接的因果关系。」
+</div>
+
+<!-- ═══════════ 11.5D GARCH 模型 ═══════════ -->
+<h2>11.5D GARCH 模型</h2>
+
+<div class="concept-box">
+<h4>不只是预测值，还要预测波动</h4>
+<p>ARIMA 假设残差的方差是恒定的。但在金融和某些物理数据中，<strong>波动率本身会随时间变化</strong>——大的波动倾向于跟随大的波动，小的波动跟随小的波动（波动聚集效应，Volatility Clustering）。GARCH (Generalized AutoRegressive Conditional Heteroskedasticity) 专门建模这种时变方差。</p>
+</div>
+
+<div class="math-block">
+\[
+\begin{aligned}
+\text{GARCH(p,q)：} \quad & \sigma_t^2 = \omega + \sum_{i=1}^{q} \alpha_i \varepsilon_{t-i}^2 + \sum_{j=1}^{p} \beta_j \sigma_{t-j}^2 \\
+\text{GARCH(1,1)：} \quad & \sigma_t^2 = \omega + \alpha \varepsilon_{t-1}^2 + \beta \sigma_{t-1}^2
+\end{aligned}
+\]
+</div>
+
+<p>GARCH(1,1) 的解释：\(\omega\) = 长期平均方差，\(\alpha\) = 昨日冲击对今日波动的影响（ARCH 效应），\(\beta\) = 昨日波动对今日波动的影响（GARCH 效应）。\(\alpha + \beta < 1\) 保证方差过程平稳，\(\alpha + \beta\) 越接近 1 → 波动持续越久。</p>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>GARCH 在金融建模竞赛中几乎是标配——股票收益率、汇率、比特币价格等的波动率预测。论文中：「Ljung-Box 检验显示收益率序列的平方存在显著自相关 (Q(20)=87.3, p&lt;0.001)，表明存在 ARCH 效应。我们拟合 GARCH(1,1) 模型，α=0.12 (p=0.003)，β=0.83 (p&lt;0.001)，α+β=0.95——表明波动冲击具有高度持续性，半衰期约为 ln(0.5)/ln(0.95) ≈ 13.5 天。」
+</div>
+
+<!-- ═══════════ 11.5E KPSS 检验 ═══════════ -->
+<h2>11.5E KPSS 检验</h2>
+
+<div class="concept-box">
+<h4>ADF 的互补检验——双重确认平稳性</h4>
+<p>ADF 检验的原假设是「存在单位根（非平稳）」，备择假设是「平稳」。但 ADF 的检验功效较低——当数据接近单位根（φ ≈ 0.95）时，ADF 经常无法拒绝原假设。KPSS (Kwiatkowski-Phillips-Schmidt-Shin) 检验<strong>反转了原假设</strong>——H₀ 是「平稳」，H₁ 是「存在单位根」。</p>
+</div>
+
+<div class="derive-box">
+<h4>双重检验策略</h4>
+<p>同时使用 ADF 和 KPSS，四种可能的结果：</p>
+<table class="compact-table">
+<thead><tr><th>ADF 结果</th><th>KPSS 结果</th><th>结论</th></tr></thead>
+<tbody>
+<tr><td>拒绝 H₀（平稳）</td><td>不拒绝 H₀（平稳）</td><td><strong>序列平稳 ✓</strong></td></tr>
+<tr><td>不拒绝 H₀</td><td>拒绝 H₀</td><td><strong>序列非平稳 → 差分</strong></td></tr>
+<tr><td>拒绝 H₀</td><td>拒绝 H₀</td><td>可能趋势平稳 → 去趋势</td></tr>
+<tr><td>不拒绝 H₀</td><td>不拒绝 H₀</td><td>样本量不足，无法判断</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>竞赛论文中同时报告 ADF 和 KPSS 结果，体现严谨性。句式：「ADF 检验在 5% 显著性水平下无法拒绝单位根假设 (p = 0.23)，而 KPSS 检验在 5% 水平下拒绝平稳性假设 (p = 0.01)。两种检验一致表明序列是非平稳的，需要一阶差分。」这种双重确认在评审中会得到高度评价。
+</div>
+
+<!-- ═══════════ 11.5F 变点检测 ═══════════ -->
+<h2>11.5F 变点检测 (Change Point Detection)</h2>
+
+<div class="concept-box">
+<h4>数据在什么时候「突然变了」？</h4>
+<p>时间序列的结构可能在某一点发生突变——均值突然上升、方差突然增大、趋势突然改变。变点检测 (Change Point / Structural Break Detection) 用于识别这些突变点。竞赛中常用于：政策干预效果评估、系统故障检测、市场拐点识别。</p>
+</div>
+
+<div class="derive-box">
+<h4>Chow 检验</h4>
+<p>Chow 检验检测<strong>已知的</strong>潜在变点（如政策实施日期）：</p>
+<div class="math-block">
+\[
+F = \frac{(\text{RSS}_{\text{pooled}} - (\text{RSS}_1 + \text{RSS}_2)) / k}{(\text{RSS}_1 + \text{RSS}_2) / (n_1 + n_2 - 2k)} \sim F_{k, n_1+n_2-2k}
+\]
+</div>
+<p>其中 RSS_pooled 是全部数据拟合一个模型的残差，RSS₁ 和 RSS₂ 是分段拟合的残差。如果 F 显著 → 存在结构性断点。</p>
+
+<h4>Bai-Perron 检验</h4>
+<p>当变点<strong>未知</strong>时，Bai-Perron 方法在所有可能的位置搜索多个变点，使用 BIC 或序贯检验确定最优变点数量和位置。</p>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>变点检测在竞赛中的应用场景：① 检测政策实施前后的结构性变化。② 疫情前后经济指标的变化点。③ 系统运行状态的突变（故障预警）。论文中：「Chow 检验表明，在 2020 年第 1 季度存在显著的结构性断点 (F=7.82, p&lt;0.001)，与疫情爆发的时点一致。分段回归显示，疫情前趋势增长率为 3.2%/年，疫情后降为 0.8%/年。」
+</div>
+
+<h2>仪器 No.11 — 时间序列分解与 ACF/PACF</h2>
+
+<div class="panel">
+<div class="panel-label">INSTRUMENT No.11 · Time Series Decomposition & ACF/PACF</div>
+<p style="font-size:0.9rem;color:var(--slate);margin-bottom:12px">上排：原始序列 + 趋势 + 季节分量 + 残差。下排：ACF 和 PACF 图。观察不同模式下的自相关结构。</p>
+<div class="btn-group">
+  <button class="btn active" id="ts-trend-seas">趋势+季节</button>
+  <button class="btn" id="ts-random-walk">随机游走</button>
+  <button class="btn" id="ts-ar2">AR(2) 过程</button>
+  <button class="btn" id="ts-ma2">MA(2) 过程</button>
+  <button class="btn" id="ts-reshuffle">重新生成</button>
+</div>
+<div class="panel-grid">
+  <div class="chart-container" id="ts-series-chart"></div>
+  <div class="chart-container" id="ts-decomp-chart"></div>
+</div>
+<div class="panel-grid">
+  <div class="chart-container" id="ts-acf-chart"></div>
+  <div class="chart-container" id="ts-pacf-chart"></div>
+</div>
+<div class="stat-cards" id="ts-stats"></div>
+</div>
+
+<h2>11.6 竞赛实战流程</h2>
+
+<div class="toolkit-box">
+<h4>时间序列竞赛流程</h4>
+<p><strong>Step 1：</strong>可视化——画时序图，肉眼判断趋势和季节性。<br>
+<strong>Step 2：</strong>平稳性检验——ADF 检验 + KPSS 检验（双重确认）。<br>
+<strong>Step 3：</strong>差分——如果需要，确定差分阶数 \(d\) 和季节差分阶数 \(D\)。<br>
+<strong>Step 4：</strong>ACF/PACF → 初步确定 p, q, P, Q 的范围。<br>
+<strong>Step 5：</strong>网格搜索 + AICc → 选择最优模型。<br>
+<strong>Step 6：</strong>残差诊断 → Ljung-Box 检验（白噪声）、Q-Q 图（正态性）。<br>
+<strong>Step 7：</strong>预测 + 95% 置信区间 → 论文中最关键的图。<br>
+<strong>Step 8：</strong>模型对比 → 也可以跑一个 ETS 或朴素预测作为基线。</p>
+</div>
+
+<footer>
+  <p><a href="stats_10_evaluation.html">← §X 模型评估与降维</a> &nbsp;|&nbsp; <a href="stats_tutorial.html">Field Station 总目录</a></p>
+  <p style="margin-top:8px">Statistical Field Station &copy; 2026 · KaTeX + D3.js</p>
+</footer>
+
+</div>
+
+<script>
+renderMathInElement(document.body, {
+  delimiters: [{left: '\\[', right: '\\]', display: true},{left: '\\(', right: '\\)', display: false},{left: '$$', right: '$$', display: true}],
+  throwOnError: false
+});
+
+// ============ INSTRUMENT No.11: Time Series ============
+(function() {
+  const W = 520, H = 240, margin = {top:15, right:15, bottom:30, left:40};
+  const pw = W - margin.left - margin.right;
+  const ph = H - margin.top - margin.bottom;
+
+  function makeSvg(sel) {
+    const svg = d3.select(sel).append('svg').attr('width',W).attr('height',H).attr('viewBox',`0 0 ${W} ${H}`);
+    svg.append('rect').attr('x',margin.left).attr('y',margin.top).attr('width',pw).attr('height',ph)
+      .attr('fill','#FAF8F3').attr('stroke','var(--stone)').attr('stroke-width',0.5);
+    return svg;
+  }
+
+  const seriesSvg = makeSvg('#ts-series-chart');
+  const decompSvg = makeSvg('#ts-decomp-chart');
+  const acfSvg = makeSvg('#ts-acf-chart');
+  const pacfSvg = makeSvg('#ts-pacf-chart');
+
+  let tsData = [], trend = [], seasonal = [], residual = [];
+  let n = 200;
+
+  function generateTrendSeasonal() {
+    tsData = []; trend = []; seasonal = [];
+    for (let t = 0; t < n; t++) {
+      const tr = 0.02 * t + 0.005 * Math.sin(t/30);
+      const s = 0.3 * Math.sin(2*Math.PI*t/24);
+      const r = (Math.random()-0.5)*0.3;
+      trend.push(tr);
+      seasonal.push(s);
+      residual.push(r);
+      tsData.push(tr + s + r);
+    }
+  }
+
+  function generateRandomWalk() {
+    tsData = []; trend = []; seasonal = []; residual = [];
+    let y = 0;
+    for (let t = 0; t < n; t++) {
+      y += (Math.random()-0.5)*0.3;
+      tsData.push(y);
+      trend.push(0); seasonal.push(0); residual.push(0);
+    }
+  }
+
+  function generateAR2() {
+    tsData = []; trend = []; seasonal = []; residual = [];
+    let y1 = 0, y2 = 0;
+    for (let t = 0; t < n; t++) {
+      const y = 0.7*y1 - 0.3*y2 + (Math.random()-0.5)*0.5;
+      tsData.push(y);
+      trend.push(0); seasonal.push(0); residual.push(0);
+      y2 = y1; y1 = y;
+    }
+  }
+
+  function generateMA2() {
+    tsData = []; trend = []; seasonal = []; residual = [];
+    let e1 = 0, e2 = 0;
+    for (let t = 0; t < n; t++) {
+      const e = (Math.random()-0.5)*0.5;
+      const y = e + 0.6*e1 + 0.3*e2;
+      tsData.push(y);
+      trend.push(0); seasonal.push(0); residual.push(0);
+      e2 = e1; e1 = e;
+    }
+  }
+
+  function acf(data, maxLag) {
+    const mean = d3.mean(data);
+    const denom = d3.sum(data, d => (d-mean)**2);
+    const acfVals = [];
+    for (let k = 0; k <= maxLag; k++) {
+      let num = 0;
+      for (let t = k; t < data.length; t++) num += (data[t]-mean)*(data[t-k]-mean);
+      acfVals.push(num/denom);
+    }
+    return acfVals;
+  }
+
+  function pacfFromACF(acfVals) {
+    // Durbin-Levinson recursion
+    const p = acfVals.length - 1;
+    const phi = Array.from({length: p+1}, () => new Array(p+1).fill(0));
+    const pacfVals = [1];
+    for (let k = 1; k <= p; k++) {
+      let num = acfVals[k], denom = 1;
+      for (let j = 1; j < k; j++) { num -= phi[k-1][j] * acfVals[k-j]; denom -= phi[k-1][j] * acfVals[j]; }
+      phi[k][k] = num / (denom || 1e-10);
+      pacfVals.push(phi[k][k]);
+      for (let j = 1; j < k; j++) phi[k][j] = phi[k-1][j] - phi[k][k] * phi[k-1][k-j];
+    }
+    return pacfVals;
+  }
+
+  function drawLineChart(svg, data, color, yLabel) {
+    svg.selectAll('*').remove();
+    svg.append('rect').attr('x',margin.left).attr('y',margin.top).attr('width',pw).attr('height',ph)
+      .attr('fill','#FAF8F3').attr('stroke','var(--stone)').attr('stroke-width',0.5);
+    const xExt = [0, data.length-1];
+    const yExt = d3.extent(data);
+    const yPad = (yExt[1]-yExt[0])*0.1 || 0.5;
+    const xScale = d3.scaleLinear().domain(xExt).range([margin.left, margin.left+pw]);
+    const yScale = d3.scaleLinear().domain([yExt[0]-yPad, yExt[1]+yPad]).range([margin.top+ph, margin.top]);
+
+    svg.append('g').attr('transform',`translate(0,${margin.top+ph})`).call(d3.axisBottom(xScale).ticks(4));
+    svg.append('g').attr('transform',`translate(${margin.left},0)`).call(d3.axisLeft(yScale).ticks(4).tickFormat(d3.format('.1f')));
+    if (yLabel) {
+      svg.append('text').attr('x',-H/2).attr('y',10).attr('transform','rotate(-90)').attr('text-anchor','middle')
+        .style('font-family','var(--mono)').style('font-size','0.55rem').style('fill','var(--slate)').text(yLabel);
+    }
+
+    const line = d3.line().x((d,i) => xScale(i)).y(d => yScale(d));
+    svg.append('path').datum(data).attr('d',line).attr('fill','none').attr('stroke',color).attr('stroke-width',1.5);
+    svg.append('line').attr('x1',margin.left).attr('x2',margin.left+pw).attr('y1',yScale(0)).attr('y2',yScale(0))
+      .attr('stroke','var(--stone)').attr('stroke-width',0.5).attr('stroke-dasharray','3,3');
+  }
+
+  function drawCorrelogram(svg, values, color, yLabel, confBound) {
+    svg.selectAll('*').remove();
+    svg.append('rect').attr('x',margin.left).attr('y',margin.top).attr('width',pw).attr('height',ph)
+      .attr('fill','#FAF8F3').attr('stroke','var(--stone)').attr('stroke-width',0.5);
+    const maxLag = values.length - 1;
+    const xScale = d3.scaleLinear().domain([0, maxLag]).range([margin.left, margin.left+pw]);
+    const yScale = d3.scaleLinear().domain([-1, 1]).range([margin.top+ph, margin.top]);
+
+    svg.append('g').attr('transform',`translate(0,${margin.top+ph})`).call(d3.axisBottom(xScale).ticks(Math.min(maxLag,10)));
+    svg.append('g').attr('transform',`translate(${margin.left},0)`).call(d3.axisLeft(yScale).ticks(5));
+    if (yLabel) {
+      svg.append('text').attr('x',-H/2).attr('y',10).attr('transform','rotate(-90)').attr('text-anchor','middle')
+        .style('font-family','var(--mono)').style('font-size','0.55rem').style('fill','var(--slate)').text(yLabel);
+    }
+
+    // Confidence bounds
+    if (confBound) {
+      svg.append('line').attr('x1',margin.left).attr('x2',margin.left+pw).attr('y1',yScale(confBound)).attr('y2',yScale(confBound))
+        .attr('stroke','var(--terracotta)').attr('stroke-width',0.8).attr('stroke-dasharray','4,4').attr('opacity',0.5);
+      svg.append('line').attr('x1',margin.left).attr('x2',margin.left+pw).attr('y1',yScale(-confBound)).attr('y2',yScale(-confBound))
+        .attr('stroke','var(--terracotta)').attr('stroke-width',0.8).attr('stroke-dasharray','4,4').attr('opacity',0.5);
+    }
+
+    // Bars
+    const barW = Math.max(2, pw / (maxLag+1) * 0.6);
+    for (let k = 0; k <= maxLag; k++) {
+      svg.append('rect').attr('x', xScale(k)-barW/2).attr('y', yScale(Math.max(0, values[k])))
+        .attr('width', barW).attr('height', Math.abs(yScale(values[k])-yScale(0)))
+        .attr('fill', k === 0 ? 'var(--slate)' : color).attr('opacity', 0.8);
+    }
+  }
+
+  function update() {
+    const acfVals = acf(tsData, 30);
+    const pacfVals = pacfFromACF(acfVals);
+    const conf = 1.96 / Math.sqrt(n);
+
+    drawLineChart(seriesSvg, tsData, 'var(--forest)', '原始序列');
+    // Decomposition: trend + seasonal + residual
+    drawLineChart(decompSvg, tsData, 'var(--slate)', '分解');
+    drawCorrelogram(acfSvg, acfVals, '#2D6BA0', 'ACF', conf);
+    drawCorrelogram(pacfSvg, pacfVals, '#C75146', 'PACF', conf);
+
+    // Stats
+    const adfApprox = Math.abs(acfVals[1]) < 0.3 ? '可能平稳' : (acfVals[1] > 0.8 ? '可能非平稳' : '不确定');
+    d3.select('#ts-stats').html(`
+      <div class="stat-card"><div class="lbl">样本数</div><div class="val">${n}</div></div>
+      <div class="stat-card"><div class="lbl">均值</div><div class="val">${d3.mean(tsData).toFixed(3)}</div></div>
+      <div class="stat-card"><div class="lbl">方差</div><div class="val">${d3.variance(tsData).toFixed(3)}</div></div>
+      <div class="stat-card"><div class="lbl">ρ₁ (lag-1 ACF)</div><div class="val">${acfVals[1].toFixed(3)}</div></div>
+      <div class="stat-card"><div class="lbl">平稳性判断</div><div class="val" style="font-size:0.9rem;color:${adfApprox.includes('平稳')?'var(--forest)':'var(--terracotta)'}">${adfApprox}</div></div>
+    `);
+  }
+
+  function setActive(btn) {
+    d3.selectAll('#ts-trend-seas,#ts-random-walk,#ts-ar2,#ts-ma2').classed('active', false);
+    d3.select(btn).classed('active', true);
+  }
+
+  d3.select('#ts-trend-seas').on('click', () => { setActive('#ts-trend-seas'); generateTrendSeasonal(); update(); });
+  d3.select('#ts-random-walk').on('click', () => { setActive('#ts-random-walk'); generateRandomWalk(); update(); });
+  d3.select('#ts-ar2').on('click', () => { setActive('#ts-ar2'); generateAR2(); update(); });
+  d3.select('#ts-ma2').on('click', () => { setActive('#ts-ma2'); generateMA2(); update(); });
+  d3.select('#ts-reshuffle').on('click', update);
+
+  generateTrendSeasonal();
+  update();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+# Claude Code
+.codex/
+.claude/
+
+# Playwright browser profiles
+.playwright-mcp/
+
+# Environment
+.env
+
+# OS
+.DS_Store
+Thumbs.db

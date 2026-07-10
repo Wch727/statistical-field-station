@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>§I 描述性统计 — Statistical Field Station</title>
+<link rel="stylesheet" href="assets/vendor/google-fonts.css">
+<link rel="stylesheet" href="assets/vendor/katex.min.css">
+<script src="assets/vendor/katex.min.js"></script>
+<script src="assets/vendor/auto-render.min.js"></script>
+<script src="assets/vendor/d3.v7.min.js"></script>
+<link rel="stylesheet" href="assets/css/site.css">
+<style>
+:root {
+  --parchment: #FDFBF5; --forest: #2D4A3E; --terracotta: #C75146;
+  --gold: #8B6914; --stone: #E8E0D5; --slate: #5B6E65; --surface: #FFFAF0;
+  --display: 'Noto Serif SC', 'Cormorant Garamond', 'STSong', serif;
+  --body: 'Noto Sans SC', 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Consolas', monospace;
+  --page-w: 1100px; --text-w: 72ch; --radius: 4px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:40px}
+body{background:var(--parchment);color:var(--forest);font-family:var(--body);font-size:1.08rem;line-height:1.72;-webkit-font-smoothing:antialiased}
+p{margin-bottom:14px;max-width:var(--text-w)}
+a{color:var(--terracotta);text-decoration:none}a:hover{text-decoration:underline}
+strong{font-weight:600}em{font-style:italic}
+
+.page{max-width:var(--page-w);margin:0 auto;padding:0 32px 64px}
+.top-nav{padding:16px 0;font-family:var(--mono);font-size:0.78rem;border-bottom:1px solid var(--stone);margin-bottom:40px}
+.top-nav a{color:var(--slate)}.top-nav span{color:var(--gold)}
+
+.hero{padding:32px 0 40px}
+.hero .num{font-family:var(--mono);font-size:0.7rem;letter-spacing:0.18em;color:var(--gold);margin-bottom:6px}
+.hero h1{font-family:var(--display);font-weight:700;font-size:clamp(2rem,5vw,3rem);line-height:1.1;color:var(--forest);margin-bottom:12px}
+.hero .deck{font-size:1.05rem;color:var(--slate);max-width:var(--text-w)}
+
+h2{font-family:var(--display);font-weight:600;font-size:1.6rem;color:var(--forest);margin:36px 0 14px;padding-top:20px;border-top:1px solid var(--stone)}
+h3{font-family:var(--display);font-weight:500;font-size:1.2rem;color:var(--forest);margin:24px 0 10px}
+
+.math-block{text-align:center;padding:16px;background:var(--surface);border:1px solid var(--stone);border-radius:var(--radius);margin:16px 0;overflow-x:auto}
+.derive-box{background:#F5F8F6;border:1px solid var(--stone);border-left:3px solid var(--forest);padding:16px 20px;border-radius:0 var(--radius) var(--radius) 0;margin:16px 0;font-size:0.92rem}
+.derive-box h4{color:var(--forest);font-family:var(--display);text-transform:none;letter-spacing:0;font-size:1rem;margin:0 0 8px}
+.derive-box strong{color:var(--forest)}
+.concept-box{background:var(--surface);border:1px solid var(--stone);border-radius:var(--radius);padding:16px 20px;margin:16px 0;font-size:0.93rem}
+.concept-box h4{font-family:var(--display);font-size:1.05rem;font-weight:600;color:var(--forest);margin:0 0 8px}
+.toolkit-box{background:#FFF5F3;border:1px solid var(--stone);border-left:3px solid var(--terracotta);padding:14px 18px;border-radius:0 var(--radius) var(--radius) 0;margin:16px 0;font-size:0.92rem}
+.toolkit-box h4{color:var(--terracotta);font-family:var(--display);font-size:1rem;margin:0 0 8px}
+.note-box{background:#FFF8F0;border-left:3px solid var(--gold);padding:14px 18px;border-radius:0 var(--radius) var(--radius) 0;margin:16px 0;font-size:0.93rem}
+.note-box strong{color:var(--gold)}
+.warn-box{background:#FFFBF0;border:1px solid #E8D5A0;border-radius:var(--radius);padding:14px 18px;margin:16px 0;font-size:0.92rem}
+.warn-box::before{content:'⚠ ';font-size:1.1rem}
+.warn-box strong{color:var(--gold)}
+.competition-box{background:#F0F7F5;border:1px solid var(--forest);border-left:4px solid var(--forest);padding:18px 22px;border-radius:0 var(--radius) var(--radius) 0;margin:20px 0;font-size:0.93rem}
+.competition-box h4{color:var(--forest);font-family:var(--display);font-size:1.05rem;margin:0 0 8px}
+.competition-box .q{color:var(--terracotta);font-weight:600}
+
+.panel{background:var(--surface);border:1px solid var(--stone);border-radius:6px;box-shadow:inset 0 1px 0 rgba(255,255,255,0.7),0 2px 12px rgba(0,0,0,0.05);padding:24px;margin:20px 0;position:relative}
+.panel::before{content:'';position:absolute;top:0;left:12px;right:12px;height:1px;background:linear-gradient(to right,transparent,var(--gold),transparent);opacity:0.4}
+.panel-label{font-family:var(--mono);font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--stone)}
+
+.stat-cards{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.stat-card{background:var(--surface);border:1px solid var(--stone);border-radius:var(--radius);padding:10px 14px;text-align:center;min-width:72px}
+.stat-card .lbl{font-family:var(--mono);font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--slate);margin-bottom:3px}
+.stat-card .val{font-family:var(--mono);font-size:1.25rem;font-weight:600;color:var(--forest)}
+
+.data-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:0.92rem}
+.data-table th{font-family:var(--body);font-size:0.75rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--slate);padding:8px 12px;border-bottom:2px solid var(--stone);text-align:left}
+.data-table td{padding:8px 14px;border-bottom:1px solid var(--stone);color:var(--forest)}
+.data-table td[contenteditable]{background:rgba(199,81,70,0.04);outline:none;border-radius:2px;transition:background 0.15s}
+.data-table td[contenteditable]:focus{background:rgba(199,81,70,0.1);box-shadow:inset 0 0 0 1px var(--terracotta)}
+
+.btn{font-family:var(--mono);font-size:0.75rem;border:1px solid var(--stone);border-radius:var(--radius);background:var(--surface);color:var(--forest);padding:6px 14px;cursor:pointer;transition:all 0.15s}
+.btn:hover{border-color:var(--terracotta);color:var(--terracotta)}
+
+.compact-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:0.88rem;margin:16px 0}
+.compact-table th,.compact-table td{padding:7px 12px;text-align:left;border-bottom:1px solid var(--stone)}
+.compact-table th{font-family:var(--body);font-size:0.72rem;letter-spacing:0.08em;color:var(--slate);border-bottom:2px solid var(--stone)}
+
+.chart-container{width:100%;overflow-x:auto}
+.chart-container svg{display:block;margin:0 auto}
+
+footer{text-align:center;padding:32px 0;font-size:0.82rem;color:var(--slate);border-top:1px solid var(--stone);margin-top:40px}
+footer a{color:var(--slate);text-decoration:underline}
+</style>
+</head>
+<body>
+<div class="page">
+
+<nav class="top-nav"><a href="stats_tutorial.html">← Field Station</a> <span>|</span> §I 描述性统计</nav>
+
+<header class="hero">
+  <div class="num">§I</div>
+  <h1>描述性统计</h1>
+  <p class="deck">描述性统计用少数几个数字概括数据集的<strong>中心趋势</strong>、<strong>离散程度</strong>和<strong>分布形态</strong>。这是任何数据分析的第一步——先看清数据长什么样，再决定用什么方法。数模论文的数据分析部分，第一段永远是描述性统计。</p>
+</header>
+
+<!-- ═══════════ 竞赛场景 ═══════════ -->
+<div class="competition-box">
+<h4>竞赛真题场景</h4>
+<p><span class="q">Q：</span>某市环保局提供了过去 10 年 12 个监测站点的 PM2.5 日均浓度数据（共约 40000 条）。论文要求首先「描述数据的整体特征」。你应该报告哪些统计量？<br>
+<span class="q">Q：</span>某电商平台提供了 5000 名用户的年消费金额。数据明显右偏——大部分用户消费 200-500 元，但有 5 个用户消费超过 10 万元。应该用均值还是中位数来描述「典型用户」？<br>
+<strong>→ 描述性统计是数模论文的第一印象。评委最先看的就是这一段——均值、标准差、中位数、偏度、峰度、Q-Q 图。本节教你如何系统性地做好这一步。</strong></p>
+</div>
+
+<!-- ═══════════ 1.1 中心趋势 ═══════════ -->
+<h2>1.1 中心趋势：数据「中心」在哪？</h2>
+
+<div class="concept-box">
+<h4>样本均值 (Sample Mean)</h4>
+<p>所有观测值的算术平均。最常用也最直观的中心度量，但<strong>受极端值影响大</strong>——一个离谱的离群值就能把均值拉偏。均值是使平方误差和最小的值：\[ \bar{x} = \arg\min_{c} \sum (x_i - c)^2 \]</p>
+</div>
+
+<div class="math-block">
+\[ \bar{x} = \frac{1}{n}\sum_{i=1}^{n} x_i \qquad \mathbb{E}[\bar{x}] = \mu \qquad \text{Var}(\bar{x}) = \frac{\sigma^2}{n} \]
+</div>
+
+<div class="concept-box">
+<h4>样本中位数 (Sample Median)</h4>
+<p>排序后正中间的值。对离群值不敏感——称为<strong>稳健 (robust)</strong> 统计量。中位数是使绝对误差和最小的值：\[ \tilde{x} = \arg\min_{c} \sum |x_i - c| \]这解释了为什么中位数比均值更稳健——绝对值惩罚比平方惩罚更「宽容」极端值。</p>
+</div>
+
+<div class="math-block">
+\[ \tilde{x} = \begin{cases} x_{(\frac{n+1}{2})} & n \text{ 为奇数} \\[4pt] \dfrac{1}{2}\left(x_{(\frac{n}{2})} + x_{(\frac{n}{2}+1)}\right) & n \text{ 为偶数} \end{cases} \]
+</div>
+
+<div class="concept-box">
+<h4>其他中心度量</h4>
+<p><strong>截尾均值 (Trimmed Mean)：</strong>去掉两端 α% 的数据后算均值。α=0 即普通均值，α→0.5 趋近中位数。体育比赛评分常用（去掉最高和最低分）。<br>
+<strong>几何均值 (Geometric Mean)：</strong>\[ G = \left(\prod_{i=1}^n x_i\right)^{1/n} \]适用于增长率、比率等乘法尺度的数据。x_i 必须为正。<br>
+<strong>调和均值 (Harmonic Mean)：</strong>\[ H = n / \sum (1/x_i) \]适用于速率、速度等倒数尺度的数据。<br>
+<strong>Huber M-estimator：</strong>均值和截尾均值的折中。对中心数据用平方损失（像均值），对尾部数据用绝对值损失（像中位数），自动平衡效率与稳健性。<br>
+<strong>何时用哪个？</strong>数据对称、无离群值 → 均值（效率最高，方差最小）。数据偏态、有离群值 → 中位数。报告论文时建议两个都报告，差异大说明数据有问题。</p>
+</div>
+
+<div class="math-block">
+\[ \bar{x}_{\text{trim}(\alpha)} = \frac{1}{n - 2\lfloor n\alpha \rfloor} \sum_{i=\lfloor n\alpha \rfloor + 1}^{n - \lfloor n\alpha \rfloor} x_{(i)} \qquad G = \sqrt[n]{\prod_{i=1}^n x_i} \qquad H = \frac{n}{\sum_{i=1}^n \frac{1}{x_i}} \]
+</div>
+
+<!-- ═══════════ 1.2 离散程度 ═══════════ -->
+<h2>1.2 离散程度：数据「散」得多开？</h2>
+
+<div class="derive-box">
+<h4>Bessel 校正的完整推导：为什么分母是 n-1？</h4>
+<p>设总体方差为 \(\sigma^2\)。用分母 \(n\) 的样本方差 \(s_n^2 = \frac{1}{n}\sum (x_i - \bar{x})^2\)，其期望为：</p>
+\[ \begin{aligned} \mathbb{E}[s_n^2] &= \mathbb{E}\!\left[\frac{1}{n}\sum (x_i - \bar{x})^2\right] = \frac{1}{n}\mathbb{E}\!\left[\sum x_i^2 - 2\bar{x}\sum x_i + n\bar{x}^2\right] \\ &= \frac{1}{n}\mathbb{E}\!\left[\sum x_i^2 - n\bar{x}^2\right] = \frac{1}{n}\left[n(\mu^2 + \sigma^2) - n\!\left(\mu^2 + \frac{\sigma^2}{n}\right)\right] \\ &= \frac{1}{n}\left[n\sigma^2 - \sigma^2\right] = \sigma^2 \cdot \frac{n-1}{n} \end{aligned} \]
+<p>因此 \(\mathbb{E}[s_n^2] = \sigma^2 \cdot \frac{n-1}{n} \neq \sigma^2\)——分母 \(n\) 的方差估计<strong>系统地偏低</strong>（低估了 \(\sigma^2/n\)）。换用分母 \(n-1\)：</p>
+\[ \mathbb{E}[s^2] = \mathbb{E}\!\left[\frac{n}{n-1} s_n^2\right] = \frac{n}{n-1} \cdot \sigma^2 \cdot \frac{n-1}{n} = \sigma^2 \quad \checkmark \]
+<p><strong>直觉：</strong>用 \(\bar{x}\) 估计 \(\mu\) 消耗了一个自由度。\(n\) 个离差 \((x_i - \bar{x})\) 中只有 \(n-1\) 个是独立可变的，因为 \(\sum (x_i - \bar{x}) = 0\) 恒成立。自由度是「数据中独立信息的数量」。</p>
+</div>
+
+<div class="math-block">
+\[ s^2 = \frac{1}{n-1}\sum_{i=1}^{n}(x_i - \bar{x})^2 \qquad s = \sqrt{s^2} \qquad \text{IQR} = Q_3 - Q_1 \qquad \text{CV} = \frac{s}{\bar{x}} \]
+</div>
+
+<div class="concept-box">
+<h4>标准误 (SEM) vs 标准差 (SD)</h4>
+<p><strong>SD (Standard Deviation)：</strong>描述<strong>单个观测值</strong>的变异程度。样本量增大，\(s\) 趋近于总体 \(\sigma\)（<strong>不</strong>趋近于 0）。<br>
+<strong>SEM (Standard Error of the Mean)：</strong>描述<strong>样本均值</strong>的精确度。\(\text{SEM} = s/\sqrt{n}\)。样本量增大，SEM → 0（均值估计越来越精确）。<br>
+<strong>两者的关系：</strong>\[ \text{SEM} = \frac{\text{SD}}{\sqrt{n}} \]如果你重复抽样无数次，每次计算 \(\bar{x}\)，这些 \(\bar{x}\) 的标准差就是 SEM。<br>
+<strong>论文中如何报告：</strong>描述样本特征用 Mean ± SD；报告估计精度用 Mean ± SEM。混用会被审稿人质疑。</p>
+</div>
+
+<div class="derive-box">
+<h4>MAD：比标准差更稳健的离散度量</h4>
+<p><strong>MAD (Median Absolute Deviation)：</strong>\[ \text{MAD} = \text{median}(|x_i - \tilde{x}|) \]用中位数替代均值，对离群值完全免疫。MAD 与标准差的关系：对正态分布，\(\sigma \approx 1.4826 \times \text{MAD}\)。这个常数 1.4826 来自 \(\Phi^{-1}(3/4)\)，使 MAD 是 σ 的一致估计量。</p>
+</div>
+
+<div class="math-block">
+\[ \text{MAD} = \operatorname{median}_i |x_i - \tilde{x}| \qquad \hat{\sigma}_{\text{MAD}} = 1.4826 \times \text{MAD} \]
+</div>
+
+<!-- ═══════════ 1.3 分布形态 ═══════════ -->
+<h2>1.3 分布形态：偏度与峰度</h2>
+
+<div class="concept-box">
+<h4>矩 (Moments) 与形态参数</h4>
+<p>一阶矩 = 均值（位置），二阶中心矩 = 方差（尺度），三阶标准化矩 = 偏度（不对称性），四阶标准化矩 = 峰度（尾重）。<br>
+<strong>偏度 g₁：</strong>\(g_1 > 0\) 右偏（长尾在右，mean > median）；\(g_1 < 0\) 左偏。\(|g_1| > 1\) 通常认为明显偏态。<br>
+<strong>超额峰度 g₂：</strong>正态分布的峰度为 3，所以超额峰度 = 峰度 - 3。\(g_2 > 0\) 为尖峰厚尾（Leptokurtic，更多极端值）；\(g_2 < 0\) 为低峰薄尾（Platykurtic）。金融数据通常峰度很大（肥尾风险）。</p>
+</div>
+
+<div class="math-block">
+\[ g_1 = \frac{\frac{1}{n}\sum_{i=1}^n (x_i - \bar{x})^3}{\left(\frac{1}{n}\sum_{i=1}^n (x_i - \bar{x})^2\right)^{3/2}} \qquad g_2 = \frac{\frac{1}{n}\sum_{i=1}^n (x_i - \bar{x})^4}{\left(\frac{1}{n}\sum_{i=1}^n (x_i - \bar{x})^2\right)^{2}} - 3 \]
+\[ \text{SE}(g_1) \approx \sqrt{\frac{6}{n}} \qquad \text{SE}(g_2) \approx \sqrt{\frac{24}{n}} \]
+</div>
+
+<div class="warn-box">
+<strong>数模陷阱：</strong>报告「数据服从正态分布」之前，必须做检验。建模论文中常见错误：① 用均值和标准差描述严重偏态的数据（应改用中位数和 IQR）② 对 n &lt; 30 的小样本声称「根据 CLT 可用正态方法」（CLT 说的是均值的分布，不是原始数据的分布，且 n 需要足够大）③ 发现异常值直接删除不做说明。
+</div>
+
+<!-- ═══════════ 1.4 异常值检测 ═══════════ -->
+<h2>1.4 异常值检测</h2>
+
+<div class="toolkit-box">
+<h4>建模工具箱：三种异常值检测方法</h4>
+<p><strong>Z-score 法：</strong>\[ z_i = \frac{x_i - \bar{x}}{s} \]若 \(|z_i| > 3\)，标记为异常。但 \(\bar{x}\) 和 \(s\) 本身受异常值影响（masking 效应——异常值拉高了均值和标准差，使自己的 z-score 不那么极端）。</p>
+<p><strong>Modified Z-score（推荐）：</strong>\[ M_i = \frac{0.6745 \cdot (x_i - \tilde{x})}{\text{MAD}} \]若 \(|M_i| > 3.5\)，标记为异常。用中位数和 MAD 替代均值和标准差，对异常值稳健。常数 0.6745 使 MAD 与 σ 在正态下等价。</p>
+<p><strong>IQR 法 (Tukey)：</strong>\(x_i < Q_1 - 1.5 \times \text{IQR}\) 或 \(x_i > Q_3 + 1.5 \times \text{IQR}\) → 异常。不依赖正态假设，适用于任何分布。</p>
+</div>
+
+<div class="math-block">
+\[ \text{Lower Fence} = Q_1 - 1.5 \times \text{IQR} \qquad \text{Upper Fence} = Q_3 + 1.5 \times \text{IQR} \]
+\[ \text{Grubbs' Test: } G = \frac{\max |x_i - \bar{x}|}{s} \qquad G_{\text{crit}} = \frac{n-1}{\sqrt{n}} \sqrt{\frac{t^2_{\alpha/(2n), n-2}}{n-2 + t^2_{\alpha/(2n), n-2}}} \]
+</div>
+
+<div class="note-box">
+<strong>处理策略：</strong>① 核实数据来源（录入错误？）② 尝试变换（对数变换常能拉回极端值）③ 使用稳健方法（中位数、MAD、非参数检验）④ 做敏感性分析（报告有无异常值的两种结果）。<strong>不要默认删除</strong>——异常值可能正是你最重要的发现。
+</div>
+
+<!-- ═══════════ 1.5 缺失数据处理 ═══════════ -->
+<h2>1.5 缺失数据处理</h2>
+
+<div class="toolkit-box">
+<h4>建模工具箱：缺失数据四种策略</h4>
+<p><strong>① 删除法 (Complete Case)：</strong>删除有缺失值的行。最简单，但浪费数据——如果 10 个变量各有 5% 缺失，可能丢失 40% 的样本。仅适用于缺失 < 5% 且完全随机缺失 (MCAR) 的情况。<br>
+<strong>② 均值/中位数填补：</strong>用变量的均值或中位数填充缺失值。简单但会低估方差、扭曲相关性。<br>
+<strong>③ 回归填补：</strong>用其他变量预测缺失值。比均值填补好，但会低估标准误（因为填补值没有不确定性）。<br>
+<strong>④ 多重填补 (Multiple Imputation)：</strong>生成 M 个填补数据集，分别分析，最后合并结果。Rubin 规则：\[ \bar{\theta} = \frac{1}{M}\sum \hat{\theta}_m \qquad \text{SE} = \sqrt{\frac{1}{M}\sum \text{SE}_m^2 + \left(1+\frac{1}{M}\right)\frac{1}{M-1}\sum (\hat{\theta}_m - \bar{\theta})^2} \]是当前最推荐的方法。R 用 <code>mice</code> 包，Python 用 <code>sklearn.impute</code>。</p>
+</div>
+
+<div class="note-box">
+<strong>竞赛中：</strong>如果缺失率 < 5%，用均值填补并注明即可。如果缺失率较高（10-30%），需要用多重填补或至少做敏感性分析。论文中必须明确说明缺失数据的处理方式。
+</div>
+
+<!-- ═══════════ 1.6 经验分布函数 ═══════════ -->
+<h2>1.6 经验分布函数 (ECDF)</h2>
+
+<div class="derive-box">
+<h4>ECDF：数据的最完整描述</h4>
+<p>ECDF 是样本的累积分布函数，不依赖任何参数假设，是数据的「最忠实」表示：</p>
+\[ \hat{F}_n(x) = \frac{1}{n}\sum_{i=1}^{n} \mathbf{1}\{x_i \leq x\} \]
+<p>由 Glivenko-Cantelli 定理，\(\hat{F}_n(x)\) 以概率 1 一致收敛到真实的 \(F(x)\)。Dvoretzky-Kiefer-Wolfowitz 不等式给出了收敛速度：</p>
+\[ P\left(\sup_x |\hat{F}_n(x) - F(x)| > \varepsilon\right) \leq 2e^{-2n\varepsilon^2} \]
+<p>ECDF 在竞赛中的应用：不需要假设分布形式，直接绘制 ECDF 图比较两组数据的整体分布差异。比仅比较均值/中位数更全面。</p>
+</div>
+
+<!-- ═══════════ 1.7 数据变换 ═══════════ -->
+<h2>1.7 数据变换：当正态假设不成立时</h2>
+
+<div class="concept-box">
+<h4>Box-Cox 变换</h4>
+<p>Box-Cox 变换是一族幂变换，让数据自己「告诉」你该用什么变换。λ 由最大似然估计：</p>
+</div>
+
+<div class="math-block">
+\[ y^{(\lambda)} = \begin{cases} \dfrac{x^\lambda - 1}{\lambda} & \lambda \neq 0 \\[8pt] \ln(x) & \lambda = 0 \end{cases} \qquad \hat{\lambda}_{\text{MLE}} = \arg\max_{\lambda} \left[-\frac{n}{2}\ln\!\left(\frac{1}{n}\sum (y_i^{(\lambda)} - \overline{y^{(\lambda)}})^2\right) + (\lambda-1)\sum \ln x_i\right] \]
+</div>
+
+<div class="concept-box">
+<h4>常用变换及其适用场景</h4>
+<p><strong>λ = 1：</strong>不变换 —— 数据已近似正态。<br>
+<strong>λ = 0.5：</strong>\(\sqrt{x}\) —— 计数数据（Poisson 分布），方差 ≈ 均值。<br>
+<strong>λ = 0：</strong>\(\ln(x)\) —— 右偏、方差随均值增大（收入、浓度）。要求 \(x > 0\)。<br>
+<strong>λ = -0.5：</strong>\(1/\sqrt{x}\) —— 强右偏。<br>
+<strong>λ = -1：</strong>\(1/x\) —— 极强右偏（反应时间、速率）。<br>
+<strong>反正弦变换：</strong>\(\arcsin(\sqrt{p})\) —— 比例/百分比数据（0-1 区间），稳定方差。<br>
+<strong>注意：</strong>变换后统计推断针对的是变换后的尺度，回代解释时需谨慎。论文中要同时报告原始尺度和变换后的结果。</p>
+</div>
+
+<!-- ═══════════ 1.8 正态性检验 ═══════════ -->
+<h2>1.8 正态性检验</h2>
+
+<div class="derive-box">
+<h4>Q-Q 图 (Quantile-Quantile Plot) 原理</h4>
+<p>将排序后的数据分位数 \(q_{(i)} = x_{(i)}\) 与理论正态分位数 \(z_{(i)} = \Phi^{-1}((i-0.5)/n)\) 配对画散点图。若数据正态，点应落在 \(y=x\) 对角线上。<br>
+<strong>阅读方法：</strong>① 整体 S 形 → 峰度问题（两端弯向同一方向）② 一端翘起 → 偏态（右端上翘 = 右偏）③ 中间偏离 → 分布中心不对。<br>
+<strong>Shapiro-Wilk 检验：</strong>\[ W = \frac{(\sum a_i x_{(i)})^2}{\sum (x_i - \bar{x})^2} \]其中 \(a_i\) 是由正态分布导出的权重。\(W\) 接近 1 表示正态。p < 0.05 拒绝正态假设。但大样本时几乎总是拒绝（敏感性过高），应结合 Q-Q 图判断。</p>
+</div>
+
+<div class="math-block">
+\[ W = \frac{\left(\sum_{i=1}^n a_i x_{(i)}\right)^2}{\sum_{i=1}^n (x_i - \bar{x})^2} \qquad D_n = \sup_x |F_n(x) - F(x)| \quad \text{(Kolmogorov-Smirnov)} \]
+</div>
+
+<h2>1.9 切比雪夫不等式与经验法则</h2>
+
+<div class="concept-box">
+<h4>切比雪夫不等式 (Chebyshev's Inequality)</h4>
+<p>对于<strong>任意</strong>分布（不要求正态！），均值 ± k 个标准差内至少包含 \(1 - 1/k^2\) 的数据：</p>
+</div>
+
+<div class="math-block">
+\[ P(|X - \mu| \geq k\sigma) \leq \frac{1}{k^2} \qquad P(|X - \mu| < k\sigma) \geq 1 - \frac{1}{k^2} \]
+\[ k=2 \rightarrow \geq 75\% \qquad k=3 \rightarrow \geq 88.9\% \qquad k=4 \rightarrow \geq 93.75\% \]
+</div>
+
+<div class="concept-box">
+<h4>68-95-99.7 经验法则 (仅适用于正态分布)</h4>
+<p>若数据服从正态分布：\(\mu \pm 1\sigma\) 含约 68.3%，\(\mu \pm 2\sigma\) 含约 95.4%，\(\mu \pm 3\sigma\) 含约 99.7%。<br>
+<strong>切比雪夫 vs 经验法则：</strong>切比雪夫对所有分布都成立，但界限很松（k=2 时 ≥75% vs 正态的 95.4%）。经验法则精确但只适用于正态。这两种工具在数模中用于快速判断数据是否有异常或是否可以用正态近似。</p>
+</div>
+
+<div class="note-box">
+<strong>数模论文 Checklist：</strong>报告 n, mean, std, median, min, max, Q1, Q3, skewness, kurtosis。若 |skewness| > 1 或 |kurtosis| > 2，说明数据偏离正态，后续分析应考虑非参数方法或数据变换。同时报告正态性检验结果（Shapiro-Wilk p 值 + Q-Q 图）。如果数据量较大，额外报告缺失值情况和处理方式。
+</div>
+
+<!-- ═══════════ 1.9A 变异系数 ═══════════ -->
+<h2>1.9A 变异系数 (CV)</h2>
+
+<div class="concept-box">
+<h4>跨量纲的离散度比较</h4>
+<p>标准差是带单位的——比较「身高(cm)的标准差」和「体重(kg)的标准差」没有意义。变异系数 (Coefficient of Variation) 解决了这个问题：</p>
+</div>
+
+<div class="math-block">
+\[
+\text{CV} = \frac{s}{\bar{x}} \times 100\% \qquad \text{（仅适用于比率尺度，即 } \bar{x} > 0 \text{ 且零点有绝对意义）}
+\]
+</div>
+
+<p>CV 的含义：「标准差占均值的百分比」。CV = 15% 意味着数据的典型波动幅度约为均值的 15%。</p>
+
+<div class="note-box">
+<strong>竞赛应用：</strong>① 比较不同量纲变量的离散度（如「收入的不平等程度 vs 教育年限的离散度」）。② 金融风险度量（CV 越低 → 投资越稳定）。③ 竞赛中常见句式：「指标 A 的变异系数为 23%，远高于指标 B 的 8%，说明 A 的不确定性更大。」<br>
+<strong>注意：</strong>CV 不能用于区间尺度（如温度 °C——零度不是「没有温度」，此时 CV 无意义）。均值接近 0 时 CV 会爆炸——不用 CV。
+</div>
+
+<!-- ═══════════ 1.9B 百分位数与分位数 ═══════════ -->
+<h2>1.9B 百分位数与分位数</h2>
+
+<div class="concept-box">
+<h4>箱线图的数学基础</h4>
+<p>第 \(p\) 百分位数 (percentile) 是将数据从小到大排列后，至少有 \(p\%\) 的数据 ≤ 该值。常用的特殊分位数：</p>
+</div>
+
+<div class="math-block">
+\[
+\begin{aligned}
+Q_1 &= P_{25} \quad \text{（第一四分位数，下四分位数）} \\
+Q_2 &= P_{50} = \text{median} \quad \text{（中位数）} \\
+Q_3 &= P_{75} \quad \text{（第三四分位数，上四分位数）} \\
+\text{IQR} &= Q_3 - Q_1 \quad \text{（四分位距，数据的中间 50% 范围）}
+\end{aligned}
+\]
+</div>
+
+<p><strong>百分位数的计算：</strong>有多种方法（Excel 用 PERCENTILE.INC 或 PERCENTILE.EXC），竞赛中常用的是插值法：将排序后的数据 \(x_{(1)} \leq x_{(2)} \leq \cdots \leq x_{(n)}\)，第 \(p\) 百分位数 = \(x_{(k)} + \alpha(x_{(k+1)} - x_{(k)})\)，其中 \(k = \lfloor p(n-1)/100 \rfloor + 1\)。</p>
+
+<div class="toolkit-box">
+<h4>建模工具箱：分位数在竞赛中的应用</h4>
+<p>① <strong>异常值阈值：</strong>下界 = \(Q_1 - 1.5 \times \text{IQR}\)，上界 = \(Q_3 + 1.5 \times \text{IQR}\)。低于下界或高于上界 → 可疑异常值。<br>
+② <strong>五数概括 (Five-Number Summary)：</strong>min, Q₁, median, Q₃, max——箱线图的基础。<br>
+③ <strong>分位数回归（见 §VI）：</strong>建模条件分位数而非均值。<br>
+④ <strong>竞赛常见句式：</strong>「数据的上四分位数为 85，说明 75% 的样本低于 85 分。」</p>
+</div>
+
+<!-- ═══════════ 1.9C 稳健统计量 ═══════════ -->
+<h2>1.9C 稳健统计量</h2>
+
+<div class="concept-box">
+<h4>当数据有异常值，均值不可靠</h4>
+<p>均值对异常值极其敏感——一个极端值可以彻底改变均值。稳健统计量通过<strong>降低极端值的权重</strong>来解决这个问题。</p>
+</div>
+
+<table class="compact-table">
+<thead><tr><th>统计量</th><th>定义</th><th>稳健性</th><th>适用场景</th></tr></thead>
+<tbody>
+<tr><td><strong>中位数</strong></td><td>排序后中间的值</td><td>★★★★★</td><td>有异常值时的中心趋势</td></tr>
+<tr><td><strong>截尾均值 (Trimmed Mean)</strong></td><td>去掉最小的 α% 和最大的 α% 后算均值</td><td>★★★★</td><td>异常值较多但不想完全放弃</td></tr>
+<tr><td><strong>Winsorized 均值</strong></td><td>将极端值替换为边界值再算均值</td><td>★★★★</td><td>保留样本量，但限制极端值影响</td></tr>
+<tr><td><strong>MAD (Median Absolute Deviation)</strong></td><td>\(\text{median}(|x_i - \text{median}(x)|)\)</td><td>★★★★★</td><td>有异常值时的离散度</td></tr>
+<tr><td><strong>IQR</strong></td><td>\(Q_3 - Q_1\)</td><td>★★★★★</td><td>有异常值时的离散度</td></tr>
+</tbody>
+</table>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>如果 Shapiro-Wilk 检验显著（非正态）且数据含明显异常值，报告 <strong>中位数 + MAD 或 IQR</strong> 而不是均值 ± 标准差。论文中写：「由于数据存在明显异常值，我们使用中位数 (IQR) 而非均值 (SD) 来描述数据的中心趋势和离散度，以获得更稳健的描述。」这展示了统计素养。
+</div>
+
+<!-- ═══════════ INTERACTIVE ═══════════ -->
+<h2>1.10 交互式数据面板</h2>
+<p>编辑下方数据集的任意单元格，所有统计量实时更新。双击数字即可编辑。尝试修改一个值使其变成极端离群值，观察均值、标准差、偏度和峰度如何变化。</p>
+
+<div class="panel">
+<div class="panel-label">INSTRUMENT No.1 — DATA LOG</div>
+<div style="display:flex;gap:32px;flex-wrap:wrap;">
+  <div style="flex:1;min-width:300px;">
+    <table class="data-table" id="desc-table">
+      <thead><tr><th>#</th><th>值 (X)</th><th>分组</th></tr></thead>
+      <tbody id="desc-tbody"></tbody>
+    </table>
+    <div style="margin-top:10px;display:flex;gap:8px;">
+      <button class="btn" onclick="addDescRow()">+ 添加行</button>
+      <button class="btn" onclick="resetDescData()">↩ 重置</button>
+    </div>
+  </div>
+  <div style="flex:1;min-width:280px;" id="desc-stats"></div>
+</div>
+</div>
+
+<footer>
+  <p><a href="stats_tutorial.html">← 返回 Statistical Field Station 主页</a></p>
+  <p>所有计算在浏览器端完成 · KaTeX 渲染公式 · D3.js 驱动图表</p>
+</footer>
+
+</div>
+
+<script>
+const mean = arr => arr.reduce((a,b)=>a+b,0)/arr.length;
+const std = arr => { const m=mean(arr); return Math.sqrt(arr.reduce((s,x)=>s+(x-m)**2,0)/(arr.length-1)); };
+const median = arr => { const s=[...arr].sort((a,b)=>a-b), n=s.length; return n%2?s[(n-1)/2]:(s[n/2-1]+s[n/2])/2; };
+const quartile = (arr, q) => { const s=[...arr].sort((a,b)=>a-b), n=s.length, idx=q*(n-1), lo=Math.floor(idx), hi=Math.ceil(idx); return lo===hi?s[lo]:s[lo]+(s[hi]-s[lo])*(idx-lo); };
+function randn_bm() { let u=0,v=0; while(u===0)u=Math.random(); while(v===0)v=Math.random(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
+
+let descData = [12,15,18,22,23,25,28,30,31,33,35,38,42,45,55];
+let descGroups = ['A','A','A','A','B','B','B','B','B','C','C','C','C','C','C'];
+
+function renderDescTable() {
+  document.getElementById('desc-tbody').innerHTML = descData.map((v,i) =>
+    `<tr><td style="color:var(--slate);">${i+1}</td><td contenteditable="true" onblur="updateDescCell(${i},this.textContent)">${v}</td><td contenteditable="true" onblur="updateGroupCell(${i},this.textContent)">${descGroups[i]||''}</td></tr>`
+  ).join('');
+}
+function updateDescCell(i, val) { const v=parseFloat(val); if(!isNaN(v)){descData[i]=v; updateDescStats();} }
+function updateGroupCell(i, val) { descGroups[i]=val.trim(); updateDescStats(); }
+function addDescRow() { descData.push(Math.round(mean(descData)+randn_bm()*std(descData))); descGroups.push(''); renderDescTable(); updateDescStats(); }
+function resetDescData() { descData=[12,15,18,22,23,25,28,30,31,33,35,38,42,45,55]; descGroups=['A','A','A','A','B','B','B','B','B','C','C','C','C','C','C']; renderDescTable(); updateDescStats(); }
+
+function updateDescStats() {
+  const d = descData.filter(v => !isNaN(v));
+  if (d.length===0) return;
+  const m=mean(d), s=std(d), med=median(d), q1=quartile(d,0.25), q3=quartile(d,0.75);
+  const mn=Math.min(...d), mx=Math.max(...d), iqr=q3-q1, n=d.length;
+  const skew = d.reduce((sum,x)=>sum+((x-m)/s)**3,0)/n;
+  const kurt = d.reduce((sum,x)=>sum+((x-m)/s)**4,0)/n - 3;
+  const mad = median(d.map(x=>Math.abs(x-med)));
+  const stats = [
+    {l:'n', v:n}, {l:'Mean', v:m.toFixed(2)}, {l:'Std', v:s.toFixed(2)},
+    {l:'SEM', v:(s/Math.sqrt(n)).toFixed(3)}, {l:'Median', v:med.toFixed(2)},
+    {l:'Min', v:mn}, {l:'Max', v:mx}, {l:'Q1', v:q1.toFixed(2)}, {l:'Q3', v:q3.toFixed(2)},
+    {l:'IQR', v:iqr.toFixed(2)}, {l:'MAD', v:mad.toFixed(2)},
+    {l:'Skew', v:skew.toFixed(3)}, {l:'Kurt', v:kurt.toFixed(3)},
+    {l:'CV', v:(m!==0?(s/m*100).toFixed(1)+'%':'N/A')}
+  ];
+  document.getElementById('desc-stats').innerHTML = '<div class="stat-cards">'+stats.map(s=>`<div class="stat-card"><div class="lbl">${s.l}</div><div class="val">${s.v}</div></div>`).join('')+'</div>';
+}
+
+renderDescTable(); updateDescStats();
+
+if (typeof renderMathInElement === 'function') {
+  renderMathInElement(document.body, {
+    delimiters: [{left: '$$', right: '$$', display: true},{left: '\\[', right: '\\]', display: true},{left: '$', right: '$', display: false},{left: '\\(', right: '\\)', display: false}],
+    throwOnError: false, strict: false,
+  });
+}
+</script>
+</body>
+</html>

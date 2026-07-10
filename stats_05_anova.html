@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>§V 方差分析 — Statistical Field Station</title>
+<link rel="stylesheet" href="assets/vendor/google-fonts.css">
+<link rel="stylesheet" href="assets/vendor/katex.min.css">
+<script src="assets/vendor/katex.min.js"></script>
+<script src="assets/vendor/auto-render.min.js"></script>
+<script src="assets/vendor/d3.v7.min.js"></script>
+<link rel="stylesheet" href="assets/css/site.css">
+<style>
+:root {
+  --parchment: #FDFBF5; --forest: #2D4A3E; --terracotta: #C75146;
+  --gold: #8B6914; --stone: #E8E0D5; --slate: #5B6E65; --surface: #FFFAF0;
+  --display: 'Noto Serif SC', 'Cormorant Garamond', 'STSong', serif;
+  --body: 'Noto Sans SC', 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Consolas', monospace;
+  --page-w: 1100px; --text-w: 72ch; --radius: 4px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:40px}
+body{background:var(--parchment);color:var(--forest);font-family:var(--body);font-size:1.08rem;line-height:1.72}
+p{margin-bottom:14px;max-width:var(--text-w)}
+a{color:var(--terracotta);text-decoration:none}a:hover{text-decoration:underline}
+strong{font-weight:600}
+
+.page{max-width:var(--page-w);margin:0 auto;padding:0 32px 64px}
+.top-nav{padding:16px 0;font-family:var(--mono);font-size:0.78rem;border-bottom:1px solid var(--stone);margin-bottom:40px}
+.top-nav a{color:var(--slate)}.top-nav span{color:var(--gold)}
+
+.hero{padding:32px 0 40px}
+.hero .num{font-family:var(--mono);font-size:0.7rem;letter-spacing:0.18em;color:var(--gold);margin-bottom:6px}
+.hero h1{font-family:var(--display);font-weight:700;font-size:clamp(2rem,5vw,3rem);line-height:1.1;color:var(--forest);margin-bottom:12px}
+.hero .deck{font-size:1.05rem;color:var(--slate);max-width:var(--text-w)}
+
+h2{font-family:var(--display);font-weight:600;font-size:1.6rem;color:var(--forest);margin:36px 0 14px;padding-top:20px;border-top:1px solid var(--stone)}
+h3{font-family:var(--display);font-weight:500;font-size:1.2rem;color:var(--forest);margin:24px 0 10px}
+
+.math-block{text-align:center;padding:16px;background:var(--surface);border:1px solid var(--stone);border-radius:var(--radius);margin:16px 0;overflow-x:auto}
+.derive-box{background:#F5F8F6;border:1px solid var(--stone);border-left:3px solid var(--forest);padding:16px 20px;border-radius:0 var(--radius) var(--radius) 0;margin:16px 0;font-size:0.92rem}
+.derive-box h4{color:var(--forest);font-family:var(--display);text-transform:none;letter-spacing:0;font-size:1rem;margin:0 0 8px}
+.concept-box{background:var(--surface);border:1px solid var(--stone);border-radius:var(--radius);padding:16px 20px;margin:16px 0;font-size:0.93rem}
+.concept-box h4{font-family:var(--display);font-size:1.05rem;font-weight:600;color:var(--forest);margin:0 0 8px}
+.toolkit-box{background:#FFF5F3;border:1px solid var(--stone);border-left:3px solid var(--terracotta);padding:14px 18px;border-radius:0 var(--radius) var(--radius) 0;margin:16px 0;font-size:0.92rem}
+.toolkit-box h4{color:var(--terracotta);font-family:var(--display);font-size:1rem;margin:0 0 8px}
+.note-box{background:#FFF8F0;border-left:3px solid var(--gold);padding:14px 18px;border-radius:0 var(--radius) var(--radius) 0;margin:16px 0;font-size:0.93rem}
+.note-box strong{color:var(--gold)}
+.warn-box{background:#FFFBF0;border:1px solid #E8D5A0;border-radius:var(--radius);padding:14px 18px;margin:16px 0;font-size:0.92rem}
+.warn-box::before{content:'⚠ ';font-size:1.1rem}
+.competition-box{background:#F0F7F5;border:1px solid var(--forest);border-left:4px solid var(--forest);padding:18px 22px;border-radius:0 var(--radius) var(--radius) 0;margin:20px 0;font-size:0.93rem}
+.competition-box h4{color:var(--forest);font-family:var(--display);font-size:1.05rem;margin:0 0 8px}
+.competition-box .q{color:var(--terracotta);font-weight:600}
+
+.panel{background:var(--surface);border:1px solid var(--stone);border-radius:6px;box-shadow:inset 0 1px 0 rgba(255,255,255,0.7),0 2px 12px rgba(0,0,0,0.05);padding:24px;margin:20px 0;position:relative}
+.panel::before{content:'';position:absolute;top:0;left:12px;right:12px;height:1px;background:linear-gradient(to right,transparent,var(--gold),transparent);opacity:0.4}
+.panel-label{font-family:var(--mono);font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--stone)}
+.panel-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+
+.slider-row{display:flex;align-items:center;gap:12px;margin:10px 0;flex-wrap:wrap}
+.slider-row label{font-family:var(--mono);font-size:0.85rem;color:var(--slate);min-width:100px}
+.slider-row input[type=range]{flex:1;min-width:100px;accent-color:var(--terracotta)}
+.slider-val{font-family:var(--mono);font-weight:600;color:var(--terracotta);min-width:36px;font-size:0.88rem}
+
+.anova-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:0.9rem;margin:16px 0}
+.anova-table th,.anova-table td{padding:8px 14px;text-align:center;border-bottom:1px solid var(--stone)}
+.anova-table th{font-family:var(--body);font-size:0.7rem;letter-spacing:0.08em;color:var(--slate);border-bottom:2px solid var(--stone)}
+.anova-table .sig{color:var(--terracotta);font-weight:600}
+
+.chart-container{width:100%;overflow-x:auto}
+.chart-container svg{display:block;margin:0 auto}
+
+.compact-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:0.88rem;margin:16px 0}
+.compact-table th,.compact-table td{padding:7px 12px;text-align:left;border-bottom:1px solid var(--stone)}
+.compact-table th{font-family:var(--body);font-size:0.72rem;letter-spacing:0.08em;color:var(--slate);border-bottom:2px solid var(--stone)}
+
+footer{text-align:center;padding:32px 0;font-size:0.82rem;color:var(--slate);border-top:1px solid var(--stone);margin-top:40px}
+footer a{color:var(--slate);text-decoration:underline}
+</style>
+</head>
+<body>
+<div class="page">
+
+<nav class="top-nav"><a href="stats_tutorial.html">← Field Station</a> <span>|</span> §V 方差分析</nav>
+
+<header class="hero">
+  <div class="num">§V</div>
+  <h1>方差分析 (ANOVA)</h1>
+  <p class="deck">当需要比较三组或更多组的均值时，不能做多个两两 t 检验——族错误率 (FWER) 急剧膨胀。ANOVA 一次性检验 H₀: μ₁ = μ₂ = ... = μ_k。本章涵盖单因素与双因素 ANOVA、交互效应、重复测量 ANOVA、Kruskal-Wallis 检验、事后检验和效应量。核心问题：<strong>「某因素对结果有多大影响？」</strong></p>
+</header>
+
+<!-- ═══════════ 竞赛场景 ═══════════ -->
+<div class="competition-box">
+<h4>竞赛真题场景</h4>
+<p><span class="q">Q：</span>某年全国大学生数学建模竞赛 A 题：三种不同工艺生产的材料，每种工艺各测试了 20 个样品的强度。问：三种工艺的强度是否有显著差异？如果显著，哪两种工艺之间差异最大？<br>
+<span class="q">Q：</span>美赛 MCM 中常见：不同地区的空气质量（4 个地区）、不同教学方法的效果（3 种方法）、不同施肥方案对作物产量的影响（5 种方案）。<br>
+<strong>→ ANOVA 是处理「多组比较」的标准方法。竞赛中，如果数据有 3 组以上，用 ANOVA 比用多次 t 检验更专业（也更正确）。</strong></p>
+</div>
+
+<h2>5.1 单因素 ANOVA 的方差分解</h2>
+
+<div class="derive-box">
+<h4>ANOVA 模型：将总变异分解为组间 + 组内</h4>
+<p>\[ x_{ij} = \mu + \tau_j + \varepsilon_{ij}, \quad \varepsilon_{ij} \sim N(0, \sigma^2), \quad \sum_{j=1}^k n_j \tau_j = 0 \]</p>
+<p><strong>组间平方和 SSB：</strong>各组均值围绕总均值的变异——「信号」+「噪声」。<br>
+<strong>组内平方和 SSW：</strong>各组内部个体围绕该组均值的变异——纯「噪声」。<br>
+<strong>F = MSB / MSW：</strong>如果 H₀ 为真（无组间效应），F 应接近 1。F 远大于 1 → 拒绝 H₀。</p>
+</div>
+
+<div class="math-block">
+\[ SS_{\text{between}} = \sum_{j=1}^k n_j(\bar{x}_j - \bar{x})^2 \qquad SS_{\text{within}} = \sum_{j=1}^k \sum_{i=1}^{n_j} (x_{ij} - \bar{x}_j)^2 \]
+\[ MS_{\text{between}} = \frac{SS_{\text{between}}}{k-1} \qquad MS_{\text{within}} = \frac{SS_{\text{within}}}{N-k} \qquad F = \frac{MS_{\text{between}}}{MS_{\text{within}}} \sim F_{k-1, N-k} \]
+</div>
+
+<div class="derive-box">
+<h4>ANOVA 的矩阵形式：与线性回归的统一视角</h4>
+<p>ANOVA 本质上就是线性回归的一个特例——用虚拟变量编码分组。以三组为例：</p>
+\[ \mathbf{Y} = \mathbf{X}\boldsymbol{\beta} + \boldsymbol{\varepsilon} \qquad \mathbf{X} = \begin{bmatrix} 1 & 0 & 0 \\ 1 & 0 & 0 \\ 1 & 1 & 0 \\ 1 & 1 & 0 \\ 1 & 0 & 1 \\ 1 & 0 & 1 \end{bmatrix} \qquad \boldsymbol{\beta} = \begin{bmatrix} \mu_1 \\ \mu_2 - \mu_1 \\ \mu_3 - \mu_1 \end{bmatrix} \]
+<p>β₀ = μ₁（组 1 均值），β₁ = μ₂−μ₁（组 2 效应），β₂ = μ₃−μ₁（组 3 效应）。ANOVA 的 F 检验等价于检验 β₁ = β₂ = 0。ANOVA 和线性回归在数学上是同一个模型，只是呈现方式不同。</p>
+</div>
+
+<h2>5.2 双因素 ANOVA 与交互效应</h2>
+
+<div class="concept-box">
+<h4>Two-Way ANOVA 模型</h4>
+<p>单因素 ANOVA 只考虑一个分组变量，但现实中往往是多个因素同时作用。双因素 ANOVA 同时分析两个因素（A 和 B）及其交互效应：</p>
+\[ Y_{ijk} = \mu + \alpha_i + \beta_j + (\alpha\beta)_{ij} + \varepsilon_{ijk} \]
+<p>包含三个假设检验：① 因素 A 的主效应 ② 因素 B 的主效应 ③ A×B 交互效应。<strong>如果交互显著，主效应不能单独解读</strong>——A 的效应取决于 B 的水平。例如：药物 A 对男性有效但对女性无效（性别×药物交互）。<strong>数模中，发现交互效应往往比发现主效应更能体现建模水平。</strong></p>
+</div>
+
+<div class="math-block">
+\[ SS_{\text{Total}} = SS_A + SS_B + SS_{AB} + SS_E \qquad F_A = \frac{MS_A}{MS_E} \quad F_B = \frac{MS_B}{MS_E} \quad F_{AB} = \frac{MS_{AB}}{MS_E} \]
+</div>
+
+<h2>5.3 重复测量 ANOVA</h2>
+
+<div class="concept-box">
+<h4>当同一批对象被多次测量</h4>
+<p>如果同一组受试者在不同时间点或不同条件下被重复测量，数据之间不再独立——不能用普通 ANOVA。重复测量 ANOVA 将「受试者」作为一个随机效应，分解出受试者间的变异：</p>
+\[ Y_{ij} = \mu + \tau_j + \pi_i + \varepsilon_{ij} \]
+<p>其中 π_i 是第 i 个受试者的随机效应。这减少了误差项（因为每个受试者自身的一致性被分离出来），从而提高了检验功效。<br>
+<strong>竞赛应用：</strong>同一批样本在不同温度下的反应速率、同一批患者在不同时间点的血压值、同一批城市在不同年份的空气质量指数。特别要注意<strong>球形假设</strong>——如果违反，需要用 Greenhouse-Geisser 或 Huynh-Feldt 校正。</p>
+</div>
+
+<h2>5.4 事后检验</h2>
+
+<div class="derive-box">
+<h4>Tukey HSD：控制所有两两比较的 FWER</h4>
+<p>F 检验显著只告诉你「至少有一组不同」，但不说哪组。事后检验做所有两两比较，同时控制多重比较的错误率。</p>
+\[ \text{HSD}_{ij} = q_{\alpha, k, df_w} \cdot \sqrt{\frac{MS_W}{n}} \qquad \text{CI}_{95\%}: (\bar{x}_i - \bar{x}_j) \pm \text{HSD} \]
+<p><strong>Tukey HSD：</strong>最常用，适用于所有两两比较。假设各组样本量相等（不平衡时用 Tukey-Kramer 修正）。<br>
+<strong>Bonferroni：</strong>最保守（功效最低），但最灵活——任何对比都适用。<br>
+<strong>Dunnett：</strong>只比较各组与对照组。适合有明确对照组的实验设计。</p>
+</div>
+
+<h2>5.5 Kruskal-Wallis 检验</h2>
+
+<div class="concept-box">
+<h4>ANOVA 的非参数替代</h4>
+<p>当数据严重偏态、方差不齐、或变量为有序等级时，Kruskal-Wallis 检验将所有数据合并排序，计算每组的平均秩次，检验各组秩次分布是否相同。事后检验用 Dunn 检验（而非 Tukey HSD）。</p>
+</div>
+
+<div class="math-block">
+\[ H = \frac{12}{N(N+1)}\sum_{j=1}^{k} \frac{R_j^2}{n_j} - 3(N+1) \sim \chi^2_{k-1} \]
+</div>
+
+<!-- ═══════════ 5.5A 协方差分析 ANCOVA ═══════════ -->
+<h2>5.5A 协方差分析 (ANCOVA)</h2>
+
+<div class="concept-box">
+<h4>控制混杂变量的 ANOVA</h4>
+<p>ANCOVA = ANOVA + 回归。在比较组间差异时，<strong>同时控制</strong>一个或多个连续协变量的影响。例如，比较三种教学方法的效果时，用学生的<strong>前测成绩</strong>作为协变量——消除初始水平差异的影响。</p>
+</div>
+
+<h3>ANCOVA 模型</h3>
+
+<div class="math-block">
+\[
+y_{ij} = \mu + \tau_i + \beta(x_{ij} - \bar{x}) + \varepsilon_{ij}, \quad \varepsilon_{ij} \sim N(0,\sigma^2)
+\]
+</div>
+
+<p>其中 \(\tau_i\) 是第 \(i\) 组的效应（控制协变量后），\(\beta\) 是协变量的斜率，\(x_{ij}\) 是协变量值。<strong>关键假设：</strong>各组的回归斜率相同（平行性假设）——即协变量与因变量的关系在各组中一致。如果斜率不同，ANCOVA 不适用，需要使用带交互项的模型。</p>
+
+<div class="derive-box">
+<h4>ANCOVA 的方差分解</h4>
+<p>ANCOVA 先通过回归去除协变量的影响，再对校正后的因变量做 ANOVA：</p>
+<div class="math-block">
+\[
+SS_{\text{total(adj)}} = SS_{\text{between(adj)}} + SS_{\text{within(adj)}}
+\]
+</div>
+<p>这相当于问：「如果所有组的协变量都相同，组间差异还有多大？」</p>
+</div>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>ANCOVA 是竞赛中提升统计功效和因果推断可信度的利器。如果数据中有明显的混杂变量（如年龄、基线水平），使用 ANCOVA 比单纯 ANOVA 更有说服力。在论文中，报告「校正后」的组均值比原始均值更准确。
+</div>
+
+<!-- ═══════════ 5.5B 多元方差分析 MANOVA ═══════════ -->
+<h2>5.5B 多元方差分析 (MANOVA)</h2>
+
+<div class="concept-box">
+<h4>多个因变量同时分析</h4>
+<p>当实验有多个相关的因变量时（如同时测量焦虑、抑郁、压力三个心理指标），单独对每个指标做 ANOVA 会：① 增加 I 型错误（多重检验）。② 忽略因变量之间的相关性。MANOVA 同时分析所有因变量，检验组间均值向量是否相等。</p>
+</div>
+
+<h3>MANOVA 的检验统计量</h3>
+
+<p>MANOVA 基于组间离差矩阵 \(H\) 和组内离差矩阵 \(E\) 的特征值 \(\lambda_i\)：</p>
+
+<table class="compact-table">
+<thead><tr><th>统计量</th><th>公式</th><th>特点</th></tr></thead>
+<tbody>
+<tr><td>Wilks' Lambda</td><td>\(\Lambda = \prod_i \frac{1}{1+\lambda_i}\)</td><td>最常用，竞赛首选</td></tr>
+<tr><td>Pillai's Trace</td><td>\(V = \sum_i \frac{\lambda_i}{1+\lambda_i}\)</td><td>对非正态最稳健</td></tr>
+<tr><td>Hotelling's Trace</td><td>\(T = \sum_i \lambda_i\)</td><td>两组时等价于 Hotelling's T²</td></tr>
+<tr><td>Roy's Largest Root</td><td>\(\theta = \max_i \lambda_i\)</td><td>功效最高但只在第一特征值占主导时</td></tr>
+</tbody>
+</table>
+
+<div class="warn-box">
+<strong>MANOVA 的陷阱：</strong>① 如果因变量之间相关性很低，MANOVA 可能不如单独 ANOVA 敏感。② MANOVA 要求各组协方差矩阵相等（Box's M 检验）。③ 如果 MANOVA 显著，需要后续的单变量 ANOVA 或判别分析来确定哪些因变量驱动了差异。④ 样本量要求比 ANOVA 更高——每组至少需要 \(n > p\)（因变量数）。
+</div>
+
+<!-- ═══════════ 5.5C 球形假设与 Mauchly 检验 ═══════════ -->
+<h2>5.5C 球形假设与 Mauchly 检验</h2>
+
+<div class="concept-box">
+<h4>重复测量 ANOVA 的前提</h4>
+<p>重复测量 ANOVA 假设<strong>所有重复测量之间差值的方差相等</strong>——这就是球形假设 (Sphericity)。如果违反，F 检验的 I 类错误率会膨胀（假阳性增多）。</p>
+</div>
+
+<div class="math-block">
+\[
+\text{Mauchly's } W = \frac{|\mathbf{C}^T\mathbf{S}\mathbf{C}|}{\left(\frac{1}{k-1}\text{tr}(\mathbf{C}^T\mathbf{S}\mathbf{C})\right)^{k-1}}
+\]
+</div>
+<p>其中 \(\mathbf{S}\) 是重复测量的样本协方差矩阵，\(\mathbf{C}\) 是 \((k-1) \times k\) 的正交对比矩阵。如果 Mauchly 检验显著 (p < 0.05) → 球形假设被违反。</p>
+
+<p><strong>修正方法：</strong>① Greenhouse-Geisser 校正（\(\hat{\varepsilon}\)）——较保守，当 \(\varepsilon < 0.75\) 时使用。② Huynh-Feldt 校正（\(\tilde{\varepsilon}\)）——较宽松，当 \(\varepsilon > 0.75\) 时使用。两种方法都是将自由度乘以 \(\varepsilon\)，使 F 检验更保守。</p>
+
+<!-- ═══════════ 5.5D 简单效应分析 ═══════════ -->
+<h2>5.5D 简单效应分析</h2>
+
+<div class="concept-box">
+<h4>交互效应显著后怎么办？</h4>
+<p>双因素 ANOVA 中如果交互效应显著，主效应不能直接解释——因为「A 的效应取决于 B 的水平」。此时需要进行<strong>简单效应分析</strong>（Simple Effects Analysis）：</p>
+</div>
+
+<p><strong>简单效应分析的做法：</strong>在 B 的每个水平上，单独检验 A 的效应。例如，如果「教学方法(A) × 年级(B)」交互显著，则分别检验：① 在低年级中，不同教学方法是否有差异？② 在高年级中，不同教学方法是否有差异？</p>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>交互效应显著后的论文写法：「方差分析显示教学方法与年级的交互效应显著 (F(2, 54) = 5.23, p = 0.008, η²_p = 0.16)。简单效应分析表明，在低年级中，探究式教学显著优于传统教学 (p = 0.003)；而在高年级中，两种教学方法无显著差异 (p = 0.42)。这说明教学方法的效应受到年级的调节。」——这是竞赛论文中展示分析深度的关键段落。
+</div>
+
+<!-- ═══════════ 5.5E Friedman 检验 ═══════════ -->
+<h2>5.5E Friedman 检验</h2>
+
+<div class="concept-box">
+<h4>重复测量的非参数替代</h4>
+<p>当重复测量数据不满足正态性或球形假设时，Friedman 检验是重复测量 ANOVA 的非参数替代。它检验的是：<strong>各处理的中位数是否相同？</strong></p>
+</div>
+
+<div class="math-block">
+\[
+Q = \frac{12}{nk(k+1)} \sum_{j=1}^{k} R_j^2 - 3n(k+1) \sim \chi^2_{k-1}
+\]
+</div>
+<p>其中 \(n\) = 被试数，\(k\) = 处理数，\(R_j\) = 第 \(j\) 个处理的秩和。如果 Q 显著 → 至少有一个处理与其他不同。事后检验：Wilcoxon 符号秩检验 + Bonferroni 校正。</p>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>如果样本量很小（n < 15）且数据明显非正态，优先使用 Friedman 检验而非重复测量 ANOVA。论文中：「由于数据存在明显偏态且样本量有限，我们使用 Friedman 检验替代重复测量 ANOVA。结果显示各时间点的评分存在显著差异 (Q = 15.4, df = 3, p = 0.0015)。」
+</div>
+
+<h2>5.6 效应量</h2>
+
+<div class="toolkit-box">
+<h4>建模工具箱：效应量汇总</h4>
+<table class="compact-table">
+<thead><tr><th>效应量</th><th>公式</th><th>小/中/大</th><th>适用场景</th></tr></thead>
+<tbody>
+<tr><td>η² (Eta-squared)</td><td>SSB / SST</td><td>0.01 / 0.06 / 0.14</td><td>ANOVA</td></tr>
+<tr><td>ω² (Omega-squared)</td><td>(SSB−(k−1)MSW)/(SST+MSW)</td><td>0.01 / 0.06 / 0.14</td><td>ANOVA (无偏估计)</td></tr>
+<tr><td>Cohen's f</td><td>√(η²/(1−η²))</td><td>0.1 / 0.25 / 0.4</td><td>功效分析</td></tr>
+</tbody>
+</table>
+<p style="margin-top:8px;">η² 是正偏估计——样本中 η² 倾向于高估总体的效应量。ω² 通过减去偏误项提供了更准确的总体效应量估计。竞赛论文中建议报告 ω² 而非 η²。</p>
+</div>
+
+<div class="warn-box">
+<strong>数模陷阱：</strong>① F 显著后不做事后检验直接说「各组有差异」——F 不能告诉你哪组不同。② 对严重偏态数据用 ANOVA 而非 Kruskal-Wallis。③ 对重复测量数据用独立样本 ANOVA（严重违反独立性假设）。④ 报告 p=0.000——p 值不可能严格为零，应写 p < 0.001。⑤ 不报告效应量——大样本下即使效应量极小 F 也可能显著，必须报告 η² 或 ω² 来判断实际意义。
+</div>
+
+<h2>5.7 交互式 ANOVA 面板</h2>
+<p>三组对比。拖动滑块调整各组均值和组内标准差，观察 F 值的变化。尝试让三组均值接近，看 F 如何趋近 1。</p>
+
+<div class="panel">
+<div class="panel-label">ONE-WAY ANOVA</div>
+<div class="panel-grid">
+  <div>
+    <h4>组 A</h4>
+    <div class="slider-row"><label>μ₁</label><input type="range" id="anova-m1" min="0" max="100" value="45" oninput="updateANOVA()"><span class="slider-val" id="anova-m1-val">45</span></div>
+    <div class="slider-row"><label>n₁</label><input type="range" id="anova-n1" min="5" max="50" value="20" oninput="updateANOVA()"><span class="slider-val" id="anova-n1-val">20</span></div>
+  </div>
+  <div>
+    <h4>组 B</h4>
+    <div class="slider-row"><label>μ₂</label><input type="range" id="anova-m2" min="0" max="100" value="55" oninput="updateANOVA()"><span class="slider-val" id="anova-m2-val">55</span></div>
+    <div class="slider-row"><label>n₂</label><input type="range" id="anova-n2" min="5" max="50" value="20" oninput="updateANOVA()"><span class="slider-val" id="anova-n2-val">20</span></div>
+  </div>
+  <div>
+    <h4>组 C</h4>
+    <div class="slider-row"><label>μ₃</label><input type="range" id="anova-m3" min="0" max="100" value="50" oninput="updateANOVA()"><span class="slider-val" id="anova-m3-val">50</span></div>
+    <div class="slider-row"><label>n₃</label><input type="range" id="anova-n3" min="5" max="50" value="20" oninput="updateANOVA()"><span class="slider-val" id="anova-n3-val">20</span></div>
+  </div>
+</div>
+<div class="slider-row" style="margin-top:12px;">
+  <label>组内 σ</label>
+  <input type="range" id="anova-sigma" min="1" max="30" value="10" oninput="updateANOVA()">
+  <span class="slider-val" id="anova-sigma-val">10</span>
+</div>
+<table class="anova-table" id="anova-table">
+  <thead><tr><th>来源</th><th>SS</th><th>df</th><th>MS</th><th>F</th><th>p</th></tr></thead>
+  <tbody id="anova-tbody"></tbody>
+</table>
+<div class="chart-container" id="anova-plot" style="margin-top:16px;"></div>
+</div>
+
+<footer>
+  <p><a href="stats_tutorial.html">← 返回 Statistical Field Station 主页</a></p>
+  <p>所有计算在浏览器端完成 · KaTeX 渲染公式 · D3.js 驱动图表</p>
+</footer>
+
+</div>
+
+<script>
+function lgamma(x){const g=7,c=[0.99999999999980993,676.5203681218851,-1259.1392167224028,771.32342877765313,-176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];if(x<0.5)return Math.log(Math.PI/Math.sin(Math.PI*x))-lgamma(1-x);x-=1;let a=c[0],t=x+g+0.5;for(let i=1;i<c.length;i++)a+=c[i]/(x+i);return Math.log(Math.sqrt(2*Math.PI))+Math.log(a)-t+Math.log(t)*(x+0.5);}
+function regularizedIncompleteBeta(x,a,b){if(x===0)return 0;if(x===1)return 1;const MAX_IT=200,EPS=1e-15;const front=Math.exp(lgamma(a+b)-lgamma(a)-lgamma(b)+a*Math.log(x)+b*Math.log(1-x));let f=1,c=1,d=1-(a+b)*x/(a+1);if(Math.abs(d)<EPS)d=EPS;d=1/d;let h=d;for(let m=1;m<=MAX_IT;m++){const m2=2*m;let aa=m*(b-m)*x/((a+m2-1)*(a+m2));d=1+aa*d;if(Math.abs(d)<EPS)d=EPS;c=1+aa/c;if(Math.abs(c)<EPS)c=EPS;d=1/d;h*=d*c;aa=-(a+m)*(a+b+m)*x/((a+m2)*(a+m2+1));d=1+aa*d;if(Math.abs(d)<EPS)d=EPS;c=1+aa/c;if(Math.abs(c)<EPS)c=EPS;d=1/d;const del=d*c;h*=del;if(Math.abs(del-1)<EPS)break;}return front*(h-1)/a;}
+function fCDF(x,df1,df2){const y=df1*x/(df1*x+df2);return regularizedIncompleteBeta(y,df1/2,df2/2);}
+
+function updateANOVA(){
+  const m1=+document.getElementById('anova-m1').value,n1=+document.getElementById('anova-n1').value;
+  const m2=+document.getElementById('anova-m2').value,n2=+document.getElementById('anova-n2').value;
+  const m3=+document.getElementById('anova-m3').value,n3=+document.getElementById('anova-n3').value;
+  const sigma=+document.getElementById('anova-sigma').value;
+  document.getElementById('anova-m1-val').textContent=m1;document.getElementById('anova-n1-val').textContent=n1;
+  document.getElementById('anova-m2-val').textContent=m2;document.getElementById('anova-n2-val').textContent=n2;
+  document.getElementById('anova-m3-val').textContent=m3;document.getElementById('anova-n3-val').textContent=n3;
+  document.getElementById('anova-sigma-val').textContent=sigma;
+
+  const N=n1+n2+n3,grandMean=(n1*m1+n2*m2+n3*m3)/N;
+  const SSB=n1*(m1-grandMean)**2+n2*(m2-grandMean)**2+n3*(m3-grandMean)**2;
+  const SSW=(n1-1)*sigma*sigma+(n2-1)*sigma*sigma+(n3-1)*sigma*sigma;
+  const dfB=2,dfW=N-3,MSB=SSB/dfB,MSW=SSW/dfW;
+  const F=MSW===0?0:MSB/MSW,p=F===0?1:1-fCDF(F,dfB,dfW);
+  const etaSq=SSB/(SSB+SSW),omegaSq=(SSB-dfB*MSW)/(SSB+SSW+MSW);
+
+  document.getElementById('anova-tbody').innerHTML=`
+    <tr><td>组间 (Between)</td><td>${SSB.toFixed(2)}</td><td>${dfB}</td><td>${MSB.toFixed(2)}</td><td rowspan="2" style="font-weight:600;">${F.toFixed(3)}</td><td rowspan="2" class="${p<0.05?'sig':''}">${p.toFixed(4)}</td></tr>
+    <tr><td>组内 (Within)</td><td>${SSW.toFixed(2)}</td><td>${dfW}</td><td>${MSW.toFixed(2)}</td></tr>
+    <tr style="border-top:2px solid var(--stone);"><td>总计 (Total)</td><td>${(SSB+SSW).toFixed(2)}</td><td>${N-1}</td><td></td><td></td><td></td></tr>
+    <tr><td colspan="6" style="font-size:0.85rem;color:var(--slate);">η² = ${etaSq.toFixed(3)} &nbsp;|&nbsp; ω² = ${omegaSq.toFixed(3)} &nbsp;|&nbsp; Cohen's f = ${Math.sqrt(etaSq/(1-etaSq)).toFixed(3)}</td></tr>`;
+
+  const container=document.getElementById('anova-plot');
+  const W=container.clientWidth||600,H=220,MM={t:20,r:30,b:40,l:30};
+  const xMin=Math.min(m1-4*sigma,m2-4*sigma,m3-4*sigma),xMax=Math.max(m1+4*sigma,m2+4*sigma,m3+4*sigma);
+  const xScale=d3.scaleLinear().domain([xMin,xMax]).range([MM.l,W-MM.r]);
+  const yMax=1/(sigma*Math.sqrt(2*Math.PI));
+  const yScale=d3.scaleLinear().domain([0,yMax*1.3]).range([H-MM.b,MM.t]);
+
+  container.innerHTML='';
+  const svg=d3.select(container).append('svg').attr('viewBox',`0 0 ${W} ${H}`).attr('width',W).attr('height',H);
+  const colors=['var(--terracotta)','var(--forest)','var(--gold)'];
+  const means=[m1,m2,m3],labels=['A','B','C'],pts=200;
+
+  labels.forEach((l,i)=>{
+    const line=d3.line().x(d=>xScale(d.x)).y(d=>yScale(d.y)).curve(d3.curveBasis);
+    const data=Array.from({length:pts},(_,j)=>{const x=xMin+(xMax-xMin)*j/pts;return{x,y:Math.exp(-((x-means[i])**2)/(2*sigma*sigma))/(sigma*Math.sqrt(2*Math.PI))};});
+    svg.append('path').datum(data).attr('d',line).attr('fill',colors[i]).attr('opacity',0.25).attr('stroke',colors[i]).attr('stroke-width',1.5);
+    svg.append('text').attr('x',xScale(means[i])).attr('y',MM.t+8).attr('text-anchor','middle').attr('font-family','var(--mono)').attr('font-size','0.65rem').attr('fill',colors[i]).text(l);
+  });
+  svg.append('g').attr('transform',`translate(0,${H-MM.b})`).call(d3.axisBottom(xScale).ticks(5));
+  svg.selectAll('.axis text').attr('font-family','var(--mono)').attr('font-size','0.7rem').attr('fill','var(--slate)');
+  svg.selectAll('.axis line,.axis path').attr('stroke','var(--stone)');
+}
+
+updateANOVA();
+window.addEventListener('resize',()=>{clearTimeout(window._rt);window._rt=setTimeout(updateANOVA,250)});
+
+if(typeof renderMathInElement==='function'){renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'\\[',right:'\\]',display:true},{left:'$',right:'$',display:false},{left:'\\(',right:'\\)',display:false}],throwOnError:false,strict:false});}
+</script>
+</body>
+</html>

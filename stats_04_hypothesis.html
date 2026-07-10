@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>§IV 假设检验 — Statistical Field Station</title>
+<link rel="stylesheet" href="assets/vendor/google-fonts.css">
+<link rel="stylesheet" href="assets/vendor/katex.min.css">
+<script src="assets/vendor/katex.min.js"></script>
+<script src="assets/vendor/auto-render.min.js"></script>
+<script src="assets/vendor/d3.v7.min.js"></script>
+<link rel="stylesheet" href="assets/css/site.css">
+<style>
+:root {
+  --parchment: #FDFBF5; --forest: #2D4A3E; --terracotta: #C75146;
+  --gold: #8B6914; --stone: #E8E0D5; --slate: #5B6E65; --surface: #FFFAF0;
+  --display: 'Noto Serif SC', 'Cormorant Garamond', 'STSong', serif;
+  --body: 'Noto Sans SC', 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Consolas', monospace;
+  --page-w: 1100px; --text-w: 72ch; --radius: 4px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:40px}
+body{background:var(--parchment);color:var(--forest);font-family:var(--body);font-size:1.08rem;line-height:1.72}
+p{margin-bottom:14px;max-width:var(--text-w)}
+a{color:var(--terracotta);text-decoration:none}a:hover{text-decoration:underline}
+strong{font-weight:600}
+
+.page{max-width:var(--page-w);margin:0 auto;padding:0 32px 64px}
+.top-nav{padding:16px 0;font-family:var(--mono);font-size:0.78rem;border-bottom:1px solid var(--stone);margin-bottom:40px}
+.top-nav a{color:var(--slate)}.top-nav span{color:var(--gold)}
+
+.hero{padding:32px 0 40px}
+.hero .num{font-family:var(--mono);font-size:0.7rem;letter-spacing:0.18em;color:var(--gold);margin-bottom:6px}
+.hero h1{font-family:var(--display);font-weight:700;font-size:clamp(2rem,5vw,3rem);line-height:1.1;color:var(--forest);margin-bottom:12px}
+.hero .deck{font-size:1.05rem;color:var(--slate);max-width:var(--text-w)}
+
+h2{font-family:var(--display);font-weight:600;font-size:1.6rem;color:var(--forest);margin:36px 0 14px;padding-top:20px;border-top:1px solid var(--stone)}
+h3{font-family:var(--display);font-weight:500;font-size:1.2rem;color:var(--forest);margin:24px 0 10px}
+
+.math-block{text-align:center;padding:16px;background:var(--surface);border:1px solid var(--stone);border-radius:var(--radius);margin:16px 0;overflow-x:auto}
+.derive-box{background:#F5F8F6;border:1px solid var(--stone);border-left:3px solid var(--forest);padding:16px 20px;border-radius:0 var(--radius) var(--radius) 0;margin:16px 0;font-size:0.92rem}
+.derive-box h4{color:var(--forest);font-family:var(--display);text-transform:none;letter-spacing:0;font-size:1rem;margin:0 0 8px}
+.concept-box{background:var(--surface);border:1px solid var(--stone);border-radius:var(--radius);padding:16px 20px;margin:16px 0;font-size:0.93rem}
+.concept-box h4{font-family:var(--display);font-size:1.05rem;font-weight:600;color:var(--forest);margin:0 0 8px}
+.toolkit-box{background:#FFF5F3;border:1px solid var(--stone);border-left:3px solid var(--terracotta);padding:14px 18px;border-radius:0 var(--radius) var(--radius) 0;margin:16px 0;font-size:0.92rem}
+.toolkit-box h4{color:var(--terracotta);font-family:var(--display);font-size:1rem;margin:0 0 8px}
+.note-box{background:#FFF8F0;border-left:3px solid var(--gold);padding:14px 18px;border-radius:0 var(--radius) var(--radius) 0;margin:16px 0;font-size:0.93rem}
+.note-box strong{color:var(--gold)}
+.warn-box{background:#FFFBF0;border:1px solid #E8D5A0;border-radius:var(--radius);padding:14px 18px;margin:16px 0;font-size:0.92rem}
+.warn-box::before{content:'⚠ ';font-size:1.1rem}
+
+/* 竞赛场景框 */
+.competition-box{background:#F0F7F5;border:1px solid var(--forest);border-left:4px solid var(--forest);padding:18px 22px;border-radius:0 var(--radius) var(--radius) 0;margin:20px 0;font-size:0.93rem}
+.competition-box h4{color:var(--forest);font-family:var(--display);font-size:1.05rem;margin:0 0 8px}
+.competition-box .q{color:var(--terracotta);font-weight:600}
+
+.panel{background:var(--surface);border:1px solid var(--stone);border-radius:6px;box-shadow:inset 0 1px 0 rgba(255,255,255,0.7),0 2px 12px rgba(0,0,0,0.05);padding:24px;margin:20px 0;position:relative}
+.panel::before{content:'';position:absolute;top:0;left:12px;right:12px;height:1px;background:linear-gradient(to right,transparent,var(--gold),transparent);opacity:0.4}
+.panel-label{font-family:var(--mono);font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--stone)}
+.panel-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+
+.stat-cards{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.stat-card{background:var(--surface);border:1px solid var(--stone);border-radius:var(--radius);padding:10px 14px;text-align:center;min-width:72px}
+.stat-card .lbl{font-family:var(--mono);font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--slate);margin-bottom:3px}
+.stat-card .val{font-family:var(--mono);font-size:1.25rem;font-weight:600;color:var(--forest)}
+
+.slider-row{display:flex;align-items:center;gap:12px;margin:10px 0;flex-wrap:wrap}
+.slider-row label{font-family:var(--mono);font-size:0.85rem;color:var(--slate);min-width:100px}
+.slider-row input[type=range]{flex:1;min-width:100px;accent-color:var(--terracotta)}
+.slider-val{font-family:var(--mono);font-weight:600;color:var(--terracotta);min-width:36px;font-size:0.88rem}
+
+.chart-container{width:100%;overflow-x:auto}
+.chart-container svg{display:block;margin:0 auto}
+
+.compact-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:0.88rem;margin:16px 0}
+.compact-table th,.compact-table td{padding:7px 12px;text-align:left;border-bottom:1px solid var(--stone)}
+.compact-table th{font-family:var(--body);font-size:0.72rem;letter-spacing:0.08em;color:var(--slate);border-bottom:2px solid var(--stone)}
+
+.chi-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:0.9rem;margin:16px 0}
+.chi-table th,.chi-table td{padding:8px 14px;text-align:center;border:1px solid var(--stone)}
+.chi-table th{background:var(--stone);font-family:var(--body);font-size:0.72rem;letter-spacing:0.08em;color:var(--slate)}
+.chi-table td[contenteditable]{background:rgba(199,81,70,0.04);outline:none;transition:background 0.15s;min-width:50px}
+.chi-table td[contenteditable]:focus{background:rgba(199,81,70,0.1);box-shadow:inset 0 0 0 1px var(--terracotta)}
+.chi-table .row-total,.chi-table .col-total{font-weight:600;color:var(--forest);background:var(--stone)}
+.chi-table .grand-total{font-weight:700;color:var(--terracotta);background:var(--stone)}
+
+.btn{font-family:var(--mono);font-size:0.75rem;border:1px solid var(--stone);border-radius:var(--radius);background:var(--surface);color:var(--forest);padding:6px 14px;cursor:pointer;transition:all 0.15s}
+.btn:hover{border-color:var(--terracotta);color:var(--terracotta)}
+
+footer{text-align:center;padding:32px 0;font-size:0.82rem;color:var(--slate);border-top:1px solid var(--stone);margin-top:40px}
+footer a{color:var(--slate);text-decoration:underline}
+</style>
+</head>
+<body>
+<div class="page">
+
+<nav class="top-nav"><a href="stats_tutorial.html">← Field Station</a> <span>|</span> §IV 假设检验</nav>
+
+<header class="hero">
+  <div class="num">§IV</div>
+  <h1>假设检验</h1>
+  <p class="deck">假设检验是统计推断的核心工具。本章涵盖 t 检验、<strong>卡方检验</strong>、Mann-Whitney U 检验、p 值的精确含义、统计功效与样本量规划、多重检验校正、Bootstrap 置信区间和置换检验。核心问题：<strong>「两组数据是否存在显著差异？」</strong></p>
+</header>
+
+<!-- ═══════════ 竞赛场景 ═══════════ -->
+<div class="competition-box">
+<h4>竞赛真题场景</h4>
+<p><span class="q">Q：</span>某地区对 A、B 两种污水处理方案各采集了 30 个样本，测得处理后 COD 浓度如下。问：两种方案的处理效果是否存在显著差异？<br>
+<span class="q">Q：</span>调查了 500 名居民对三个政策的支持情况，数据整理成 3×2 列联表。问：不同政策之间的支持率是否有显著差异？<br>
+<span class="q">Q：</span>某药物对 100 名患者进行临床试验，治疗组 50 人（有效 38 人），对照组 50 人（有效 22 人）。问：该药物是否有效？<br>
+<strong>→ 第一个用 t 检验，第二个用卡方检验，第三个用卡方检验或 Fisher 精确检验。本章教你如何选择。</strong></p>
+</div>
+
+<!-- ═══════════ 4.1 假设检验的逻辑框架 ═══════════ -->
+<h2>4.1 假设检验的逻辑框架</h2>
+
+<div class="concept-box">
+<h4>H₀ 与 H₁：零假设与备择假设</h4>
+<p><strong>H₀（零假设）：</strong>「没有效应」「没有差异」「变量独立」——我们想要<em>拒绝</em>的陈述。类比法庭上的「无罪推定」。<br>
+<strong>H₁（备择假设）：</strong>与 H₀ 相反的陈述。可以是双侧（≠）、左侧（<）或右侧（>）。<br>
+<strong>I 类错误 (α)：</strong>H₀ 为真却拒绝了（假阳性，冤案）。<strong>II 类错误 (β)：</strong>H₀ 为假却没拒绝（假阴性，漏网）。</p>
+</div>
+
+<div class="math-block">
+\[ \alpha = P(\text{Reject } H_0 \mid H_0 \text{ true}) \qquad \beta = P(\text{Fail to reject } H_0 \mid H_0 \text{ false}) \]
+\[ \text{Power} = 1 - \beta = P(\text{Reject } H_0 \mid H_1 \text{ true}) \]
+</div>
+
+<div class="derive-box">
+<h4>p 值的精确含义与 ASA 2016 声明</h4>
+<p>\[ p = P(T \geq t_{\text{obs}} \mid H_0 \text{ 为真}) \]——在零假设为真的前提下，观察到当前或更极端检验统计量的概率。<br>
+<strong>p 值不是什么：</strong>① p 不是 P(H₀ 为真 | 数据)——这是贝叶斯后验概率。② p 不是效应大小。③ p > 0.05 不意味着 H₀ 为真——只意味着数据不足以拒绝 H₀。④ p = 0.049 和 p = 0.051 没有本质区别。<br>
+<strong>ASA 2016 声明：</strong>美国统计协会正式声明「p 值不能衡量假设为真的概率或数据仅由随机因素产生的概率」。论文中应报告效应量 + 置信区间 + p 值，三者缺一不可。</p>
+</div>
+
+<!-- ═══════════ 4.2 统计功效 ═══════════ -->
+<h2>4.2 统计功效与样本量规划</h2>
+
+<div class="derive-box">
+<h4>Power = 1 − β 由四个因素决定</h4>
+<p>① 效应量 Δ（越大 → 功效越高）② 样本量 n（越大 → 功效越高）③ 显著性水平 α（越大 → 功效越高）④ 检验类型（参数检验比非参数检验功效更高）。<br>
+<strong>先验功效分析：</strong>在实验前确定所需样本量。给定期望效应量 d、α=0.05、目标 Power=0.80，算出最小 n。</p>
+</div>
+
+<div class="math-block">
+\[ \text{Power} = \Phi\!\left(\frac{|\Delta|}{\sigma\sqrt{1/n_1 + 1/n_2}} - z_{\alpha/2}\right) \qquad n_{\text{per group}} \approx \frac{2(z_{\alpha/2} + z_\beta)^2}{d^2} \]
+\[ d = \frac{\bar{x}_1 - \bar{x}_2}{s_{\text{pooled}}} \qquad s_{\text{pooled}} = \sqrt{\frac{(n_1-1)s_1^2 + (n_2-1)s_2^2}{n_1+n_2-2}} \]
+</div>
+
+<div class="note-box">
+<strong>竞赛实用值：</strong>α=0.05, Power=0.80 → z_{α/2}=1.96, z_β=0.84。n ≈ 15.7/d²。若 d=0.5（中等效应），每组需要约 63 人。若 d=0.2（小效应），每组需要约 393 人。数模中如果样本量太小，可以用 Bootstrap 或非参数方法作为补充。
+</div>
+
+<!-- ═══════════ 4.3 多重检验校正 ═══════════ -->
+<h2>4.3 多重检验校正</h2>
+
+<div class="derive-box">
+<h4>为什么不能做 20 次 t 检验</h4>
+<p>假设你做 k 次独立检验，每次 α=0.05。至少一次假阳性的概率：</p>
+\[ \text{FWER} = 1 - (1-\alpha)^k \qquad k=3 \rightarrow 14.3\% \quad k=10 \rightarrow 40.1\% \quad k=20 \rightarrow 64.2\% \]
+<p><strong>Bonferroni 校正：</strong>用 α/k 作为每次检验的显著性水平。等价于将 p 值乘以 k。非常保守（功效低），但简单。<br>
+<strong>Holm 校正：</strong>Bonferroni 的改进版。将 p 值排序，逐步拒绝。比 Bonferroni 功效更高，同时控制 FWER。<br>
+<strong>Benjamini-Hochberg (BH)：</strong>控制 FDR (False Discovery Rate) 而非 FWER。更宽松，适合探索性分析。</p>
+</div>
+
+<div class="math-block">
+\[ p_{\text{Bonf}} = \min(k \cdot p_i, 1) \qquad p_{\text{BH}(i)} = \min_{j \geq i} \min\!\left(\frac{k}{j} \cdot p_{(j)}, 1\right) \]
+</div>
+
+<!-- ═══════════ 4.4 两样本 t 检验 ═══════════ -->
+<h2>4.4 两样本 t 检验</h2>
+
+<div class="concept-box">
+<h4>三种 t 检验的区别</h4>
+<p><strong>单样本 t 检验：</strong>\[ t = \frac{\bar{x} - \mu_0}{s/\sqrt{n}} \]检验一个样本的均值是否等于某个已知值 μ₀。<br>
+<strong>独立样本 (Welch) t 检验：</strong>两组独立观测。不要求方差齐性。<strong>推荐默认使用 Welch。</strong><br>
+<strong>配对 t 检验：</strong>同一批对象前后测。计算差值 d_i = x_i − y_i，然后做单样本 t 检验。配对设计<strong>不能用</strong>独立样本 t 检验。</p>
+</div>
+
+<div class="math-block">
+\[ t_{\text{Welch}} = \frac{\bar{x}_1 - \bar{x}_2}{\sqrt{\frac{s_1^2}{n_1} + \frac{s_2^2}{n_2}}} \qquad df_{\text{Welch}} = \frac{\left(\frac{s_1^2}{n_1} + \frac{s_2^2}{n_2}\right)^2}{\frac{(s_1^2/n_1)^2}{n_1-1} + \frac{(s_2^2/n_2)^2}{n_2-1}} \]
+\[ t_{\text{paired}} = \frac{\bar{d}}{s_d/\sqrt{n}} \quad \text{where } d_i = x_i - y_i \qquad df = n-1 \]
+</div>
+
+<!-- ═══════════ 4.5 卡方检验 ═══════════ -->
+<h2>4.5 卡方检验：分类数据的假设检验</h2>
+
+<div class="concept-box">
+<h4>卡方检验解决什么问题？</h4>
+<p>t 检验处理的是<strong>连续数据</strong>（如身高、成绩、COD 浓度）。但当数据是<strong>分类/计数</strong>形式时——如「性别 × 是否吸烟」「政策 × 支持/反对」——t 检验不适用。卡方检验比较<strong>观测频数</strong>和<strong>期望频数</strong>的差异。</p>
+</div>
+
+<h3>4.5.1 卡方拟合优度检验 (Goodness of Fit)</h3>
+
+<div class="derive-box">
+<h4>检验观测分布是否符合理论分布</h4>
+<p>例：掷骰子 60 次，得到 1-6 点的频数分别为 [8, 12, 9, 11, 10, 10]。问：这个骰子是否公平？（H₀：每个面概率均为 1/6）</p>
+\[ \chi^2 = \sum_{i=1}^{k} \frac{(O_i - E_i)^2}{E_i} \sim \chi^2_{k-1} \qquad E_i = n \cdot p_i \]
+<p>若 H₀ 为真，每个格子的期望频数 E_i = 60 × 1/6 = 10。χ² = (8-10)²/10 + (12-10)²/10 + ... + (10-10)²/10 = 0.4+0.4+0.1+0.1+0+0 = 1.0。df = 6-1 = 5。p = P(χ²₅ ≥ 1.0) ≈ 0.96 → 不拒绝 H₀，骰子看起来是公平的。</p>
+</div>
+
+<h3>4.5.2 卡方独立性检验 (Test of Independence)</h3>
+
+<div class="derive-box">
+<h4>检验两个分类变量是否独立</h4>
+<p>最常用的卡方检验形式。数据以 r×c 列联表呈现。<strong>期望频数：</strong>在 H₀（独立）下，E_{ij} = (行总和ᵢ × 列总和ⱼ) / 总样本量。</p>
+</div>
+
+<div class="math-block">
+\[ \chi^2 = \sum_{i=1}^{r}\sum_{j=1}^{c} \frac{(O_{ij} - E_{ij})^2}{E_{ij}} \sim \chi^2_{(r-1)(c-1)} \qquad E_{ij} = \frac{(\text{row}_i) \cdot (\text{col}_j)}{N} \]
+\[ \text{Cramér's V} = \sqrt{\frac{\chi^2}{N \cdot \min(r-1, c-1)}} \quad \text{df=1: } V \geq 0.1/0.3/0.5 \text{ (小/中/大)} \]
+</div>
+
+<div class="concept-box">
+<h4>卡方检验的适用条件</h4>
+<p>① 所有期望频数 E_{ij} ≥ 1。② 不超过 20% 的格子有 E_{ij} < 5。③ 若条件不满足，使用 <strong>Fisher 精确检验</strong>（尤其 2×2 表）。④ 卡方检验是双侧检验——它只检验「是否独立」，不检验方向。<br>
+<strong>Yates 连续性校正：</strong>对 2×2 表，χ² 可能高估 → 用 Yates 校正：χ²_{Yates} = Σ (|O-E| - 0.5)²/E。但现代统计更推荐直接用 Fisher 精确检验。</p>
+</div>
+
+<div class="math-block">
+\[ \text{Fisher's Exact Test (2×2): } p = \frac{\binom{a+b}{a}\binom{c+d}{c}}{\binom{N}{a+c}} = \frac{(a+b)!(c+d)!(a+c)!(b+d)!}{a!b!c!d!N!} \]
+</div>
+
+<div class="warn-box">
+<strong>数模陷阱：</strong>① 对百分比数据直接用卡方检验——必须用原始频数（不是百分比！）。② 单元格期望频数 < 5 时仍用卡方而不改用 Fisher。③ 卡方显著但 Cramér's V 很小（大样本下几乎任何 χ² 都显著，必须报告效应量 V）。④ 混淆「拟合优度」和「独立性」检验——前者是 1 维 vs 理论分布，后者是 2 维列联表。
+</div>
+
+<!-- ═══════════ 4.6 Mann-Whitney U ═══════════ -->
+<h2>4.6 Mann-Whitney U 检验</h2>
+
+<div class="concept-box">
+<h4>秩和检验的原理</h4>
+<p><strong>Step 1：</strong>合并两组数据，从小到大排序，分配秩次。遇相同值时取平均秩次。<br>
+<strong>Step 2：</strong>计算组 1 的秩和 R₁。如果两组分布相同，R₁ 应在 n₁(N+1)/2 附近。<br>
+<strong>Step 3：</strong>U₁ = R₁ − n₁(n₁+1)/2，U₂ = n₁n₂ − U₁，U = min(U₁, U₂)。</p>
+</div>
+
+<div class="math-block">
+\[ U_1 = n_1 n_2 + \frac{n_1(n_1+1)}{2} - R_1 \qquad U_2 = n_1 n_2 - U_1 \qquad U = \min(U_1, U_2) \]
+\[ \mu_U = \frac{n_1 n_2}{2} \qquad \sigma_U = \sqrt{\frac{n_1 n_2 (n_1 + n_2 + 1)}{12}} \qquad z = \frac{U - \mu_U}{\sigma_U} \]
+</div>
+
+<!-- ═══════════ 4.7 Bootstrap 与置换检验 ═══════════ -->
+<h2>4.7 Bootstrap 与置换检验</h2>
+
+<div class="derive-box">
+<h4>Bootstrap 置信区间：不需要正态假设</h4>
+<p>传统 CI 依赖正态近似（x̄ ± 1.96·SEM）。Bootstrap 绕过这个假设：① 从原始样本中有放回地抽取 n 个 → Bootstrap 样本 ② 计算统计量 ③ 重复 B=1000-10000 次 ④ 取百分位数 [α/2, 1-α/2] 作为 CI。</p>
+</div>
+
+<div class="derive-box">
+<h4>置换检验：不依赖分布的假设检验</h4>
+<p>原理：如果 H₀ 为真（两组无差异），组标签可以任意打乱而不影响检验统计量。打乱标签 B 次，每次计算检验统计量，得到 H₀ 下的零分布。</p>
+\[ p_{\text{perm}} = \frac{1 + \sum_{b=1}^{B} \mathbf{1}\{|T_b| \geq |T_{\text{obs}}|\}}{B + 1} \]
+</div>
+
+<!-- ═══════════ 4.7A 配对检验 ═══════════ -->
+<h2>4.7A 配对检验</h2>
+
+<div class="concept-box">
+<h4>什么时候用配对检验？</h4>
+<p>当同一个体被测量两次（前后对照），或两个体被有意匹配（如按年龄、性别配对）时，两样本不再是独立的。配对检验利用这种配对结构，通过分析<strong>差异</strong>来提高检验功效。</p>
+</div>
+
+<h3>配对 t 检验</h3>
+
+<p>设 \(d_i = x_i^{\text{after}} - x_i^{\text{before}}\) 为第 \(i\) 对的差值。检验 \(H_0: \mu_d = 0\)：</p>
+
+<div class="math-block">
+\[
+t = \frac{\bar{d}}{s_d / \sqrt{n}}, \quad \text{df} = n-1
+\]
+</div>
+
+<p>这本质上是对差值做<strong>单样本 t 检验</strong>。配对 t 检验的功效通常高于独立样本 t 检验——因为去除了个体间变异。</p>
+
+<h3>Wilcoxon 符号秩检验</h3>
+
+<p>配对 t 检验的非参数版本（不假设差值正态）。步骤：① 计算差值 \(d_i\)，去掉 \(d_i=0\)。② 对 \(|d_i|\) 排序。③ 检验统计量 \(W = \sum \text{sign}(d_i) \times \text{rank}(|d_i|)\)。</p>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>配对设计是提升统计功效的免费午餐——如果能够对样本进行配对，就一定要配对。在论文中，报告配对检验的结果比独立检验更有说服力。但注意：<strong>配对必须是合理的</strong>——不能随意配对不相关的样本。
+</div>
+
+<!-- ═══════════ 4.7B 效应量系统 ═══════════ -->
+<h2>4.7B 效应量：p 值之外</h2>
+
+<div class="concept-box">
+<h4>为什么需要效应量？</h4>
+<p>p 值只告诉你「差异是否可能由随机产生」，但不告诉你「差异有多大」。在大样本下，微小的差异也可能显著（p < 0.001），但实际意义可能为零。效应量衡量的是<strong>差异的实际大小</strong>，不依赖于样本量。</p>
+</div>
+
+<table class="compact-table">
+<thead><tr><th>效应量</th><th>公式</th><th>适用检验</th><th>小/中/大阈值</th></tr></thead>
+<tbody>
+<tr><td>Cohen's d</td><td>\(d = \frac{\bar{x}_1 - \bar{x}_2}{s_{\text{pooled}}}\)</td><td>独立 t 检验</td><td>0.2 / 0.5 / 0.8</td></tr>
+<tr><td>Hedges' g</td><td>\(g = d \cdot (1 - \frac{3}{4n-9})\)</td><td>小样本修正</td><td>同 Cohen's d</td></tr>
+<tr><td>Cohen's d_z</td><td>\(d_z = \frac{\bar{d}}{s_d}\)</td><td>配对 t 检验</td><td>0.2 / 0.5 / 0.8</td></tr>
+<tr><td>η² (Eta-squared)</td><td>\(\eta^2 = \frac{SS_{\text{between}}}{SS_{\text{total}}}\)</td><td>ANOVA</td><td>0.01 / 0.06 / 0.14</td></tr>
+<tr><td>Cohen's f</td><td>\(f = \sqrt{\frac{\eta^2}{1-\eta^2}}\)</td><td>ANOVA</td><td>0.1 / 0.25 / 0.4</td></tr>
+<tr><td>Cramér's V</td><td>\(V = \sqrt{\frac{\chi^2}{n \cdot \min(r-1,c-1)}}\)</td><td>卡方检验</td><td>0.1 / 0.3 / 0.5</td></tr>
+<tr><td>Odds Ratio</td><td>\(\text{OR} = \frac{p_1/(1-p_1)}{p_2/(1-p_2)}\)</td><td>逻辑回归</td><td>1.5 / 2.5 / 4.0</td></tr>
+</tbody>
+</table>
+
+<div class="derive-box">
+<h4>推导：Cohen's d 的合并标准差</h4>
+<p>合并标准差 (pooled SD) 是两组方差的加权平均：</p>
+<div class="math-block">
+\[
+s_{\text{pooled}} = \sqrt{\frac{(n_1-1)s_1^2 + (n_2-1)s_2^2}{n_1 + n_2 - 2}}
+\]
+</div>
+<p>当两组方差相等时，这是总体标准差的最优无偏估计。如果方差不等，使用 Glass's Δ（以控制组的标准差为分母）或 Hedges' g（使用每组各自的标准差）。</p>
+</div>
+
+<div class="note-box">
+<strong>竞赛要求：</strong>越来越多的竞赛评审要求同时报告 p 值和效应量。仅报告 p < 0.05 是不够的——你需要告诉读者这个差异「有多大」。在论文中，建议的格式是：「两组之间存在显著差异（t(58) = 2.34, p = 0.023, Cohen's d = 0.62, 中等效应）」。
+</div>
+
+<!-- ═══════════ 4.7C 方差齐性检验 ═══════════ -->
+<h2>4.7C 方差齐性检验</h2>
+
+<p>许多参数检验（t 检验、ANOVA）假设各组方差相等。方差齐性检验用于验证这个假设：</p>
+
+<table class="compact-table">
+<thead><tr><th>检验</th><th>适用场景</th><th>稳健性</th></tr></thead>
+<tbody>
+<tr><td>Levene's Test</td><td>通用，基于绝对离差</td><td>对非正态较稳健</td></tr>
+<tr><td>Brown-Forsythe</td><td>Levene 的变体，基于中位数离差</td><td>对非正态更稳健</td></tr>
+<tr><td>Bartlett's Test</td><td>数据正态时使用</td><td>对非正态非常敏感</td></tr>
+<tr><td>F-test (两组)</td><td>\(F = s_1^2 / s_2^2\)</td><td>仅两组，对非正态敏感</td></tr>
+</tbody>
+</table>
+
+<div class="warn-box">
+<strong>关键提醒：</strong>如果 Levene 检验显著（p < 0.05），说明方差不等——此时应使用 Welch t 检验（不假设等方差）或 Welch ANOVA，而非标准 t 检验或 ANOVA。在竞赛中，报告 Levene 检验结果 + 相应的修正方法，是严谨性的体现。
+</div>
+
+<!-- ═══════════ 4.7D 单样本检验 ═══════════ -->
+<h2>4.7D 单样本检验</h2>
+
+<div class="concept-box">
+<h4>与已知值比较</h4>
+<p>前面的检验都是比较<strong>两个组</strong>。但竞赛中经常需要比较<strong>一个样本与一个已知值</strong>——例如「该城市 PM2.5 均值是否超过国家标准 35 μg/m³？」「产品的平均寿命是否达到标称的 1000 小时？」</p>
+</div>
+
+<h3>单样本 t 检验</h3>
+<div class="math-block">
+\[
+t = \frac{\bar{x} - \mu_0}{s / \sqrt{n}} \sim t_{n-1}
+\]
+</div>
+<p>检验 \(H_0: \mu = \mu_0\) vs \(H_1: \mu \neq \mu_0\)（或单侧 > 或 <）。其中 \(\mu_0\) 是已知的参考值。</p>
+
+<h3>单样本 Wilcoxon 符号秩检验</h3>
+<p>当数据不满足正态性时，用 Wilcoxon 符号秩检验——检验<strong>中位数</strong>是否等于 \(\mu_0\)。计算 \(d_i = x_i - \mu_0\)，对 \(|d_i|\) 排序，统计正差值的秩和。</p>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>单样本检验在竞赛中通常出现在「达标判定」场景——某个指标是否达到国家标准？某地区均值是否显著高于全国平均水平？报告时写成：「单样本 t 检验表明，该城市 PM2.5 年均值 (42.3 ± 15.6 μg/m³) 显著高于国家标准 35 μg/m³ (t(29) = 2.56, p = 0.016, Cohen's d = 0.47)。」
+</div>
+
+<!-- ═══════════ 4.7E 单侧 vs 双侧检验 ═══════════ -->
+<h2>4.7E 单侧 vs 双侧检验</h2>
+
+<div class="concept-box">
+<h4>你的方向有先验依据吗？</h4>
+<p><strong>双侧检验：</strong>\(H_1: \mu_1 \neq \mu_2\)——不预设方向，只看「是否有差异」。<br>
+<strong>单侧检验：</strong>\(H_1: \mu_1 > \mu_2\) 或 \(H_1: \mu_1 < \mu_2\)——预设方向，只看「是否大于」或「是否小于」。</p>
+</div>
+
+<div class="derive-box">
+<h4>单侧的代价和收益</h4>
+<p>单侧检验将 α 全部放在一侧，同等效应量下更容易显著（统计功效更高）。但代价是<strong>如果真实效应在相反方向，无论效应多大，检验都无法检测到</strong>。</p>
+<p><strong>选择原则：</strong>① 只有在有<strong>强烈先验理由</strong>预期方向时才能用单侧（如「新药不可能比安慰剂差」）。② 竞赛中，<strong>默认使用双侧检验</strong>——评委不会质疑你「为什么用双侧」。③ 如果用了单侧检验，必须在论文中明确说明理由。④ 单侧检验的 p 值 = 双侧检验的 p 值 / 2（当效应方向与预期一致时）。</p>
+</div>
+
+<div class="warn-box">
+<strong>竞赛陷阱：</strong>做完双侧检验后发现 p=0.06，然后说「我们用单侧检验，p=0.03 显著」——这属于 p-hacking，评委会识破。检验方向必须在<strong>看到数据之前</strong>确定。
+</div>
+
+<!-- ═══════════ 4.8 检验选择决策树 ═══════════ -->
+<h2>4.8 检验选择决策树</h2>
+
+<div class="toolkit-box">
+<h4>建模工具箱：根据数据类型选择正确的检验</h4>
+<table class="compact-table">
+<thead><tr><th>你的数据</th><th>你的问题</th><th>推荐检验</th><th>非参数替代</th></tr></thead>
+<tbody>
+<tr><td>连续变量，两组独立</td><td>均值是否相等</td><td>Welch t-test</td><td>Mann-Whitney U</td></tr>
+<tr><td>连续变量，两组配对</td><td>差值是否为 0</td><td>配对 t-test</td><td>Wilcoxon Signed-Rank</td></tr>
+<tr><td>连续变量，三组+</td><td>均值是否全相等</td><td>One-Way ANOVA</td><td>Kruskal-Wallis</td></tr>
+<tr><td>分类变量，r×c 表</td><td>是否独立</td><td>卡方独立性检验</td><td>Fisher 精确检验</td></tr>
+<tr><td>分类变量，1 维</td><td>是否符合理论分布</td><td>卡方拟合优度</td><td>Kolmogorov-Smirnov</td></tr>
+<tr><td>连续变量，单样本</td><td>均值是否等于 μ₀</td><td>单样本 t-test</td><td>Wilcoxon Signed-Rank</td></tr>
+<tr><td>任何分布，任何问题</td><td>最后一招</td><td>——</td><td>Bootstrap / 置换检验</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="note-box">
+<strong>竞赛决策口诀：</strong>连续数据 → t 检验 / ANOVA；不满足正态 → Mann-Whitney / Kruskal-Wallis；分类计数 → 卡方检验；样本量太小 → Fisher 精确检验；不确定 → 置换检验（永远有效的最后堡垒）。报告时：p 值 + 效应量 + 置信区间，三者缺一不可！
+</div>
+
+<!-- ═══════════ INTERACTIVE 1: t-TEST ═══════════ -->
+<h2>4.9 交互式 t 检验面板</h2>
+<p>调整两组数据的均值和标准差，观察 t 统计量和 p 值的变化。注意：即使均值差相同，样本量越大 p 越小。</p>
+
+<div class="panel">
+<div class="panel-label">INSTRUMENT No.4A — t-TEST COMPARATOR</div>
+<div class="panel-grid">
+  <div>
+    <h4>组 A</h4>
+    <div class="slider-row"><label>μ₁</label><input type="range" id="ttest-m1" min="0" max="100" value="50" oninput="updateTTest()"><span class="slider-val" id="ttest-m1-val">50</span></div>
+    <div class="slider-row"><label>σ₁</label><input type="range" id="ttest-s1" min="1" max="30" value="10" oninput="updateTTest()"><span class="slider-val" id="ttest-s1-val">10</span></div>
+    <div class="slider-row"><label>n₁</label><input type="range" id="ttest-n1" min="5" max="100" value="30" oninput="updateTTest()"><span class="slider-val" id="ttest-n1-val">30</span></div>
+  </div>
+  <div>
+    <h4>组 B</h4>
+    <div class="slider-row"><label>μ₂</label><input type="range" id="ttest-m2" min="0" max="100" value="55" oninput="updateTTest()"><span class="slider-val" id="ttest-m2-val">55</span></div>
+    <div class="slider-row"><label>σ₂</label><input type="range" id="ttest-s2" min="1" max="30" value="12" oninput="updateTTest()"><span class="slider-val" id="ttest-s2-val">12</span></div>
+    <div class="slider-row"><label>n₂</label><input type="range" id="ttest-n2" min="5" max="100" value="30" oninput="updateTTest()"><span class="slider-val" id="ttest-n2-val">30</span></div>
+  </div>
+</div>
+<div id="ttest-results" style="margin-top:20px;"></div>
+<div class="chart-container" id="ttest-plot" style="margin-top:16px;"></div>
+</div>
+
+<!-- ═══════════ INTERACTIVE 2: CHI-SQUARE ═══════════ -->
+<h2>4.10 交互式卡方检验面板</h2>
+<p>编辑下方 2×2 列联表中的频数，观察 χ² 统计量、p 值和 Cramér's V 的实时变化。双击数字即可编辑。尝试让行和列的比例完全相同（独立），看 χ² 如何趋近 0。</p>
+
+<div class="panel">
+<div class="panel-label">INSTRUMENT No.4B — CHI-SQUARE ANALYZER</div>
+<div style="display:flex;gap:32px;flex-wrap:wrap;">
+  <div style="flex:1;min-width:280px;">
+    <table class="chi-table" id="chi-contingency">
+      <thead>
+        <tr><th></th><th>列 1</th><th>列 2</th><th style="color:var(--terracotta);">行合计</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>行 1</th>
+          <td contenteditable="true" id="chi-o11" onblur="updateChiSquare()">38</td>
+          <td contenteditable="true" id="chi-o12" onblur="updateChiSquare()">12</td>
+          <td class="row-total" id="chi-r1">50</td>
+        </tr>
+        <tr>
+          <th>行 2</th>
+          <td contenteditable="true" id="chi-o21" onblur="updateChiSquare()">22</td>
+          <td contenteditable="true" id="chi-o22" onblur="updateChiSquare()">28</td>
+          <td class="row-total" id="chi-r2">50</td>
+        </tr>
+        <tr>
+          <td class="col-total" id="chi-c1">60</td>
+          <td class="col-total" id="chi-c2">40</td>
+          <td class="grand-total" id="chi-N">100</td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="margin-top:8px;display:flex;gap:8px;">
+      <button class="btn" onclick="resetChiSquare()">↩ 重置</button>
+      <button class="btn" onclick="randomChiSquare()">🎲 随机</button>
+    </div>
+  </div>
+  <div style="flex:1;min-width:280px;" id="chi-results"></div>
+</div>
+<div class="chart-container" id="chi-plot" style="margin-top:16px;"></div>
+</div>
+
+<footer>
+  <p><a href="stats_tutorial.html">← 返回 Statistical Field Station 主页</a></p>
+  <p>所有计算在浏览器端完成 · KaTeX 渲染公式 · D3.js 驱动图表</p>
+</footer>
+
+</div>
+
+<script src="assets/js/statistics.js"></script>
+<script>
+
+function updateTTest(){
+  const m1=+document.getElementById('ttest-m1').value,s1=+document.getElementById('ttest-s1').value,n1=+document.getElementById('ttest-n1').value;
+  const m2=+document.getElementById('ttest-m2').value,s2=+document.getElementById('ttest-s2').value,n2=+document.getElementById('ttest-n2').value;
+  document.getElementById('ttest-m1-val').textContent=m1;document.getElementById('ttest-s1-val').textContent=s1;document.getElementById('ttest-n1-val').textContent=n1;
+  document.getElementById('ttest-m2-val').textContent=m2;document.getElementById('ttest-s2-val').textContent=s2;document.getElementById('ttest-n2-val').textContent=n2;
+
+  const se=Math.sqrt(s1*s1/n1+s2*s2/n2),t=(m1-m2)/se;
+  const df_num=(s1*s1/n1+s2*s2/n2)**2,df_den=(s1*s1/n1)**2/(n1-1)+(s2*s2/n2)**2/(n2-1);
+  const df=df_den===0?1:df_num/df_den,p=2*(1-tCDF(Math.abs(t),df));
+  const sp=Math.sqrt(((n1-1)*s1*s1+(n2-1)*s2*s2)/(n1+n2-2)),d=(m1-m2)/sp;
+
+  document.getElementById('ttest-results').innerHTML='<div class="stat-cards">'+[
+    {l:'t',v:t.toFixed(4)},{l:'df',v:df.toFixed(1)},{l:'p',v:p.toFixed(4)},
+    {l:"Cohen's d (pooled SD)",v:d.toFixed(3)},{l:'Significant',v:p<0.05?'YES (p<0.05)':'NO'}
+  ].map(s=>`<div class="stat-card"><div class="lbl">${s.l}</div><div class="val" style="color:${s.l==='Significant'&&p<0.05?'var(--terracotta)':'var(--forest)'}">${s.v}</div></div>`).join('')+'</div>'+
+  `<p style="font-size:0.7rem;color:var(--slate);margin-top:4px;">本面板采用 Welch t 检验；效应量展示 pooled Cohen's d。小样本时可使用 Hedges' g 进行偏差修正；方差明显不齐且存在明确对照组时，可考虑 Glass's Δ。</p>`;
+
+  const container=document.getElementById('ttest-plot');
+  const W=container.clientWidth||500,H=220,MM={t:20,r:30,b:40,l:30};
+  const xMin=Math.min(m1-4*s1,m2-4*s2),xMax=Math.max(m1+4*s1,m2+4*s2);
+  const xScale=d3.scaleLinear().domain([xMin,xMax]).range([MM.l,W-MM.r]);
+  const yMax=Math.max(1/(s1*Math.sqrt(2*Math.PI)),1/(s2*Math.sqrt(2*Math.PI)));
+  const yScale=d3.scaleLinear().domain([0,yMax*1.2]).range([H-MM.b,MM.t]);
+
+  container.innerHTML='';
+  const svg=d3.select(container).append('svg').attr('viewBox',`0 0 ${W} ${H}`).attr('width',W).attr('height',H);
+  function normalPDF(x,m,s){return Math.exp(-((x-m)**2)/(2*s*s))/(s*Math.sqrt(2*Math.PI));}
+  const pts=200;
+  [{m:m1,s:s1,color:'var(--terracotta)',label:'A'},{m:m2,s:s2,color:'var(--forest)',label:'B'}].forEach(g=>{
+    const line=d3.line().x(d=>xScale(d.x)).y(d=>yScale(d.y)).curve(d3.curveBasis);
+    const data=Array.from({length:pts},(_,i)=>{const x=xMin+(xMax-xMin)*i/pts;return{x,y:normalPDF(x,g.m,g.s)};});
+    svg.append('path').datum(data).attr('d',line).attr('fill',g.color).attr('opacity',0.2).attr('stroke',g.color).attr('stroke-width',2);
+    svg.append('text').attr('x',xScale(g.m)).attr('y',MM.t+10).attr('text-anchor','middle').attr('font-family','var(--mono)').attr('font-size','0.7rem').attr('fill',g.color).text(g.label);
+  });
+  svg.append('g').attr('transform',`translate(0,${H-MM.b})`).call(d3.axisBottom(xScale).ticks(5));
+  svg.selectAll('.axis text').attr('font-family','var(--mono)').attr('font-size','0.7rem').attr('fill','var(--slate)');
+  svg.selectAll('.axis line,.axis path').attr('stroke','var(--stone)');
+}
+
+// ═══════════ Chi-Square ═══════════
+function updateChiSquare(){
+  const rawO11=document.getElementById('chi-o11').textContent.trim();
+  const rawO12=document.getElementById('chi-o12').textContent.trim();
+  const rawO21=document.getElementById('chi-o21').textContent.trim();
+  const rawO22=document.getElementById('chi-o22').textContent.trim();
+  const raws=[rawO11,rawO12,rawO21,rawO22];
+
+  // Validate: no empty cells (Number('') → 0, misleading)
+  if(raws.some(v=>v==='')){
+    document.getElementById('chi-results').innerHTML='<p style="color:var(--terracotta);">⚠ 频数不能为空；需要表示零时请输入 0</p>';
+    document.getElementById('chi-plot').innerHTML='';
+    return;
+  }
+
+  const o11=Number(rawO11),o12=Number(rawO12),o21=Number(rawO21),o22=Number(rawO22);
+  const obs=[o11,o12,o21,o22];
+
+  // Validate: non-negative integers only
+  if(obs.some(v=>!Number.isFinite(v)||v<0||!Number.isInteger(v))){
+    document.getElementById('chi-results').innerHTML='<p style="color:var(--terracotta);">⚠ 请输入非负整数频数</p>';
+    document.getElementById('chi-plot').innerHTML='';
+    return;
+  }
+
+  const r1=o11+o12,r2=o21+o22,c1=o11+o21,c2=o12+o22,N=r1+r2;
+  document.getElementById('chi-r1').textContent=r1;document.getElementById('chi-r2').textContent=r2;
+  document.getElementById('chi-c1').textContent=c1;document.getElementById('chi-c2').textContent=c2;
+  document.getElementById('chi-N').textContent=N;
+
+  // Validate: every row and column must have positive totals
+  if([r1,r2,c1,c2].some(v=>v===0)){
+    document.getElementById('chi-results').innerHTML='<p style="color:var(--terracotta);">⚠ 每行、每列合计都必须大于 0</p>';
+    document.getElementById('chi-plot').innerHTML='';
+    return;
+  }
+
+  const e11=r1*c1/N,e12=r1*c2/N,e21=r2*c1/N,e22=r2*c2/N;
+  const expected=[e11,e12,e21,e22];
+  const chi2 = (o11-e11)**2/e11 + (o12-e12)**2/e12 + (o21-e21)**2/e21 + (o22-e22)**2/e22;
+  const df=1,p=1-chiCDF(chi2,df);
+  const cramersV=Math.sqrt(chi2/(N*1));
+
+  // Fisher warning when expected frequencies are small
+  const smallCount=expected.filter(e=>e<5).length;
+  const fisherNote=smallCount>0
+    ?`<p style="font-size:0.8rem;color:var(--gold);margin-top:4px;">⚠ ${smallCount} 个单元格期望频数 &lt; 5，建议使用 Fisher 精确检验</p>`
+    :'<p style="font-size:0.8rem;color:var(--forest);margin-top:4px;">✓ 期望频数条件满足</p>';
+
+  const significance = smallCount > 0
+    ? 'CHECK FISHER'
+    : p < 0.05
+      ? 'YES (p<0.05)'
+      : 'NO';
+
+  const cardColor = s => {
+    if (s.l !== 'Significant') return 'var(--forest)';
+    if (smallCount > 0) return 'var(--gold)';
+    return p < 0.05 ? 'var(--terracotta)' : 'var(--forest)';
+  };
+
+  document.getElementById('chi-results').innerHTML='<div class="stat-cards">'+[
+    {l:'χ²',v:chi2.toFixed(4)},{l:'df',v:df},{l:'p',v:p.toFixed(4)},
+    {l:"Cramér's V",v:cramersV.toFixed(4)},
+    {l:'Significant',v:significance}
+  ].map(s=>`<div class="stat-card"><div class="lbl">${s.l}</div><div class="val" style="color:${cardColor(s)}">${s.v}</div></div>`).join('')+'</div>'+
+  `<p style="font-size:0.85rem;color:var(--slate);margin-top:8px;">期望频数: E₁₁=${e11.toFixed(1)}, E₁₂=${e12.toFixed(1)}, E₂₁=${e21.toFixed(1)}, E₂₂=${e22.toFixed(1)}</p>`+
+  fisherNote;
+
+  const container=document.getElementById('chi-plot');
+  const W=container.clientWidth||500,H=250,MM={t:30,r:30,b:50,l:50};
+
+  container.innerHTML='';
+  const svg=d3.select(container).append('svg').attr('viewBox',`0 0 ${W} ${H}`).attr('width',W).attr('height',H);
+
+  const groups=['行1/列1','行1/列2','行2/列1','行2/列2'];
+  const exp=[e11,e12,e21,e22];
+  const xScale=d3.scaleBand().domain(groups).range([MM.l,W-MM.r]).padding(0.2);
+  const yMax=d3.max([...obs,...exp])*1.2;
+  const yScale=d3.scaleLinear().domain([0,yMax]).range([H-MM.b,MM.t]);
+
+  const xSub=d3.scaleBand().domain(['Observed','Expected']).range([0,xScale.bandwidth()]).padding(0.1);
+
+  svg.append('g').attr('transform',`translate(0,${H-MM.b})`).call(d3.axisBottom(xScale));
+  svg.append('g').attr('transform',`translate(${MM.l},0)`).call(d3.axisLeft(yScale).ticks(5));
+  svg.selectAll('.axis text').attr('font-family','var(--mono)').attr('font-size','0.7rem').attr('fill','var(--slate)');
+  svg.selectAll('.axis line,.axis path').attr('stroke','var(--stone)');
+
+  const legend=svg.append('g').attr('transform',`translate(${MM.l},${MM.t-8})`);
+  legend.append('rect').attr('x',0).attr('y',0).attr('width',10).attr('height',10).attr('fill','var(--terracotta)').attr('opacity',0.7);
+  legend.append('text').attr('x',14).attr('y',9).attr('font-family','var(--mono)').attr('font-size','0.6rem').attr('fill','var(--slate)').text('Observed');
+  legend.append('rect').attr('x',80).attr('y',0).attr('width',10).attr('height',10).attr('fill','var(--forest)').attr('opacity',0.5);
+  legend.append('text').attr('x',94).attr('y',9).attr('font-family','var(--mono)').attr('font-size','0.6rem').attr('fill','var(--slate)').text('Expected');
+
+  groups.forEach((g,i)=>{
+    svg.append('rect').attr('x',xScale(g)+xSub('Observed')).attr('y',yScale(obs[i])).attr('width',xSub.bandwidth()).attr('height',H-MM.b-yScale(obs[i])).attr('fill','var(--terracotta)').attr('opacity',0.7);
+    svg.append('rect').attr('x',xScale(g)+xSub('Expected')).attr('y',yScale(exp[i])).attr('width',xSub.bandwidth()).attr('height',H-MM.b-yScale(exp[i])).attr('fill','var(--forest)').attr('opacity',0.5);
+  });
+}
+
+function resetChiSquare(){
+  document.getElementById('chi-o11').textContent='38';document.getElementById('chi-o12').textContent='12';
+  document.getElementById('chi-o21').textContent='22';document.getElementById('chi-o22').textContent='28';
+  updateChiSquare();
+}
+function randomChiSquare(){
+  document.getElementById('chi-o11').textContent=Math.floor(Math.random()*50+20);
+  document.getElementById('chi-o12').textContent=Math.floor(Math.random()*50+20);
+  document.getElementById('chi-o21').textContent=Math.floor(Math.random()*50+20);
+  document.getElementById('chi-o22').textContent=Math.floor(Math.random()*50+20);
+  updateChiSquare();
+}
+
+// ═══════════ Init ═══════════
+updateTTest();updateChiSquare();
+window.addEventListener('resize',()=>{clearTimeout(window._rt);window._rt=setTimeout(()=>{updateTTest();updateChiSquare();},250)});
+
+if(typeof renderMathInElement==='function'){renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'\\[',right:'\\]',display:true},{left:'$',right:'$',display:false},{left:'\\(',right:'\\)',display:false}],throwOnError:false,strict:false});}
+</script>
+</body>
+</html>

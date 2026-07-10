@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>§IX 聚类分析 — Statistical Field Station</title>
+<link rel="stylesheet" href="assets/vendor/google-fonts.css">
+<link rel="stylesheet" href="assets/vendor/katex.min.css">
+<script src="assets/vendor/katex.min.js"></script>
+<script src="assets/vendor/auto-render.min.js"></script>
+<script src="assets/vendor/d3.v7.min.js"></script>
+<link rel="stylesheet" href="assets/css/site.css">
+<style>
+:root {
+  --parchment: #FDFBF5; --forest: #2D4A3E; --terracotta: #C75146;
+  --gold: #8B6914; --stone: #E8E0D5; --slate: #5B6E65; --surface: #FFFAF0;
+  --display: 'Noto Serif SC', 'Cormorant Garamond', 'STSong', serif;
+  --body: 'Noto Sans SC', 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Consolas', monospace;
+  --page-w: 1100px; --text-w: 72ch; --radius: 4px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:40px}
+body{background:var(--parchment);color:var(--forest);font-family:var(--body);font-size:1.08rem;line-height:1.72}
+p{margin-bottom:14px;max-width:var(--text-w)}
+a{color:var(--terracotta);text-decoration:none}a:hover{text-decoration:underline}
+strong{font-weight:600}
+
+.page{max-width:var(--page-w);margin:0 auto;padding:0 32px 64px}
+.top-nav{padding:16px 0;font-family:var(--mono);font-size:0.78rem;border-bottom:1px solid var(--stone);margin-bottom:40px}
+.top-nav a{color:var(--slate)}.top-nav span{color:var(--gold)}
+
+.hero{padding:32px 0 40px}
+.hero .num{font-family:var(--mono);font-size:0.7rem;letter-spacing:0.18em;color:var(--gold);margin-bottom:6px}
+.hero h1{font-family:var(--display);font-weight:700;font-size:clamp(2rem,5vw,3rem);line-height:1.1;color:var(--forest);margin-bottom:12px}
+.hero .deck{font-size:1.05rem;color:var(--slate);max-width:var(--text-w)}
+
+h2{font-family:var(--display);font-weight:600;font-size:1.6rem;color:var(--forest);margin:36px 0 14px;padding-top:20px;border-top:1px solid var(--stone)}
+h3{font-family:var(--display);font-weight:500;font-size:1.2rem;color:var(--forest);margin:24px 0 10px}
+
+.math-block{text-align:center;padding:16px;background:var(--surface);border:1px solid var(--stone);border-radius:var(--radius);margin:16px 0;overflow-x:auto}
+.derive-box{background:#F5F8F6;border:1px solid var(--stone);border-left:3px solid var(--forest);padding:16px 20px;border-radius:0 var(--radius) var(--radius) 0;margin:16px 0;font-size:0.92rem}
+.derive-box h4{color:var(--forest);font-family:var(--display);text-transform:none;letter-spacing:0;font-size:1rem;margin:0 0 8px}
+.concept-box{background:var(--surface);border:1px solid var(--stone);border-radius:var(--radius);padding:16px 20px;margin:16px 0;font-size:0.93rem}
+.concept-box h4{font-family:var(--display);font-size:1.05rem;font-weight:600;color:var(--forest);margin:0 0 8px}
+.toolkit-box{background:#FFF5F3;border:1px solid var(--stone);border-left:3px solid var(--terracotta);padding:14px 18px;border-radius:0 var(--radius) var(--radius) 0;margin:16px 0;font-size:0.92rem}
+.toolkit-box h4{color:var(--terracotta);font-family:var(--display);font-size:1rem;margin:0 0 8px}
+.note-box{background:#FFF8F0;border-left:3px solid var(--gold);padding:14px 18px;border-radius:0 var(--radius) var(--radius) 0;margin:16px 0;font-size:0.93rem}
+.note-box strong{color:var(--gold)}
+.warn-box{background:#FFFBF0;border:1px solid #E8D5A0;border-radius:var(--radius);padding:14px 18px;margin:16px 0;font-size:0.92rem}
+.warn-box::before{content:'⚠ ';font-size:1.1rem}
+.competition-box{background:#F0F7F5;border:1px solid var(--forest);border-left:4px solid var(--forest);padding:18px 22px;border-radius:0 var(--radius) var(--radius) 0;margin:20px 0;font-size:0.93rem}
+.competition-box h4{color:var(--forest);font-family:var(--display);font-size:1.05rem;margin:0 0 8px}
+.competition-box .q{color:var(--terracotta);font-weight:600}
+
+.panel{background:var(--surface);border:1px solid var(--stone);border-radius:6px;box-shadow:inset 0 1px 0 rgba(255,255,255,0.7),0 2px 12px rgba(0,0,0,0.05);padding:24px;margin:20px 0;position:relative}
+.panel::before{content:'';position:absolute;top:0;left:12px;right:12px;height:1px;background:linear-gradient(to right,transparent,var(--gold),transparent);opacity:0.4}
+.panel-label{font-family:var(--mono);font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--stone)}
+.panel-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+
+.stat-cards{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.stat-card{background:var(--surface);border:1px solid var(--stone);border-radius:var(--radius);padding:10px 14px;text-align:center;min-width:72px}
+.stat-card .lbl{font-family:var(--mono);font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--slate);margin-bottom:3px}
+.stat-card .val{font-family:var(--mono);font-size:1.25rem;font-weight:600;color:var(--forest)}
+
+.slider-row{display:flex;align-items:center;gap:12px;margin:10px 0;flex-wrap:wrap}
+.slider-row label{font-family:var(--mono);font-size:0.85rem;color:var(--slate);min-width:100px}
+.slider-row input[type=range]{flex:1;min-width:100px;accent-color:var(--terracotta)}
+.slider-val{font-family:var(--mono);font-weight:600;color:var(--terracotta);min-width:36px;font-size:0.88rem}
+
+.chart-container{width:100%;overflow-x:auto}
+.chart-container svg{display:block;margin:0 auto}
+
+.compact-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:0.88rem;margin:16px 0}
+.compact-table th,.compact-table td{padding:7px 12px;text-align:left;border-bottom:1px solid var(--stone)}
+.compact-table th{font-family:var(--body);font-size:0.72rem;letter-spacing:0.08em;color:var(--slate);border-bottom:2px solid var(--stone)}
+
+.btn{font-family:var(--mono);font-size:0.75rem;border:1px solid var(--stone);border-radius:var(--radius);background:var(--surface);color:var(--forest);padding:6px 14px;cursor:pointer;transition:all 0.15s}
+.btn:hover{border-color:var(--terracotta);color:var(--terracotta)}
+.btn.active{background:var(--forest);color:#fff;border-color:var(--forest)}
+.btn-group{display:flex;gap:4px;flex-wrap:wrap;margin:8px 0}
+
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin:8px 0;font-family:var(--mono);font-size:0.78rem}
+.legend-item{display:flex;align-items:center;gap:6px}
+.legend-dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+
+footer{text-align:center;padding:32px 0;font-size:0.82rem;color:var(--slate);border-top:1px solid var(--stone);margin-top:40px}
+footer a{color:var(--slate);text-decoration:underline}
+</style>
+</head>
+<body>
+<div class="page">
+
+<nav class="top-nav"><a href="stats_tutorial.html">← Field Station</a> <span>|</span> §IX 聚类分析</nav>
+
+<header class="hero">
+  <div class="num">§IX</div>
+  <h1>聚类分析</h1>
+  <p class="deck">当没有标签时，如何发现数据中的自然分组？聚类分析是无监督学习的核心——不需要任何先验知识，仅凭数据本身的结构来划分群组。本章涵盖三种互补的聚类范式：K-Means（基于原型的划分）、层次聚类（基于树状结构的合并）和 DBSCAN（基于密度的发现）。</p>
+</header>
+
+<div class="competition-box">
+<h4>竞赛真题场景</h4>
+<p><span class="q">Q：</span>国赛 A 题：根据城市的多项指标，将城市分为若干类（如「高发展-高污染」「低发展-低污染」等），为政策制定提供依据。<br>
+<span class="q">Q：</span>美赛 MCM：对客户进行市场细分（customer segmentation），K-Means 是最常用的方法。一等奖论文通常结合 PCA 降维 → K-Means 聚类 → 轮廓系数验证 → 结果解读。<br>
+<span class="q">Q：</span>数据挖掘竞赛：异常检测——DBSCAN 自动标记噪声点，天然适合离群点检测。<br>
+<strong>→ 竞赛中，聚类结果不是终点，而是起点——聚类后需要分析每个簇的特征，回答「为什么这些样本被分在一起？」</strong></p>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>9.1 K-Means 聚类</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>核心思想</h4>
+<p>将 \(n\) 个样本划分为 \(K\) 个簇（cluster），使得<strong>簇内平方和</strong>（Within-Cluster Sum of Squares, WCSS）最小化。每个簇由其质心（centroid，即簇内样本的均值向量）表示。</p>
+</div>
+
+<h3>9.1.1 Lloyd 算法</h3>
+
+<p>K-Means 的优化目标（即惯性，inertia）：</p>
+
+<div class="math-block">
+\[
+\text{WCSS} = \sum_{k=1}^{K} \sum_{i \in C_k} \|x_i - \mu_k\|^2
+\quad\text{其中}\quad \mu_k = \frac{1}{|C_k|} \sum_{i \in C_k} x_i
+\]
+</div>
+
+<p>这是一个 NP-hard 问题，但 Lloyd 算法给出了高效的局部最优解（不是全局最优！）：</p>
+
+<div class="derive-box">
+<h4>Lloyd 算法（EM 风格）</h4>
+<p><strong>步骤 1（初始化）：</strong>随机选择 \(K\) 个样本作为初始质心 \(\mu_1, \ldots, \mu_K\)。<br>
+<strong>步骤 2（分配步 — Expectation）：</strong>将每个样本分配到最近的质心：</p>
+<div class="math-block">
+\[
+C_k = \{ x_i : \|x_i - \mu_k\|^2 \le \|x_i - \mu_j\|^2 \ \forall j \neq k \}
+\]
+</div>
+<p><strong>步骤 3（更新步 — Maximization）：</strong>重新计算每个簇的质心：\(\mu_k = \frac{1}{|C_k|} \sum_{x_i \in C_k} x_i\)。<br>
+<strong>步骤 4：</strong>重复步骤 2-3，直到质心不再变化（或变化小于阈值）。</p>
+<p>可以证明：每次迭代 <strong>WCSS 单调递减</strong>（不会增加）。但算法可能收敛到局部最优——这就是为什么需要多次运行取最佳结果。</p>
+</div>
+
+<h3>9.1.2 K 的选择：肘部法则与轮廓系数</h3>
+
+<p><strong>肘部法则 (Elbow Method)：</strong>绘制 WCSS 随 K 变化的曲线，选择「肘部」——即 WCSS 下降速度开始明显减缓的点。</p>
+
+<p><strong>轮廓系数 (Silhouette Score)：</strong>对于样本 \(i\)，设 \(a(i)\) 为同簇内样本的平均距离，\(b(i)\) 为到最近其他簇的平均距离：</p>
+
+<div class="math-block">
+\[
+s(i) = \frac{b(i) - a(i)}{\max(a(i), b(i))} \in [-1, 1]
+\]
+</div>
+
+<p>\(s(i) \approx 1\)：样本很好地聚类；\(s(i) \approx 0\)：样本在簇边界上；\(s(i) \approx -1\)：样本可能被分错了簇。平均轮廓系数是选择 K 的重要指标。</p>
+
+<div class="toolkit-box">
+<h4>竞赛工具箱：K-Means 使用指南</h4>
+<p><strong>K 的选择：</strong>同时参考肘部法则 + 轮廓系数 + 业务可解释性。三个指标一致时最有说服力。<br>
+<strong>初始化：</strong>使用 K-Means++（sklearn 默认），它选择初始质心时尽量分散，显著减少收敛到局部最优的概率。<br>
+<strong>标准化：</strong>K-Means 依赖欧氏距离——<strong>必须先标准化</strong>。否则取值范围大的特征主导聚类结果。<br>
+<strong>多次运行：</strong>设置 n_init=10 或更多，取 WCSS 最小的结果。<br>
+<strong>局限性：</strong>K-Means 假设簇是球形且大小相近——对拉长的、大小不一的、非凸的簇效果差。</p>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>9.2 层次聚类</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>核心思想</h4>
+<p>不预设簇的数量 \(K\)，而是构建一棵<strong>树状图（dendrogram）</strong>，展示从每个样本自成一簇到所有样本聚为一簇的完整合并过程。用户可以在任意高度截断树来获得不同数量的簇。</p>
+</div>
+
+<h3>9.2.1 凝聚层次聚类 (Agglomerative)</h3>
+
+<p><strong>算法流程：</strong></p>
+<ol style="margin:0 0 14px 24px;max-width:var(--text-w)">
+  <li>初始化：每个样本自成一簇（共 \(n\) 个簇）</li>
+  <li>计算所有簇对之间的距离</li>
+  <li>合并距离最近的两个簇</li>
+  <li>更新距离矩阵（重新计算新簇与其他簇的距离）</li>
+  <li>重复步骤 3-4，直到只剩一个簇</li>
+</ol>
+
+<h3>9.2.2 链接方法 (Linkage)</h3>
+
+<p>「簇间距离」的定义是层次聚类的核心选择：</p>
+
+<table class="compact-table">
+<thead><tr><th>方法</th><th>定义</th><th>特点</th></tr></thead>
+<tbody>
+<tr><td>Single Linkage</td><td>\(d(C_A, C_B) = \min_{a \in A, b \in B} d(a,b)\)</td><td>对噪声敏感，易产生链状簇（chaining）</td></tr>
+<tr><td>Complete Linkage</td><td>\(d(C_A, C_B) = \max_{a \in A, b \in B} d(a,b)\)</td><td>倾向于产生紧凑的球形簇</td></tr>
+<tr><td>Average Linkage</td><td>\(d(C_A, C_B) = \frac{1}{|A||B|}\sum_{a,b} d(a,b)\)</td><td>对噪声较鲁棒，折中方案</td></tr>
+<tr><td>Ward's Method</td><td>最小化合并后的 WCSS 增量</td><td><strong>竞赛首选</strong>，倾向于产生大小相近的簇</td></tr>
+</tbody>
+</table>
+
+<div class="derive-box">
+<h4>Ward 方法的增量公式</h4>
+<p>合并簇 \(A\) 和 \(B\) 后，WCSS 的增量（即 Ward 距离）为：</p>
+<div class="math-block">
+\[
+\Delta(A,B) = \frac{|A| \cdot |B|}{|A| + |B|} \cdot \|\mu_A - \mu_B\|^2
+\]
+</div>
+<p>这个公式揭示了 Ward 方法的关键特性：如果两个簇的质心距离很远，或者两个簇都很大，Ward 距离就大——它会优先合并小的、质心接近的簇。</p>
+</div>
+
+<div class="note-box">
+<strong>竞赛提示：</strong>层次聚类的一个巨大优势是<strong>不需要预先指定 K</strong>——你可以画树状图，然后根据图的形状和业务需求选择截断高度。在论文中展示树状图比只给一个 K 值更有说服力。此外，Ward 方法在大多数竞赛场景中表现最好。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>9.3 DBSCAN</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>核心思想</h4>
+<p>DBSCAN (Density-Based Spatial Clustering of Applications with Noise) 不需要预设簇的数量，而是基于<strong>密度</strong>来定义簇。簇被定义为「密度相连」的点的最大集合。DBSCAN 可以自动发现任意形状的簇，并自动标记噪声点。</p>
+</div>
+
+<h3>9.3.1 核心概念</h3>
+
+<p>DBSCAN 有两个核心参数：</p>
+<ul style="margin:0 0 14px 24px;max-width:var(--text-w)">
+  <li><strong>\(\varepsilon\) (eps)：</strong>邻域半径</li>
+  <li><strong>minPts：</strong>邻域内最少点数阈值</li>
+</ul>
+
+<p>基于这两个参数，点被分为三类：</p>
+<ul style="margin:0 0 14px 24px;max-width:var(--text-w)">
+  <li><strong>核心点 (Core Point)：</strong>\(\varepsilon\)-邻域内至少有 minPts 个点（包括自身）</li>
+  <li><strong>边界点 (Border Point)：</strong>不是核心点，但在某个核心点的 \(\varepsilon\)-邻域内</li>
+  <li><strong>噪声点 (Noise Point)：</strong>既不是核心点也不是边界点</li>
+</ul>
+
+<div class="derive-box">
+<h4>算法流程</h4>
+<p>① 对每个未访问的点 \(p\)，检查其 \(\varepsilon\)-邻域。如果 \(|N_\varepsilon(p)| \ge \text{minPts}\)，则 \(p\) 是核心点，创建新簇。<br>
+② 将 \(p\) 的 \(\varepsilon\)-邻域中所有点加入该簇。对每个新加入的点 \(q\)，如果 \(q\) 也是核心点，则将其 \(\varepsilon\)-邻域中的点也加入簇（<strong>密度可达</strong>的传递性）。<br>
+③ 重复直到没有新点可加入。剩余未访问的点标记为噪声。</p>
+</div>
+
+<h3>9.3.2 DBSCAN vs K-Means</h3>
+
+<table class="compact-table">
+<thead><tr><th>特性</th><th>K-Means</th><th>DBSCAN</th></tr></thead>
+<tbody>
+<tr><td>需要预设 K</td><td>是</td><td>否</td></tr>
+<tr><td>簇形状</td><td>球形</td><td>任意形状</td></tr>
+<tr><td>噪声处理</td><td>所有点都属于某个簇</td><td>自动检测噪声点</td></tr>
+<tr><td>对参数敏感度</td><td>对 K 敏感</td><td>对 \(\varepsilon\) 和 minPts 敏感</td></tr>
+<tr><td>高维数据</td><td>较差（维度灾难）</td><td>较差（密度在高维中失去意义）</td></tr>
+<tr><td>计算复杂度</td><td>\(O(nKd)\) 每迭代</td><td>\(O(n\log n)\) 用空间索引，\(O(n^2)\) 暴力</td></tr>
+</tbody>
+</table>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>DBSCAN 特别适合<strong>地理空间数据</strong>（如城市聚类、污染源定位）和<strong>异常检测</strong>（噪声点 = 异常样本）。在竞赛中，如果数据有明显的非球形结构或需要异常检测，DBSCAN 通常比 K-Means 更合适。参数 \(\varepsilon\) 的选择可以使用 k-距离图（k-distance graph）——找曲线的拐点。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>9.3A 高斯混合模型 (GMM)</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>从硬聚类到软聚类</h4>
+<p>K-Means 将每个样本硬性分配给一个簇（要么属于，要么不属于）。GMM 则给出每个样本<strong>属于每个簇的概率</strong>——这被称为软聚类（soft clustering）。GMM 假设数据由 \(K\) 个高斯分布的混合生成，每个高斯分布代表一个簇。</p>
+</div>
+
+<h3>GMM 的概率模型</h3>
+
+<div class="math-block">
+\[
+p(x) = \sum_{k=1}^{K} \pi_k \cdot \mathcal{N}(x \mid \mu_k, \Sigma_k)
+\]
+</div>
+
+<p>其中 \(\pi_k\) 是第 \(k\) 个高斯分量的<strong>混合权重</strong>（\(\sum \pi_k = 1\)），\(\mu_k\) 是均值向量，\(\Sigma_k\) 是协方差矩阵。</p>
+
+<div class="derive-box">
+<h4>EM 算法求解 GMM</h4>
+<p><strong>E 步（Expectation）：</strong>计算每个样本属于每个分量的<strong>后验概率</strong>（责任度，responsibility）：</p>
+<div class="math-block">
+\[
+\gamma_{ik} = \frac{\pi_k \cdot \mathcal{N}(x_i \mid \mu_k, \Sigma_k)}{\sum_{j=1}^{K} \pi_j \cdot \mathcal{N}(x_i \mid \mu_j, \Sigma_j)}
+\]
+</div>
+<p><strong>M 步（Maximization）：</strong>用责任度加权更新参数：</p>
+<div class="math-block">
+\[
+\mu_k = \frac{\sum_i \gamma_{ik} x_i}{\sum_i \gamma_{ik}}, \quad
+\Sigma_k = \frac{\sum_i \gamma_{ik} (x_i-\mu_k)(x_i-\mu_k)^T}{\sum_i \gamma_{ik}}, \quad
+\pi_k = \frac{\sum_i \gamma_{ik}}{n}
+\]
+</div>
+<p>GMM 的协方差矩阵可以有不同的约束形式：<strong>spherical</strong>（各向同性，等价于 K-Means）、<strong>diagonal</strong>（轴对齐椭圆）、<strong>tied</strong>（所有分量共享同一协方差）、<strong>full</strong>（每个分量独立的任意协方差）。</p>
+</div>
+
+<h3>GMM vs K-Means</h3>
+
+<table class="compact-table">
+<thead><tr><th>特性</th><th>K-Means</th><th>GMM</th></tr></thead>
+<tbody>
+<tr><td>簇形状</td><td>圆形（等方差）</td><td>椭圆（任意协方差）</td></tr>
+<tr><td>分配方式</td><td>硬分配（0/1）</td><td>软分配（概率）</td></tr>
+<tr><td>不确定性的表达</td><td>无</td><td>有（后验概率）</td></tr>
+<tr><td>优化算法</td><td>Lloyd（EM 的特例）</td><td>EM 算法</td></tr>
+<tr><td>对初始化的敏感度</td><td>高</td><td>高（用 K-Means 初始化）</td></tr>
+</tbody>
+</table>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>9.3B 聚类评估指标</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>如何判断聚类质量？</h4>
+<p>聚类是无监督学习——没有真实的标签来验证。但我们可以用内部指标评估聚类的紧致性和分离性，用外部指标（如果有部分标签）评估聚类与真实分类的一致性。</p>
+</div>
+
+<table class="compact-table">
+<thead><tr><th>指标</th><th>公式 / 含义</th><th>最佳值</th><th>类型</th></tr></thead>
+<tbody>
+<tr><td>轮廓系数</td><td>\(s = (b-a)/\max(a,b)\)</td><td>接近 1</td><td>内部</td></tr>
+<tr><td>Davies-Bouldin</td><td>簇内距离 vs 簇间距离之比</td><td>越小越好</td><td>内部</td></tr>
+<tr><td>Calinski-Harabasz</td><td>\(\frac{SS_B/(K-1)}{SS_W/(n-K)}\)</td><td>越大越好</td><td>内部</td></tr>
+<tr><td>Dunn Index</td><td>最小簇间距离 / 最大簇内直径</td><td>越大越好</td><td>内部</td></tr>
+<tr><td>ARI (调整兰德指数)</td><td>与真实标签的一致性（校正随机）</td><td>接近 1</td><td>外部</td></tr>
+<tr><td>NMI (标准化互信息)</td><td>聚类与真实标签的互信息</td><td>接近 1</td><td>外部</td></tr>
+</tbody>
+</table>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>在竞赛论文中，至少报告<strong>轮廓系数 + Davies-Bouldin 指数</strong>。如果数据有部分已知标签，额外报告 ARI。最有力的论证是「多个指标一致指向 K=3 是最优的」——单一指标的说服力有限。
+</div>
+
+<!-- ═══════════ 9.3C 谱聚类 ═══════════ -->
+<h2>9.3C 谱聚类 (Spectral Clustering)</h2>
+
+<div class="concept-box">
+<h4>当聚类不是凸的——K-Means 和 DBSCAN 都束手无策</h4>
+<p>K-Means 只能找到球形聚类，DBSCAN 依赖密度阈值。谱聚类通过<strong>图论</strong>方法——将数据点视为图的节点，相似度视为边的权重，然后切割图——能够发现任意形状的非凸聚类。</p>
+</div>
+
+<div class="derive-box">
+<h4>谱聚类的算法步骤</h4>
+<p><strong>Step 1 — 构建相似矩阵：</strong>\(W_{ij} = \exp\left(-\frac{\|x_i - x_j\|^2}{2\sigma^2}\right)\)（高斯核）。σ 控制邻域大小——这是最关键的超参数。</p>
+<p><strong>Step 2 — 构建拉普拉斯矩阵：</strong>\(\mathbf{L} = \mathbf{D} - \mathbf{W}\)，其中 \(\mathbf{D}_{ii} = \sum_j W_{ij}\)（度矩阵）。或使用归一化版本 \(\mathbf{L}_{sym} = \mathbf{D}^{-1/2}\mathbf{L}\mathbf{D}^{-1/2}\)。</p>
+<p><strong>Step 3 — 特征分解：</strong>计算 \(\mathbf{L}\) 的前 \(k\) 个最小特征值对应的特征向量，组成矩阵 \(\mathbf{U} \in \mathbb{R}^{n \times k}\)。</p>
+<p><strong>Step 4 — K-Means：</strong>将 \(\mathbf{U}\) 的每一行作为数据点的新坐标（谱嵌入），用 K-Means 聚类。</p>
+</div>
+
+<div class="math-block">
+\[
+\mathbf{L} = \mathbf{D} - \mathbf{W} \qquad \mathbf{L}_{sym} = \mathbf{I} - \mathbf{D}^{-1/2}\mathbf{W}\mathbf{D}^{-1/2}
+\]
+</div>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>谱聚类特别适合<strong>图像分割</strong>和<strong>社区发现</strong>类竞赛题。当 K-Means 和 DBSCAN 都无法找到合理聚类时，谱聚类是第三个选择。但注意：① σ 的选择至关重要——用局部缩放（每个点的 σ 自适应）比全局 σ 更鲁棒。② 计算复杂度 O(n³)——n > 10000 时使用近似方法（Nyström 近似或 Landmark-based 谱聚类）。
+</div>
+
+<!-- ═══════════ 9.3D t-SNE 与 UMAP ═══════════ -->
+<h2>9.3D t-SNE 与 UMAP</h2>
+
+<div class="concept-box">
+<h4>不是聚类方法，但是聚类可视化必需品</h4>
+<p>t-SNE 和 UMAP 是<strong>降维可视化</strong>方法——将高维数据映射到 2D 或 3D 空间，保留局部结构。它们<strong>不能</strong>产生聚类标签，但可以<strong>非常直观地展示</strong>聚类结果——如果聚类是合理的，同一簇的点在 t-SNE/UMAP 图中应该聚在一起。</p>
+</div>
+
+<table class="compact-table">
+<thead><tr><th>特性</th><th>t-SNE</th><th>UMAP</th><th>PCA</th></tr></thead>
+<tbody>
+<tr><td>保留结构</td><td>局部邻居关系</td><td>局部 + 部分全局</td><td>全局方差</td></tr>
+<tr><td>速度</td><td>慢 (O(n²))</td><td>快 (O(n log n))</td><td>极快 (O(p³))</td></tr>
+<tr><td>可解释性</td><td>低（轴无含义）</td><td>低（轴无含义）</td><td>高（载荷可解释）</td></tr>
+<tr><td>聚类可视化</td><td>★★★★★</td><td>★★★★★</td><td>★★★</td></tr>
+<tr><td>随机性</td><td>有（多次运行结果不同）</td><td>有（但更稳定）</td><td>无（确定性）</td></tr>
+</tbody>
+</table>
+
+<div class="warn-box">
+<strong>关键警告：</strong>① t-SNE/UMAP 的簇间距离无意义——两个簇在图上的距离不代表它们的实际相似度。② t-SNE 的 perplexity 参数对结果影响巨大——建议尝试 5, 30, 50 多个值。③ <strong>不能在 t-SNE 图上做聚类然后说「我发现了 3 个簇」</strong>——这是循环论证。正确的做法是先用 K-Means/DBSCAN 聚类，再用 t-SNE 可视化验证聚类结果。④ 竞赛中永远不要只展示 t-SNE 图——结合 PCA 和聚类评估指标一起使用。
+</div>
+
+<!-- ═══════════ 9.3E 高维聚类 ═══════════ -->
+<h2>9.3E 高维聚类</h2>
+
+<div class="concept-box">
+<h4>维度灾难在聚类中的表现</h4>
+<p>当维度 p > 20 时，聚类面临三个严重问题：① <strong>距离失效：</strong>高维空间中，所有点之间的距离趋于相等——最近邻和最远邻的差距消失。② <strong>噪声累积：</strong>每个维度都贡献一些噪声，p 个维度的噪声加起来淹没了信号。③ <strong>稀疏性：</strong>数据点在高维空间中极其稀疏，大部分区域是空的。</p>
+</div>
+
+<div class="toolkit-box">
+<h4>建模工具箱：高维聚类的应对策略</h4>
+<p><strong>① PCA 降维 → 聚类：</strong>最常用的策略。先 PCA 降到 5-20 维（保留 80%+ 方差），再 K-Means。优点是简单、可解释（载荷可说明每个簇的特征）。<br>
+<strong>② 特征选择 → 聚类：</strong>用方差阈值、互信息或 LASSO 选出与聚类最相关的特征。适合特征有明确含义时。<br>
+<strong>③ 子空间聚类：</strong>不同簇可能存在于不同的特征子集中——例如「簇 1 由特征 A,B,C 定义，簇 2 由特征 D,E,F 定义」。CLIQUE 和 PROCLUS 是经典算法。<br>
+<strong>④ 谱聚类 + 自适应 σ：</strong>使用局部缩放的高斯核，对高维噪声更鲁棒。</p>
+</div>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>竞赛中高维聚类 (p > 30) 的标准流程：① 特征筛选（去掉方差接近 0 的特征）。② PCA 降维（保留 80-90% 方差）。③ 在 PCA 空间上做 K-Means/DBSCAN/谱聚类。④ 通过载荷分析解释每个簇的含义。⑤ 用 t-SNE 可视化最终结果。这五步流程在论文中非常规范。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>9.4 聚类方法选择决策树</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<table class="compact-table">
+<thead><tr><th>条件</th><th>推荐方法</th><th>理由</th></tr></thead>
+<tbody>
+<tr><td>已知簇数量 K</td><td>K-Means</td><td>直接设定 K，计算高效</td></tr>
+<tr><td>不知道 K，需要探索</td><td>层次聚类</td><td>树状图提供全貌，灵活选择 K</td></tr>
+<tr><td>簇形状可能非球形</td><td>DBSCAN</td><td>基于密度，不假设簇形状</td></tr>
+<tr><td>需要检测异常点</td><td>DBSCAN</td><td>天然标记噪声点</td></tr>
+<tr><td>数据量大（n &gt; 10⁴）</td><td>K-Means / MiniBatch K-Means</td><td>层次聚类 \(O(n^2)\) 在大数据上不可行</td></tr>
+<tr><td>需要展示合并过程</td><td>层次聚类</td><td>树状图是天然的可视化</td></tr>
+<tr><td>簇大小差异大</td><td>DBSCAN / 层次聚类</td><td>K-Means 倾向于产生大小相近的簇</td></tr>
+</tbody>
+</table>
+
+<div class="warn-box">
+<strong>竞赛常见错误：</strong>① 不标准化就做 K-Means/层次聚类——距离度量对尺度敏感。② 只用肘部法则选 K 而不报告轮廓系数。③ 使用 DBSCAN 但不解释参数选择——评委会问「为什么选这个 \(\varepsilon\)？」。④ 聚类后不做簇的解读——只给「分成了 3 类」是不够的，必须分析每个簇的特征（均值、方差、最有区分度的特征）。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- INSTRUMENT No.9A: K-Means 迭代动画 -->
+<!-- ══════════════════════════════════════════════ -->
+<h2>仪器 No.9A — K-Means 迭代演示</h2>
+<div class="panel">
+<div class="panel-label">INSTRUMENT No.9A · K-Means Lloyd Iteration</div>
+<p style="font-size:0.9rem;color:var(--slate);margin-bottom:12px">点击画布添加数据点，然后逐步运行 K-Means 迭代。观察质心（大圆）的移动和簇分配的变化。WCSS 随迭代单调递减。</p>
+<div class="slider-row">
+  <label>K = <span class="slider-val" id="km-k-val">3</span></label>
+  <input type="range" id="km-k" min="2" max="6" value="3" step="1">
+</div>
+<div class="btn-group">
+  <button class="btn" id="km-step">单步迭代 (Step)</button>
+  <button class="btn" id="km-auto">自动迭代 (Auto)</button>
+  <button class="btn" id="km-reset">重置质心</button>
+  <button class="btn" id="km-random">随机生成数据</button>
+  <button class="btn" id="km-clear">清空</button>
+</div>
+<div class="stat-cards" id="km-stats"></div>
+<div class="chart-container" id="km-chart"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- INSTRUMENT No.9B: DBSCAN 演示 -->
+<!-- ══════════════════════════════════════════════ -->
+<h2>仪器 No.9B — DBSCAN 密度聚类演示</h2>
+<div class="panel">
+<div class="panel-label">INSTRUMENT No.9B · DBSCAN Density-Based Clustering</div>
+<p style="font-size:0.9rem;color:var(--slate);margin-bottom:12px">对比 K-Means 和 DBSCAN 在非球形数据上的表现。K-Means 强制将数据分为 K 个球形簇，而 DBSCAN 能发现任意形状的簇并标记噪声。</p>
+<div class="panel-grid">
+  <div>
+    <div class="slider-row"><label>ε = <span class="slider-val" id="db-eps-val">0.08</span></label><input type="range" id="db-eps" min="0.02" max="0.25" value="0.08" step="0.01"></div>
+    <div class="slider-row"><label>minPts = <span class="slider-val" id="db-mp-val">4</span></label><input type="range" id="db-mp" min="2" max="10" value="4" step="1"></div>
+    <div class="btn-group">
+      <button class="btn" id="db-moons">双月牙数据</button>
+      <button class="btn" id="db-circles">同心圆数据</button>
+      <button class="btn" id="db-blobs">团状数据</button>
+    </div>
+    <div class="stat-cards" id="db-stats"></div>
+  </div>
+  <div class="legend">
+    <div class="legend-item"><span class="legend-dot" style="background:#888"></span> 噪声点</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#C75146"></span> 簇 1</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#2D6BA0"></span> 簇 2</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#5B8C3E"></span> 簇 3</div>
+  </div>
+</div>
+<div class="panel-grid">
+  <div><div class="chart-container" id="db-chart"></div><p style="text-align:center;font-family:var(--mono);font-size:0.7rem;color:var(--slate);margin-top:4px">DBSCAN</p></div>
+  <div><div class="chart-container" id="km-comp-chart"></div><p style="text-align:center;font-family:var(--mono);font-size:0.7rem;color:var(--slate);margin-top:4px">K-Means (K=3)</p></div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>9.5 竞赛实战流程</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="toolkit-box">
+<h4>聚类问题竞赛流程</h4>
+<p><strong>Step 1：</strong>数据预处理——标准化（必须）、处理缺失值、去除无关特征。<br>
+<strong>Step 2：</strong>降维可视化——PCA 降到 2D（见 §X），初步观察数据分布。<br>
+<strong>Step 3：</strong>确定 K 的范围——肘部法则 + 轮廓系数，确定候选 K 值。<br>
+<strong>Step 4：</strong>多方法对比——K-Means + 层次聚类（Ward）+ DBSCAN（如果数据非球形）。<br>
+<strong>Step 5：</strong>结果验证——轮廓系数、Davies-Bouldin 指数、Calinski-Harabasz 指数。<br>
+<strong>Step 6：</strong>簇的解读——分析每个簇的统计特征（均值、方差），找出区分簇的关键特征。<br>
+<strong>Step 7：</strong>可视化呈现——PCA 散点图（颜色编码簇）+ 特征雷达图（每个簇的轮廓）。</p>
+</div>
+
+<footer>
+  <p><a href="stats_08_classification.html">← §VIII 分类方法</a> &nbsp;|&nbsp; <a href="stats_tutorial.html">Field Station 总目录</a> &nbsp;|&nbsp; 下一章：<a href="stats_10_evaluation.html">§X 模型评估与降维 →</a></p>
+  <p style="margin-top:8px">Statistical Field Station &copy; 2026 · KaTeX + D3.js</p>
+</footer>
+
+</div>
+
+<script>
+// ============ KaTeX Auto-Render ============
+renderMathInElement(document.body, {
+  delimiters: [
+    {left: '\\[', right: '\\]', display: true},
+    {left: '\\(', right: '\\)', display: false},
+    {left: '$$', right: '$$', display: true}
+  ],
+  throwOnError: false
+});
+
+// ============ Color palette for clusters ============
+const clusterColors = ['#C75146','#2D6BA0','#5B8C3E','#8B6914','#9B59B6','#E67E22'];
+
+// ============ INSTRUMENT No.9A: K-Means ============
+(function() {
+  const W = 680, H = 450, margin = {top:10, right:10, bottom:10, left:10};
+  const pw = W - margin.left - margin.right;
+  const ph = H - margin.top - margin.bottom;
+  const xScale = d3.scaleLinear().domain([0,1]).range([margin.left, margin.left+pw]);
+  const yScale = d3.scaleLinear().domain([0,1]).range([margin.top+ph, margin.top]);
+
+  const svg = d3.select('#km-chart').append('svg').attr('width',W).attr('height',H)
+    .attr('viewBox',`0 0 ${W} ${H}`);
+
+  svg.append('rect').attr('x',margin.left).attr('y',margin.top)
+    .attr('width',pw).attr('height',ph)
+    .attr('fill','#FAF8F3').attr('stroke','var(--stone)').attr('stroke-width',1);
+
+  let points = [], centroids = [], assignments = [];
+  let K = 3, converged = false;
+
+  function initCentroids() {
+    if (points.length < K) return;
+    // K-Means++ style initialization
+    centroids = [points[Math.floor(Math.random()*points.length)]];
+    for (let k = 1; k < K; k++) {
+      const dists = points.map(p => {
+        const minD = Math.min(...centroids.map(c => (p.x-c.x)**2 + (p.y-c.y)**2));
+        return minD;
+      });
+      const total = d3.sum(dists);
+      let r = Math.random() * total, cum = 0;
+      let chosen = points[points.length-1];
+      for (let i = 0; i < points.length; i++) {
+        cum += dists[i];
+        if (cum >= r) { chosen = points[i]; break; }
+      }
+      centroids.push({x: chosen.x, y: chosen.y});
+    }
+    assignPoints();
+    converged = false;
+  }
+
+  function assignPoints() {
+    const oldAssignments = [...assignments];
+    assignments = points.map(p => {
+      let best = 0, bestD = Infinity;
+      centroids.forEach((c, i) => {
+        const d = (p.x-c.x)**2 + (p.y-c.y)**2;
+        if (d < bestD) { bestD = d; best = i; }
+      });
+      return best;
+    });
+    return oldAssignments.every((a,i) => a === assignments[i]);
+  }
+
+  function updateCentroids() {
+    const newCentroids = [];
+    for (let k = 0; k < K; k++) {
+      const cluster = points.filter((_,i) => assignments[i] === k);
+      if (cluster.length > 0) {
+        newCentroids.push({
+          x: d3.mean(cluster, d => d.x),
+          y: d3.mean(cluster, d => d.y)
+        });
+      } else {
+        // Empty cluster: reinitialize randomly
+        newCentroids.push(points[Math.floor(Math.random()*points.length)]);
+      }
+    }
+    centroids = newCentroids;
+  }
+
+  function wcss() {
+    let sum = 0;
+    points.forEach((p, i) => {
+      const c = centroids[assignments[i]];
+      sum += (p.x-c.x)**2 + (p.y-c.y)**2;
+    });
+    return sum;
+  }
+
+  function redraw() {
+    svg.selectAll('.km-point,.km-centroid,.km-voronoi').remove();
+
+    if (points.length === 0) return;
+
+    // Voronoi-style background
+    if (centroids.length > 0 && assignments.length > 0) {
+      const grid = 80;
+      for (let i = 0; i <= grid; i++) {
+        for (let j = 0; j <= grid; j++) {
+          const gx = i/grid, gy = j/grid;
+          let best = 0, bestD = Infinity;
+          centroids.forEach((c, ci) => {
+            const d = (gx-c.x)**2 + (gy-c.y)**2;
+            if (d < bestD) { bestD = d; best = ci; }
+          });
+          svg.append('rect').attr('class','km-voronoi')
+            .attr('x', xScale(gx)-pw/grid/2).attr('y', yScale(gy)-ph/grid/2)
+            .attr('width', pw/grid+0.5).attr('height', ph/grid+0.5)
+            .attr('fill', clusterColors[best]+'15').attr('stroke','none');
+        }
+      }
+    }
+
+    // Points
+    svg.selectAll('.km-point').data(points).join('circle').attr('class','km-point')
+      .attr('cx', d => xScale(d.x)).attr('cy', d => yScale(d.y))
+      .attr('r', 4.5).attr('fill', (d,i) => assignments[i] !== undefined ? clusterColors[assignments[i]] : '#888')
+      .attr('stroke', '#fff').attr('stroke-width', 1.2).attr('opacity', 0.85);
+
+    // Centroids
+    svg.selectAll('.km-centroid').data(centroids).join('circle').attr('class','km-centroid')
+      .attr('cx', d => xScale(d.x)).attr('cy', d => yScale(d.y))
+      .attr('r', 8).attr('fill', 'none')
+      .attr('stroke', (d,i) => clusterColors[i]).attr('stroke-width', 3)
+      .attr('opacity', 0.9);
+    svg.selectAll('.km-centroid-inner').data(centroids).join('circle').attr('class','km-centroid')
+      .attr('cx', d => xScale(d.x)).attr('cy', d => yScale(d.y))
+      .attr('r', 3).attr('fill', (d,i) => clusterColors[i]);
+  }
+
+  function updateStats() {
+    const w = wcss();
+    d3.select('#km-stats').html(`
+      <div class="stat-card"><div class="lbl">样本数</div><div class="val">${points.length}</div></div>
+      <div class="stat-card"><div class="lbl">WCSS</div><div class="val">${w.toFixed(4)}</div></div>
+      <div class="stat-card"><div class="lbl">迭代状态</div><div class="val" style="font-size:0.9rem">${converged ? '已收敛 ✓' : '进行中'}</div></div>
+      ${centroids.map((c,i) => `
+        <div class="stat-card"><div class="lbl" style="color:${clusterColors[i]}">簇 ${i+1} 质心</div><div class="val" style="font-size:0.8rem">(${c.x.toFixed(2)},${c.y.toFixed(2)})</div></div>
+      `).join('')}
+    `);
+  }
+
+  function doStep() {
+    if (points.length < K || converged) return;
+    assignPoints();
+    updateCentroids();
+    const isConverged = assignPoints(); // re-assign after update
+    if (isConverged) converged = true;
+    updateCentroids();
+    redraw();
+    updateStats();
+  }
+
+  // Click to add points
+  svg.on('click', function(event) {
+    const [mx, my] = d3.pointer(event);
+    if (mx < margin.left || mx > margin.left+pw || my < margin.top || my > margin.top+ph) return;
+    const x = (mx - margin.left) / pw;
+    const y = (margin.top + ph - my) / ph;
+    points.push({x, y});
+    converged = false;
+    if (points.length >= K && centroids.length === 0) initCentroids();
+    else { assignPoints(); updateCentroids(); assignPoints(); }
+    redraw();
+    updateStats();
+  });
+
+  d3.select('#km-k').on('input', function() {
+    K = +this.value;
+    d3.select('#km-k-val').text(K);
+    converged = false;
+    initCentroids();
+    redraw();
+    updateStats();
+  });
+
+  d3.select('#km-step').on('click', function() { doStep(); });
+  d3.select('#km-reset').on('click', function() { converged = false; initCentroids(); redraw(); updateStats(); });
+
+  let autoTimer = null;
+  d3.select('#km-auto').on('click', function() {
+    if (autoTimer) { clearInterval(autoTimer); autoTimer = null; d3.select(this).text('自动迭代 (Auto)'); return; }
+    d3.select(this).text('停止');
+    autoTimer = setInterval(function() {
+      if (converged) { clearInterval(autoTimer); autoTimer = null; d3.select('#km-auto').text('自动迭代 (Auto)'); return; }
+      doStep();
+    }, 500);
+  });
+
+  d3.select('#km-random').on('click', function() {
+    points = [];
+    // Generate clustered data
+    const centers = [];
+    for (let k = 0; k < K; k++) {
+      centers.push({x: 0.2 + Math.random()*0.6, y: 0.2 + Math.random()*0.6});
+    }
+    for (let i = 0; i < 80; i++) {
+      const c = centers[Math.floor(Math.random()*K)];
+      points.push({
+        x: Math.max(0.02, Math.min(0.98, c.x + (Math.random()-0.5)*0.25)),
+        y: Math.max(0.02, Math.min(0.98, c.y + (Math.random()-0.5)*0.25))
+      });
+    }
+    converged = false;
+    initCentroids();
+    redraw();
+    updateStats();
+  });
+
+  d3.select('#km-clear').on('click', function() {
+    points = []; centroids = []; assignments = []; converged = false;
+    redraw();
+    updateStats();
+  });
+
+  // Init
+  d3.select('#km-random').dispatch('click');
+})();
+
+// ============ INSTRUMENT No.9B: DBSCAN ============
+(function() {
+  const W = 480, H = 400, margin = {top:10, right:10, bottom:10, left:10};
+  const pw = W - margin.left - margin.right;
+  const ph = H - margin.top - margin.bottom;
+  const xScale = d3.scaleLinear().domain([0,1]).range([margin.left, margin.left+pw]);
+  const yScale = d3.scaleLinear().domain([0,1]).range([margin.top+ph, margin.top]);
+
+  function makeSvg(sel) {
+    const svg = d3.select(sel).append('svg').attr('width',W).attr('height',H).attr('viewBox',`0 0 ${W} ${H}`);
+    svg.append('rect').attr('x',margin.left).attr('y',margin.top)
+      .attr('width',pw).attr('height',ph).attr('fill','#FAF8F3').attr('stroke','var(--stone)').attr('stroke-width',1);
+    return svg;
+  }
+
+  const dbSvg = makeSvg('#db-chart');
+  const kmSvg = makeSvg('#km-comp-chart');
+
+  let data = [];
+
+  function generateMoons() {
+    data = [];
+    const n = 150;
+    for (let i = 0; i < n; i++) {
+      const t = Math.PI * 0.8 * i / n;
+      data.push({x: 0.35 + 0.2*Math.cos(t) + (Math.random()-0.5)*0.05, y: 0.5 + 0.25*Math.sin(t) + (Math.random()-0.5)*0.05});
+    }
+    for (let i = 0; i < n; i++) {
+      const t = Math.PI * 0.8 * (1 - i/n);
+      data.push({x: 0.65 + 0.2*Math.cos(t) + (Math.random()-0.5)*0.05, y: 0.5 - 0.25*Math.sin(t) + (Math.random()-0.5)*0.05});
+    }
+  }
+
+  function generateCircles() {
+    data = [];
+    for (let i = 0; i < 120; i++) {
+      const a = Math.random()*2*Math.PI;
+      const r = 0.15 + (Math.random()-0.5)*0.05;
+      data.push({x: 0.5 + r*Math.cos(a), y: 0.5 + r*Math.sin(a)});
+    }
+    for (let i = 0; i < 120; i++) {
+      const a = Math.random()*2*Math.PI;
+      const r = 0.3 + (Math.random()-0.5)*0.05;
+      data.push({x: 0.5 + r*Math.cos(a), y: 0.5 + r*Math.sin(a)});
+    }
+  }
+
+  function generateBlobs() {
+    data = [];
+    const centers = [[0.3,0.3],[0.7,0.3],[0.5,0.7]];
+    centers.forEach(([cx,cy]) => {
+      for (let i = 0; i < 80; i++) {
+        data.push({x: cx + (Math.random()-0.5)*0.2, y: cy + (Math.random()-0.5)*0.2});
+      }
+    });
+  }
+
+  function dbscan(eps, minPts) {
+    const labels = new Array(data.length).fill(-1); // -1 = unvisited/noise
+    let clusterId = 0;
+
+    for (let i = 0; i < data.length; i++) {
+      if (labels[i] !== -1) continue;
+      const neighbors = [];
+      for (let j = 0; j < data.length; j++) {
+        const d = Math.sqrt((data[i].x-data[j].x)**2 + (data[i].y-data[j].y)**2);
+        if (d < eps) neighbors.push(j);
+      }
+      if (neighbors.length < minPts) {
+        labels[i] = -2; // noise (temporary)
+        continue;
+      }
+      // Core point: start new cluster
+      labels[i] = clusterId;
+      const seeds = [...neighbors];
+      let idx = 0;
+      while (idx < seeds.length) {
+        const j = seeds[idx];
+        if (labels[j] === -2) labels[j] = clusterId; // noise → border
+        if (labels[j] !== -1) { idx++; continue; }
+        labels[j] = clusterId;
+        const nbrs = [];
+        for (let k = 0; k < data.length; k++) {
+          const d = Math.sqrt((data[j].x-data[k].x)**2 + (data[j].y-data[k].y)**2);
+          if (d < eps) nbrs.push(k);
+        }
+        if (nbrs.length >= minPts) {
+          for (const n of nbrs) {
+            if (!seeds.includes(n)) seeds.push(n);
+          }
+        }
+        idx++;
+      }
+      clusterId++;
+    }
+    // Convert temporary noise to actual noise
+    for (let i = 0; i < labels.length; i++) {
+      if (labels[i] === -2) labels[i] = -1;
+    }
+    return { labels, nClusters: clusterId };
+  }
+
+  function kmeans(data, K) {
+    // Simple K-Means
+    let centroids = [];
+    const idx = Array.from({length: data.length}, (_,i) => i);
+    for (let k = 0; k < K; k++) {
+      const ri = idx.splice(Math.floor(Math.random()*idx.length),1)[0];
+      centroids.push({x: data[ri].x, y: data[ri].y});
+    }
+    let labels = new Array(data.length).fill(0);
+    for (let iter = 0; iter < 20; iter++) {
+      let changed = false;
+      for (let i = 0; i < data.length; i++) {
+        let best = 0, bestD = Infinity;
+        centroids.forEach((c, ci) => {
+          const d = (data[i].x-c.x)**2 + (data[i].y-c.y)**2;
+          if (d < bestD) { bestD = d; best = ci; }
+        });
+        if (labels[i] !== best) { labels[i] = best; changed = true; }
+      }
+      if (!changed) break;
+      for (let k = 0; k < K; k++) {
+        const cluster = data.filter((_,i) => labels[i] === k);
+        if (cluster.length > 0) {
+          centroids[k] = {x: d3.mean(cluster,d=>d.x), y: d3.mean(cluster,d=>d.y)};
+        }
+      }
+    }
+    return labels;
+  }
+
+  function drawPoints(svg, labels, nClusters) {
+    svg.selectAll('.db-point').remove();
+    svg.selectAll('.db-point').data(data).join('circle').attr('class','db-point')
+      .attr('cx', d => xScale(d.x)).attr('cy', d => yScale(d.y))
+      .attr('r', 3.5).attr('fill', (d,i) => {
+        if (labels[i] === -1) return '#aaa';
+        return clusterColors[labels[i] % clusterColors.length];
+      })
+      .attr('stroke', '#fff').attr('stroke-width', 0.8).attr('opacity', 0.85);
+  }
+
+  function update() {
+    const eps = +d3.select('#db-eps').property('value');
+    const minPts = +d3.select('#db-mp').property('value');
+    d3.select('#db-eps-val').text(eps.toFixed(2));
+    d3.select('#db-mp-val').text(minPts);
+
+    const dbResult = dbscan(eps, minPts);
+    const kmLabels = kmeans(data, 3);
+
+    drawPoints(dbSvg, dbResult.labels, dbResult.nClusters);
+    drawPoints(kmSvg, kmLabels, 3);
+
+    const noiseCount = dbResult.labels.filter(l => l === -1).length;
+    d3.select('#db-stats').html(`
+      <div class="stat-card"><div class="lbl">DBSCAN 簇数</div><div class="val">${dbResult.nClusters}</div></div>
+      <div class="stat-card"><div class="lbl">噪声点数</div><div class="val">${noiseCount}</div></div>
+      <div class="stat-card"><div class="lbl">K-Means 簇数</div><div class="val">3</div></div>
+      <div class="stat-card"><div class="lbl">总样本数</div><div class="val">${data.length}</div></div>
+    `);
+  }
+
+  d3.select('#db-eps').on('input', update);
+  d3.select('#db-mp').on('input', update);
+  d3.select('#db-moons').on('click', () => { generateMoons(); update(); });
+  d3.select('#db-circles').on('click', () => { generateCircles(); update(); });
+  d3.select('#db-blobs').on('click', () => { generateBlobs(); update(); });
+
+  generateMoons();
+  update();
+})();
+</script>
+</body>
+</html>
