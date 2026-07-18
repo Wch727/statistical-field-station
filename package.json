@@ -1,0 +1,13 @@
+{
+  "private": true,
+  "devDependencies": {
+    "playwright": "1.61.1"
+  },
+  "scripts": {
+    "test:statistics": "node tests/run-statistics-tests.js",
+    "test:links": "node tests/check-links.js",
+    "test:assets": "node tests/check-assets.js",
+    "test:smoke": "node tests/smoke-pages.js",
+    "test": "node tests/run-statistics-tests.js && node tests/check-links.js && node tests/check-assets.js"
+  }
+}
