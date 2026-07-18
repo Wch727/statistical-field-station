@@ -880,7 +880,9 @@ if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
     // Intersections with axes
     constraints.forEach(con => {
       if (con.c / con.a > 0) pts.push([con.c / con.a, 0]);
-      if (con.c / con.b > 0) pts.push([0, con.c / con.b]);    // Intersections between pairs of constraints
+      if (con.c / con.b > 0) pts.push([0, con.c / con.b]);
+    });
+    // Intersections between pairs of constraints
     for (let i = 0; i < constraints.length; i++) {
       for (let j = i+1; j < constraints.length; j++) {
         const det = constraints[i].a * constraints[j].b - constraints[i].b * constraints[j].a;
@@ -893,10 +895,14 @@ if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
     // Filter: keep only points that satisfy all constraints
     const feasible = pts.filter(([x1,x2]) => {
       if (x1 < -1e-9 || x2 < -1e-9) return false;
-      return constraints.every(c => c.a*x1 + c.b*x2 <= c.c + 1e-9);    // Remove duplicates
+      return constraints.every(c => c.a*x1 + c.b*x2 <= c.c + 1e-9);
+    });
+    // Remove duplicates
     const uniq = [];
     feasible.forEach(p => {
-      if (!uniq.some(q => Math.abs(p[0]-q[0])<1e-8 && Math.abs(p[1]-q[1])<1e-8)) uniq.push(p);    // Sort by polar angle around centroid
+      if (!uniq.some(q => Math.abs(p[0]-q[0])<1e-8 && Math.abs(p[1]-q[1])<1e-8)) uniq.push(p);
+    });
+    // Sort by polar angle around centroid
     const cx = uniq.reduce((s,p)=>s+p[0],0)/uniq.length;
     const cy = uniq.reduce((s,p)=>s+p[1],0)/uniq.length;
     uniq.sort((a,b) => Math.atan2(a[1]-cy, a[0]-cx) - Math.atan2(b[1]-cy, b[0]-cx));
@@ -954,11 +960,17 @@ if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
       const mx = (x1A + x1B) / 2, my = (x2A + x2B) / 2;
       svg.append('text').attr('x',xScale(mx)).attr('y',yScale(my)-6)
         .text(con.name).style('font-family','var(--mono)').style('font-size','0.6rem')
-        .style('fill',con.color).style('text-anchor','middle');    // Find optimal vertex (minimize c1*x1 + c2*x2)
+        .style('fill',con.color).style('text-anchor','middle');
+    });
+
+    // Find optimal vertex (minimize c1*x1 + c2*x2)
     let bestVal = Infinity, bestPt = null;
     vertices.forEach(([x1,x2]) => {
       const val = c1 * x1 + c2 * x2;
-      if (val < bestVal) { bestVal = val; bestPt = [x1, x2]; }    // Objective contours
+      if (val < bestVal) { bestVal = val; bestPt = [x1, x2]; }
+    });
+
+    // Objective contours
     if (bestPt && Math.abs(c1)+Math.abs(c2) > 0.01) {
       const objVal = c1 * bestPt[0] + c2 * bestPt[1];
       // Draw 3 contour lines
@@ -1010,10 +1022,14 @@ if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
   d3.select('#lp-preset1').on('click', () => {
     d3.select('#lp-c1').property('value', -3);
     d3.select('#lp-c2').property('value', -2);
-    update();  d3.select('#lp-preset2').on('click', () => {
+    update();
+  });
+  d3.select('#lp-preset2').on('click', () => {
     d3.select('#lp-c1').property('value', 2);
     d3.select('#lp-c2').property('value', 3);
-    update();  update();
+    update();
+  });
+  update();
 })();
 
 // ============ INSTRUMENT No.13B: Knapsack DP ============
@@ -1034,7 +1050,9 @@ if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
       items.push({
         name: `物品${i+1}`,
         weight: Math.floor(Math.random() * 8) + 2,
-        value: Math.floor(Math.random() * 15) + 5    }
+        value: Math.floor(Math.random() * 15) + 5
+      });
+    }
   }
 
   function solveKnapsack(capacity) {
@@ -1109,7 +1127,10 @@ if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
       kpSvg.append('text').attr('x', xScale(item.weight) + 4).attr('y', y + yScale.bandwidth()/4 + 4)
         .text(`w=${item.weight}`).style('font-family','var(--mono)').style('font-size','0.55rem').style('fill','var(--slate)');
       kpSvg.append('text').attr('x', xScale(item.value) + 4).attr('y', y + 3*yScale.bandwidth()/4 + 4)
-        .text(`v=${item.value}`).style('font-family','var(--mono)').style('font-size','0.55rem').style('fill','var(--slate)');    // Legend
+        .text(`v=${item.value}`).style('font-family','var(--mono)').style('font-size','0.55rem').style('fill','var(--slate)');
+    });
+
+    // Legend
     kpSvg.append('rect').attr('x',margin.left).attr('y',margin.top + nItems * barH + 8).attr('width',10).attr('height',6).attr('fill','var(--stone)').attr('opacity',0.8);
     kpSvg.append('text').attr('x',margin.left+14).attr('y',margin.top + nItems * barH + 15).text('重量').style('font-size','0.6rem').style('fill','var(--slate)');
     kpSvg.append('rect').attr('x',margin.left+50).attr('y',margin.top + nItems * barH + 8).attr('width',10).attr('height',6).attr('fill','var(--stone)').attr('opacity',0.8);
@@ -1150,7 +1171,9 @@ if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
       // Row label
       dpSvg.append('text').attr('x', dpM.left - 4).attr('y', dpM.top + ri * cellH + cellH/2 + 4)
         .text(`i=${i}`).style('font-family','var(--mono)').style('font-size','0.55rem')
-        .style('fill','var(--slate)').style('text-anchor','end');    // Column labels (every few)
+        .style('fill','var(--slate)').style('text-anchor','end');
+    });
+    // Column labels (every few)
     for (let j = 0; j <= capacity; j += Math.max(1, Math.floor(capacity/8))) {
       dpSvg.append('text').attr('x', dpM.left + j * cellW + cellW/2).attr('y', dpM.top + rowsToShow.length * cellH + 12)
         .text(`w=${j}`).style('font-family','var(--mono)').style('font-size','0.5rem')

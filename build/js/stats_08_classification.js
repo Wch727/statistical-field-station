@@ -58,7 +58,9 @@
         .attr('x', xScale(g.x) - cellW/2).attr('y', yScale(g.y) - cellH/2)
         .attr('width', cellW+0.5).attr('height', cellH+0.5)
         .attr('fill', g.pred === 0 ? 'rgba(199,81,70,0.12)' : 'rgba(45,107,160,0.12)')
-        .attr('stroke','none');  }
+        .attr('stroke','none');
+      });
+    }
 
   function drawPoints() {
     pointsGroup.selectAll('*').remove();
@@ -81,15 +83,26 @@
     const y = Math.max(0, Math.min(1, (margin.top + ph - my) / ph));
     const cls = d3.event && d3.event.shiftKey ? 1 : currentClass;
     points.push({x, y, cls});
-    redraw();  // Use mousedown for shift detection
+    redraw();
+  });
+
   svg.on('mousedown', function(event) {
     if (event.shiftKey) {
       d3.select('#knn-current-class').text('Class B (蓝)').style('color','#2D6BA0');
-    }  svg.on('mouseup', function() {
-    d3.select('#knn-current-class').text('Class A (红)').style('color','var(--terracotta)');  d3.select('#knn-k').on('input', function() {
+    }
+  });
+
+  svg.on('mouseup', function() {
+    d3.select('#knn-current-class').text('Class A (红)').style('color','var(--terracotta)');
+  });
+
+  d3.select('#knn-k').on('input', function() {
     K = +this.value;
     d3.select('#knn-k-val').text(K);
-    redraw();  d3.select('#knn-rand').on('click', function() {
+    redraw();
+  });
+
+  d3.select('#knn-rand').on('click', function() {
     points = [];
     const rng = d3.randomUniform(0.15, 0.85);
     for (let i = 0; i < 30; i++) {
@@ -98,14 +111,24 @@
       points.push({
         x: Math.max(0.02, Math.min(0.98, cx + (Math.random()-0.5)*0.5)),
         y: Math.max(0.02, Math.min(0.98, cy + (Math.random()-0.5)*0.5)),
-        cls    }
-    redraw();  d3.select('#knn-clear').on('click', function() {
+        cls
+      });
+    }
+    redraw();
+  });
+
+  d3.select('#knn-clear').on('click', function() {
     points = [];
-    redraw();  d3.select('#knn-toggle-class').on('click', function() {
+    redraw();
+  });
+
+  d3.select('#knn-toggle-class').on('click', function() {
     currentClass = 1 - currentClass;
     d3.select('#knn-current-class')
       .text(currentClass === 0 ? 'Class A (红)' : 'Class B (蓝)')
-      .style('color', currentClass === 0 ? 'var(--terracotta)' : '#2D6BA0');  // Initialize with random data
+      .style('color', currentClass === 0 ? 'var(--terracotta)' : '#2D6BA0');
+  });
+
   d3.select('#knn-rand').dispatch('click');
 })();
 
@@ -216,7 +239,10 @@
   slider.on('input', function() {
     const v = +this.value;
     d3.select('#dt-split-val').text(v.toFixed(2));
-    if (data.length > 0) update(v);  d3.select('#dt-best').on('click', function() {
+    if (data.length > 0) update(v);
+  });
+
+  d3.select('#dt-best').on('click', function() {
     let bestSplit = 0.5, bestGain = 0;
     for (let s = 0.05; s <= 0.95; s += 0.01) {
       const left = data.filter(d => d.x < s), right = data.filter(d => d.x >= s);
@@ -228,9 +254,15 @@
     }
     slider.property('value', bestSplit);
     d3.select('#dt-split-val').text(bestSplit.toFixed(2));
-    update(bestSplit);  d3.select('#dt-reshuffle').on('click', function() {
+    update(bestSplit);
+  });
+
+  d3.select('#dt-reshuffle').on('click', function() {
     generateData();
     const s = +slider.property('value');
-    update(s);  generateData();
+    update(s);
+  });
+
+  generateData();
   update(0.5);
 })();

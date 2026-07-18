@@ -484,7 +484,9 @@ const clusterColors = ['#C75146','#2D6BA0','#5B8C3E','#8B6914','#9B59B6','#E67E2
     for (let k = 1; k < K; k++) {
       const dists = points.map(p => {
         const minD = Math.min(...centroids.map(c => (p.x-c.x)**2 + (p.y-c.y)**2));
-        return minD;      const total = d3.sum(dists);
+        return minD;
+      });
+      const total = d3.sum(dists);
       let r = Math.random() * total, cum = 0;
       let chosen = points[points.length-1];
       for (let i = 0; i < points.length; i++) {
@@ -503,7 +505,11 @@ const clusterColors = ['#C75146','#2D6BA0','#5B8C3E','#8B6914','#9B59B6','#E67E2
       let best = 0, bestD = Infinity;
       centroids.forEach((c, i) => {
         const d = (p.x-c.x)**2 + (p.y-c.y)**2;
-        if (d < bestD) { bestD = d; best = i; }      return best;    return oldAssignments.every((a,i) => a === assignments[i]);
+        if (d < bestD) { bestD = d; best = i; }
+      });
+      return best;
+    });
+    return oldAssignments.every((a,i) => a === assignments[i]);
   }
 
   function updateCentroids() {
@@ -513,7 +519,9 @@ const clusterColors = ['#C75146','#2D6BA0','#5B8C3E','#8B6914','#9B59B6','#E67E2
       if (cluster.length > 0) {
         newCentroids.push({
           x: d3.mean(cluster, d => d.x),
-          y: d3.mean(cluster, d => d.y)      } else {
+          y: d3.mean(cluster, d => d.y)
+        });
+      } else {
         // Empty cluster: reinitialize randomly
         newCentroids.push(points[Math.floor(Math.random()*points.length)]);
       }
@@ -525,7 +533,9 @@ const clusterColors = ['#C75146','#2D6BA0','#5B8C3E','#8B6914','#9B59B6','#E67E2
     let sum = 0;
     points.forEach((p, i) => {
       const c = centroids[assignments[i]];
-      sum += (p.x-c.x)**2 + (p.y-c.y)**2;    return sum;
+      sum += (p.x-c.x)**2 + (p.y-c.y)**2;
+    });
+    return sum;
   }
 
   function redraw() {
@@ -542,7 +552,9 @@ const clusterColors = ['#C75146','#2D6BA0','#5B8C3E','#8B6914','#9B59B6','#E67E2
           let best = 0, bestD = Infinity;
           centroids.forEach((c, ci) => {
             const d = (gx-c.x)**2 + (gy-c.y)**2;
-            if (d < bestD) { bestD = d; best = ci; }          svg.append('rect').attr('class','km-voronoi')
+            if (d < bestD) { bestD = d; best = ci; }
+          });
+          svg.append('rect').attr('class','km-voronoi')
             .attr('x', xScale(gx)-pw/grid/2).attr('y', yScale(gy)-ph/grid/2)
             .attr('width', pw/grid+0.5).attr('height', ph/grid+0.5)
             .attr('fill', clusterColors[best]+'15').attr('stroke','none');
@@ -601,13 +613,20 @@ const clusterColors = ['#C75146','#2D6BA0','#5B8C3E','#8B6914','#9B59B6','#E67E2
     if (points.length >= K && centroids.length === 0) initCentroids();
     else { assignPoints(); updateCentroids(); assignPoints(); }
     redraw();
-    updateStats();  d3.select('#km-k').on('input', function() {
+    updateStats();
+  });
+
+  d3.select('#km-k').on('input', function() {
     K = +this.value;
     d3.select('#km-k-val').text(K);
     converged = false;
     initCentroids();
     redraw();
-    updateStats();  d3.select('#km-step').on('click', function() { doStep(); });
+    updateStats();
+  });
+
+  d3.select('#km-step').on('click', function() { doStep(); });
+
   d3.select('#km-reset').on('click', function() { converged = false; initCentroids(); redraw(); updateStats(); });
 
   let autoTimer = null;
@@ -617,7 +636,10 @@ const clusterColors = ['#C75146','#2D6BA0','#5B8C3E','#8B6914','#9B59B6','#E67E2
     autoTimer = setInterval(function() {
       if (converged) { clearInterval(autoTimer); autoTimer = null; d3.select('#km-auto').text('自动迭代 (Auto)'); return; }
       doStep();
-    }, 500);  d3.select('#km-random').on('click', function() {
+    }, 500);
+  });
+
+  d3.select('#km-random').on('click', function() {
     points = [];
     // Generate clustered data
     const centers = [];
@@ -628,14 +650,21 @@ const clusterColors = ['#C75146','#2D6BA0','#5B8C3E','#8B6914','#9B59B6','#E67E2
       const c = centers[Math.floor(Math.random()*K)];
       points.push({
         x: Math.max(0.02, Math.min(0.98, c.x + (Math.random()-0.5)*0.25)),
-        y: Math.max(0.02, Math.min(0.98, c.y + (Math.random()-0.5)*0.25))    }
+        y: Math.max(0.02, Math.min(0.98, c.y + (Math.random()-0.5)*0.25))
+      });
+    }
     converged = false;
     initCentroids();
     redraw();
-    updateStats();  d3.select('#km-clear').on('click', function() {
+    updateStats();
+  });
+
+  d3.select('#km-clear').on('click', function() {
     points = []; centroids = []; assignments = []; converged = false;
     redraw();
-    updateStats();  // Init
+    updateStats();
+  });
+
   d3.select('#km-random').dispatch('click');
 })();
 
@@ -692,7 +721,9 @@ const clusterColors = ['#C75146','#2D6BA0','#5B8C3E','#8B6914','#9B59B6','#E67E2
     centers.forEach(([cx,cy]) => {
       for (let i = 0; i < 80; i++) {
         data.push({x: cx + (Math.random()-0.5)*0.2, y: cy + (Math.random()-0.5)*0.2});
-      }  }
+      }
+    });
+  }
 
   function dbscan(eps, minPts) {
     const labels = new Array(data.length).fill(-1); // -1 = unvisited/noise
@@ -754,7 +785,9 @@ const clusterColors = ['#C75146','#2D6BA0','#5B8C3E','#8B6914','#9B59B6','#E67E2
         let best = 0, bestD = Infinity;
         centroids.forEach((c, ci) => {
           const d = (data[i].x-c.x)**2 + (data[i].y-c.y)**2;
-          if (d < bestD) { bestD = d; best = ci; }        if (labels[i] !== best) { labels[i] = best; changed = true; }
+          if (d < bestD) { bestD = d; best = ci; }
+        });
+        if (labels[i] !== best) { labels[i] = best; changed = true; }
       }
       if (!changed) break;
       for (let k = 0; k < K; k++) {
@@ -773,7 +806,8 @@ const clusterColors = ['#C75146','#2D6BA0','#5B8C3E','#8B6914','#9B59B6','#E67E2
       .attr('cx', d => xScale(d.x)).attr('cy', d => yScale(d.y))
       .attr('r', 3.5).attr('fill', (d,i) => {
         if (labels[i] === -1) return '#aaa';
-        return clusterColors[labels[i] % clusterColors.length];      .attr('stroke', '#fff').attr('stroke-width', 0.8).attr('opacity', 0.85);
+        return clusterColors[labels[i] % clusterColors.length];
+      }).attr('stroke', '#fff').attr('stroke-width', 0.8).attr('opacity', 0.85);
   }
 
   function update() {

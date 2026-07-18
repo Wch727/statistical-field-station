@@ -35,7 +35,9 @@
           dist[to] = dist[u] + w;
           prev[to] = u;
           pq.push([to, dist[to]]);
-        }    }
+        }
+      });
+    }
     // Reconstruct path
     const path = [];
     let cur = end;
@@ -67,7 +69,9 @@
       svg.append('text').attr('x',mx).attr('y',my-8)
         .text(e.w).style('font-family','var(--mono)').style('font-size','0.7rem')
         .style('fill', inPath ? 'var(--terracotta)' : 'var(--slate)').style('text-anchor','middle')
-        .style('font-weight', inPath ? '700' : '400');    // Nodes
+        .style('font-weight', inPath ? '700' : '400');
+    });
+    // Nodes
     nodes.forEach(n => {
       const isStart = n.id === selectedStart;
       const isEnd = n.id === selectedEnd;
@@ -84,7 +88,10 @@
           if (selectedStart === null) { selectedStart = n.id; selectedEnd = null; }
           else if (selectedEnd === null && n.id !== selectedStart) { selectedEnd = n.id; }
           else { selectedStart = n.id; selectedEnd = null; }
-          draw();      svg.append('text').attr('x',n.x).attr('y',n.y+5)
+          draw();
+        });
+
+      svg.append('text').attr('x',n.x).attr('y',n.y+5)
         .text(n.id).style('font-family','var(--mono)').style('font-size','0.75rem')
         .style('fill', (isStart || isEnd) ? '#fff' : 'var(--forest)')
         .style('text-anchor','middle').style('font-weight','700')
@@ -92,7 +99,11 @@
           if (selectedStart === null) { selectedStart = n.id; selectedEnd = null; }
           else if (selectedEnd === null && n.id !== selectedStart) { selectedEnd = n.id; }
           else { selectedStart = n.id; selectedEnd = null; }
-          draw();    // Stats
+          draw();
+        });
+    });
+
+    // Stats
     if (result && result.path.length > 0) {
       d3.select('#sp-stats').html(`
         <div class="stat-card"><div class="lbl">最短距离</div><div class="val" style="color:var(--terracotta)">${result.dist}</div></div>
@@ -109,6 +120,8 @@
       d3.select('#sp-path-info').text('');
     }
   }
+
+
 
   d3.select('#sp-reset').on('click', () => { selectedStart = null; selectedEnd = null; draw(); });
   d3.select('#sp-preset').on('click', () => { selectedStart = 0; selectedEnd = 5; draw(); });
@@ -180,3 +193,5 @@
     svg.selectAll('circle').remove();
     updateStats();  addPoints(200);
 })();
+})();
+  });

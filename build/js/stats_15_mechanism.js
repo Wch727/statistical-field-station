@@ -136,7 +136,10 @@
     const lx = margin.left + pw - 120, ly = margin.top + 10;
     [['S 易感','#2D6BA0'],['I 感染','var(--terracotta)'],['R 康复','#5B8C3E']].forEach(([lbl,clr],i) => {
       svg.append('line').attr('x1',lx).attr('x2',lx+20).attr('y1',ly+i*18).attr('y2',ly+i*18).attr('stroke',clr).attr('stroke-width',2);
-      svg.append('text').attr('x',lx+24).attr('y',ly+i*18+4).text(lbl).style('font-family','var(--mono)').style('font-size','0.65rem').style('fill','var(--slate)');    // Peak
+      svg.append('text').attr('x',lx+24).attr('y',ly+i*18+4).text(lbl).style('font-family','var(--mono)').style('font-size','0.65rem').style('fill','var(--slate)');
+    });
+
+    // Peak
     const peakI = d3.max(data, d => d.I);
     const peakT = data.find(d => d.I === peakI)?.t || 0;
     const finalR = data[data.length-1].R;

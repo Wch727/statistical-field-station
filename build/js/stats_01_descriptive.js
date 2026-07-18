@@ -37,6 +37,3 @@ function updateDescStats() {
 }
 
 renderDescTable(); updateDescStats();
-
-', display: false}],
-    throwOnError: false, strict: false,}

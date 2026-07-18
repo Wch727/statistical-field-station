@@ -30,7 +30,9 @@ function updateTTest(){
     const line=d3.line().x(d=>xScale(d.x)).y(d=>yScale(d.y)).curve(d3.curveBasis);
     const data=Array.from({length:pts},(_,i)=>{const x=xMin+(xMax-xMin)*i/pts;return{x,y:normalPDF(x,g.m,g.s)};});
     svg.append('path').datum(data).attr('d',line).attr('fill',g.color).attr('opacity',0.2).attr('stroke',g.color).attr('stroke-width',2);
-    svg.append('text').attr('x',xScale(g.m)).attr('y',MM.t+10).attr('text-anchor','middle').attr('font-family','var(--mono)').attr('font-size','0.7rem').attr('fill',g.color).text(g.label);  svg.append('g').attr('transform',`translate(0,${H-MM.b})`).call(d3.axisBottom(xScale).ticks(5));
+    svg.append('text').attr('x',xScale(g.m)).attr('y',MM.t+10).attr('text-anchor','middle').attr('font-family','var(--mono)').attr('font-size','0.7rem').attr('fill',g.color).text(g.label);
+  });
+  svg.append('g').attr('transform',`translate(0,${H-MM.b})`).call(d3.axisBottom(xScale).ticks(5));
   svg.selectAll('.axis text').attr('font-family','var(--mono)').attr('font-size','0.7rem').attr('fill','var(--slate)');
   svg.selectAll('.axis line,.axis path').attr('stroke','var(--stone)');
 }
@@ -131,7 +133,8 @@ function updateChiSquare(){
 
   groups.forEach((g,i)=>{
     svg.append('rect').attr('x',xScale(g)+xSub('Observed')).attr('y',yScale(obs[i])).attr('width',xSub.bandwidth()).attr('height',H-MM.b-yScale(obs[i])).attr('fill','var(--terracotta)').attr('opacity',0.7);
-    svg.append('rect').attr('x',xScale(g)+xSub('Expected')).attr('y',yScale(exp[i])).attr('width',xSub.bandwidth()).attr('height',H-MM.b-yScale(exp[i])).attr('fill','var(--forest)').attr('opacity',0.5);}
+    svg.append('rect').attr('x',xScale(g)+xSub('Expected')).attr('y',yScale(exp[i])).attr('width',xSub.bandwidth()).attr('height',H-MM.b-yScale(exp[i])).attr('fill','var(--forest)').attr('opacity',0.5);
+    });
 
 function resetChiSquare(){
   document.getElementById('chi-o11').textContent='38';document.getElementById('chi-o12').textContent='12';
@@ -148,4 +151,4 @@ function randomChiSquare(){
 
 // ═══════════ Init ═══════════
 updateTTest();updateChiSquare();
-window.addEventListener('resize',()=>{clearTimeout(window._rt);window._rt=setTimeout(()=>{updateTTest();updateChiSquare();},250)});
+window.addEventListener('resize',()=>{clearTimeout(window._rt);window._rt=setTimeout(()=>{updateTTest();updateChiSquare();},250)});}

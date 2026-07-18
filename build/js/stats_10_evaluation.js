@@ -93,11 +93,16 @@
       svg.append('rect').attr('x', xScale(d.x0)).attr('y', yScale(d.length))
         .attr('width', Math.max(1, xScale(d.x1)-xScale(d.x0)-1))
         .attr('height', yScale(0)-yScale(d.length))
-        .attr('fill', '#2D6BA0').attr('opacity', 0.5);    histPos.forEach(d => {
+        .attr('fill', '#2D6BA0').attr('opacity', 0.5);
+    });
+    histPos.forEach(d => {
       svg.append('rect').attr('x', xScale(d.x0)).attr('y', yScale(d.length))
         .attr('width', Math.max(1, xScale(d.x1)-xScale(d.x0)-1))
         .attr('height', yScale(0)-yScale(d.length))
-        .attr('fill', '#C75146').attr('opacity', 0.5);    // Threshold line
+        .attr('fill', '#C75146').attr('opacity', 0.5);
+    });
+
+    // Threshold line
     svg.append('line').attr('x1',xScale(thresh)).attr('x2',xScale(thresh))
       .attr('y1',margin.top).attr('y2',margin.top+ph)
       .attr('stroke','var(--gold)').attr('stroke-width',2).attr('stroke-dasharray','6,3');
@@ -164,9 +169,13 @@
   d3.select('#cm-thresh').on('input', update);
   d3.select('#cm-ratio').on('input', function() {
     generateScores(+this.value);
-    update();  d3.select('#cm-reshuffle').on('click', function() {
+    update();
+  });
+  d3.select('#cm-reshuffle').on('click', function() {
     generateScores(+d3.select('#cm-ratio').property('value'));
-    update();  generateScores(0.3);
+    update();
+  });
+  generateScores(0.3);
   update();
 })();
 
@@ -195,7 +204,9 @@
       data3D.push({
         x1: 0.8*a + 0.2*b + noise,
         x2: 0.6*a - 0.4*b + (Math.random()-0.5)*0.5,
-        x3: 0.4*a + 0.6*b + (Math.random()-0.5)*0.5    }
+        x3: 0.4*a + 0.6*b + (Math.random()-0.5)*0.5
+      });
+    }
   }
 
   function computePCA() {

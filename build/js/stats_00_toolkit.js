@@ -156,16 +156,24 @@
     currentFold = 0;
     folds = getFolds();
     draw();
-    updateFoldDisplay();  d3.select('#cv-next').on('click', () => {
+    updateFoldDisplay();
+  });
+  d3.select('#cv-next').on('click', () => {
     currentFold = (currentFold + 1) % K;
     draw();
-    updateFoldDisplay();  d3.select('#cv-prev').on('click', () => {
+    updateFoldDisplay();
+  });
+  d3.select('#cv-prev').on('click', () => {
     currentFold = (currentFold - 1 + K) % K;
     draw();
-    updateFoldDisplay();  d3.select('#cv-shuffle').on('click', () => {
+    updateFoldDisplay();
+  });
+  d3.select('#cv-shuffle').on('click', () => {
     generateData();
     currentFold = 0;
     folds = getFolds();
     draw();
-    updateFoldDisplay();  init();
+    updateFoldDisplay();
+  });
+  init();
 })();

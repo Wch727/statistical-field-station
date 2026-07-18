@@ -76,9 +76,13 @@
     const tVal = 1.96; // approximate t_{n-2, 0.975} for n >= 30
     const piUpper = xAll.map((x, i) => {
       const se = sigma * Math.sqrt(1 + 1/n + (x - mx)**2 / Sxx);
-      return yHats[i] + tVal * se;    const piLower = xAll.map((x, i) => {
+      return yHats[i] + tVal * se;
+    });
+    const piLower = xAll.map((x, i) => {
       const se = sigma * Math.sqrt(1 + 1/n + (x - mx)**2 / Sxx);
-      return yHats[i] - tVal * se;    // PI band
+      return yHats[i] - tVal * se;
+    });
+    // PI band
     const area = d3.area()
       .x((d, i) => xScale(xAll[i]))
       .y0((d, i) => yScale(piLower[i]))
@@ -89,9 +93,13 @@
     // Confidence interval band (narrower)
     const ciUpper = xAll.map((x, i) => {
       const se = sigma * Math.sqrt(1/n + (x - mx)**2 / Sxx);
-      return yHats[i] + tVal * se;    const ciLower = xAll.map((x, i) => {
+      return yHats[i] + tVal * se;
+    });
+    const ciLower = xAll.map((x, i) => {
       const se = sigma * Math.sqrt(1/n + (x - mx)**2 / Sxx);
-      return yHats[i] - tVal * se;    const ciArea = d3.area()
+      return yHats[i] - tVal * se;
+    });
+    const ciArea = d3.area()
       .x((d, i) => xScale(xAll[i]))
       .y0((d, i) => yScale(ciLower[i]))
       .y1((d, i) => yScale(ciUpper[i]));
@@ -145,11 +153,15 @@
     noise = +this.value;
     d3.select('#pred-noise-val').text(noise.toFixed(1));
     generateData();
-    update();  d3.select('#pred-n').on('input', function() {
+    update();
+  });
+  d3.select('#pred-n').on('input', function() {
     nPts = +this.value;
     d3.select('#pred-n-val').text(nPts);
     generateData();
-    update();  d3.select('#pred-reshuffle').on('click', () => { generateData(); update(); });
+    update();
+  });
+  d3.select('#pred-reshuffle').on('click', () => { generateData(); update(); });
 
   generateData();
   update();
@@ -369,7 +381,9 @@
   d3.select('#gm-steps').on('input', function() {
     forecastSteps = +this.value;
     d3.select('#gm-steps-val').text(forecastSteps);
-    updateGM();  d3.select('#gm-reshuffle').on('click', () => { generateGMData(); updateGM(); });
+    updateGM();
+  });
+  d3.select('#gm-reshuffle').on('click', () => { generateGMData(); updateGM(); });
   d3.select('#gm-add-noise').on('click', () => {
     for (let i = 0; i < gmData.length; i++) {
       gmData[i] += (Math.random() - 0.5) * gmData[i] * 0.12;
@@ -378,3 +392,4 @@
     updateGM();  generateGMData();
   updateGM();
 })();
+});

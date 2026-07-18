@@ -528,7 +528,9 @@ if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
       const sp = Math.sqrt((d.v1-ideal.v1)**2 + (d.v2-ideal.v2)**2);
       const sm = Math.sqrt((d.v1-anti.v1)**2 + (d.v2-anti.v2)**2);
       const c = sm / (sp + sm);
-      return {name: d.name, v1: d.v1, v2: d.v2, sp, sm, c};    result.sort((a,b) => b.c - a.c);
+      return {name: d.name, v1: d.v1, v2: d.v2, sp, sm, c};
+    });
+    result.sort((a,b) => b.c - a.c);
     return {result, ideal, anti};
   }
 
@@ -568,7 +570,10 @@ if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
       svg.append('line').attr('x1',xScale(d.v1)).attr('y1',yScale(d.v2)).attr('x2',xScale(anti.v1)).attr('y2',yScale(anti.v2)).attr('stroke','var(--terracotta)').attr('stroke-width',1).attr('stroke-dasharray','2,3').attr('opacity',0.4);
       // Point
       svg.append('circle').attr('cx',xScale(d.v1)).attr('cy',yScale(d.v2)).attr('r',5).attr('fill','var(--forest)').attr('stroke','#fff').attr('stroke-width',1.5);
-      svg.append('text').attr('x',xScale(d.v1)+8).attr('y',yScale(d.v2)-6).text(d.name).style('font-family','var(--mono)').style('font-size','0.7rem').style('fill','var(--forest)').style('font-weight','600');    // Ranking table
+      svg.append('text').attr('x',xScale(d.v1)+8).attr('y',yScale(d.v2)-6).text(d.name).style('font-family','var(--mono)').style('font-size','0.7rem').style('fill','var(--forest)').style('font-weight','600');
+    });
+
+    // Ranking table
     const colors = ['var(--terracotta)','var(--gold)','var(--forest)','var(--slate)','var(--slate)','var(--slate)'];
     d3.select('#topsis-rank').html(`
       <p style="font-family:var(--mono);font-size:0.72rem;color:var(--slate);margin-bottom:8px">排名（相对贴近度 Cᵢ）：</p>
@@ -622,13 +627,17 @@ if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
     const row = slidersDiv.append('div').style('display','flex').style('align-items','center').style('gap','8px').style('margin-bottom','6px');
     row.append('span').style('font-family','var(--mono)').style('font-size','0.7rem').style('color','var(--slate)').style('min-width','140px').text(label);
     row.append('input').attr('type','range').attr('id',`ahp-p${idx}`).attr('min',0).attr('max',16).attr('value',scales.indexOf(defaultPairs[idx])).style('flex','1').style('accent-color','var(--terracotta)');
-    row.append('span').attr('id',`ahp-v${idx}`).style('font-family','var(--mono)').style('font-size','0.78rem').style('font-weight','600').style('color','var(--terracotta)').style('min-width','36px').style('text-align','right');  const wSvg = d3.select('#ahp-weight-chart').append('svg').attr('width',380).attr('height',160).attr('viewBox','0 0 380 160');
+    row.append('span').attr('id',`ahp-v${idx}`).style('font-family','var(--mono)').style('font-size','0.78rem').style('font-weight','600').style('color','var(--terracotta)').style('min-width','36px').style('text-align','right');
+  });
+  const wSvg = d3.select('#ahp-weight-chart').append('svg').attr('width',380).attr('height',160).attr('viewBox','0 0 380 160');
 
   function update() {
     // Get values
     const pairs = pairLabels.map((_,i) => {
       const idx = +d3.select(`#ahp-p${i}`).property('value');
-      return scales[idx];    pairs.forEach((v,i) => d3.select(`#ahp-v${i}`).text(v < 1 ? v.toFixed(2) : v.toFixed(0)));
+      return scales[idx];
+    });
+    pairs.forEach((v,i) => d3.select(`#ahp-v${i}`).text(v < 1 ? v.toFixed(2) : v.toFixed(0)));
 
     // Build full matrix
     const A = Array.from({length: n}, () => new Array(n).fill(1));
@@ -688,7 +697,7 @@ if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
       .style('fill','var(--forest)').text(d => d.toFixed(3));
   }
 
-  d3.selectAll('[id^="ahp-p"]').on('input', update);
+  pairLabels.forEach((_, i) => d3.select(`#ahp-p${i}`).on('input', update));
   update();
 })();
 
