@@ -88,8 +88,7 @@ const homeJs = ''; // JS modules will be added in Phase 3
 
 let homeHtml = homeTemplate
   .replace('{{HOME_CSS}}', homeCss)
-  .replace('{{HOME_CONTENT}}', homeContent)
-  .replace('{{HOME_JS}}', homeJs);
+  .replace('{{HOME_CONTENT}}', homeContent);
 
 fs.writeFileSync(path.join(ROOT, 'stats_tutorial.html'), homeHtml);
 console.log(`  stats_tutorial.html (${homeHtml.length} bytes)`);
