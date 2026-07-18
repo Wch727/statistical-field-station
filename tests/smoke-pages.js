@@ -104,10 +104,37 @@ async function main() {
     }
   }
 
+  // ── Mobile viewport check (first 3 pages as sample) ──
+  console.log('\n── Mobile viewport check (375×812) ──');
+  const mobileContext = await browser.newContext({ viewport: { width: 375, height: 812 } });
+  for (const pageFile of pages.slice(0, 3)) {
+    const url = `http://localhost:${PORT}/${pageFile}`;
+    try {
+      const page = await mobileContext.newPage();
+      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 15000 });
+      await page.waitForTimeout(1000);
+
+      const hasOverflow = await page.evaluate(() =>
+        document.documentElement.scrollWidth > window.innerWidth + 5
+      );
+      if (hasOverflow) {
+        console.error(`MOBILE OVERFLOW: ${pageFile}`);
+        failures++;
+      } else {
+        console.log(`OK   ${pageFile} (mobile)`);
+      }
+      await page.close();
+    } catch (err) {
+      console.error(`MOBILE FATAL: ${pageFile} — ${err.message}`);
+      failures++;
+    }
+  }
+  await mobileContext.close();
+
   await browser.close();
   server.close();
 
-  console.log(`\n${pages.length - failures}/${pages.length} pages OK, ${failures} failed.`);
+  console.log(`\n${pages.length - failures}/${pages.length + 3} checks OK, ${failures} failed.`);
   if (failures > 0) process.exitCode = 1;
 }
 

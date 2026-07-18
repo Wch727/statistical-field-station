@@ -40,8 +40,21 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run test:smoke
 
+  python-golden:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: pip install -r tests/python/requirements.txt
+      - run: pytest tests/python/ -v
+
   deploy:
-    needs: [statistics, links, assets, smoke]
+    needs: [statistics, links, assets, smoke, python-golden]
     if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     permissions:
