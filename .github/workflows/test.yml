@@ -1,8 +1,11 @@
-name: Tests
+name: Tests & Deploy
 
 on:
   push:
   pull_request:
+
+permissions:
+  contents: read
 
 jobs:
   statistics:
@@ -36,3 +39,23 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run test:smoke
+
+  deploy:
+    needs: [statistics, links, assets, smoke]
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+      - uses: actions/deploy-pages@v4
+        id: deployment

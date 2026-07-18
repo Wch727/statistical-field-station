@@ -92,7 +92,7 @@ footer{text-align:center;padding:32px 0;font-size:0.82rem;color:var(--slate);bor
 footer a{color:var(--slate);text-decoration:underline}
 
 /* Code blocks */
-.code-block,pre{white-space:pre-wrap !important;word-break:break-word;overflow-wrap:break-word;overflow-x:auto}
+.code-block,pre{white-space:pre;overflow-x:auto}
 
 /* CDN fallback banner */
 .cdn-fallback{background:#C75146;color:#fff;padding:12px;text-align:center;font-family:Inter,sans-serif;display:none}
@@ -108,4 +108,5 @@ footer a{color:var(--slate);text-decoration:underline}
   h2 { font-size: 1.35rem; }
   .panel { padding: 16px; }
   .q6-grid { grid-template-columns: 1fr; }
+  .code-block, pre { white-space: pre-wrap; overflow-wrap: anywhere; }
 }

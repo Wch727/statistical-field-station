@@ -320,10 +320,12 @@ t = \frac{\bar{x} - \mu_0}{s / \sqrt{n}} \sim t_{n-1}
 <tr><td>连续变量，两组独立</td><td>均值是否相等</td><td>Welch t-test</td><td>均值差的置换检验</td></tr>
 <tr><td>连续变量，两组独立</td><td>分布位置是否相同</td><td>Mann-Whitney U</td><td>Brunner-Munzel 检验</td></tr>
 <tr><td>连续变量，两组配对</td><td>差值是否为 0</td><td>配对 t-test</td><td>Wilcoxon Signed-Rank</td></tr>
-<tr><td>连续变量，三组+</td><td>均值是否全相等</td><td>One-Way ANOVA</td><td>Kruskal-Wallis</td></tr>
+<tr><td>连续变量，三组+</td><td>均值是否全相等</td><td>ANOVA；方差不齐用 Welch ANOVA</td><td>均值差的置换检验</td></tr>
+<tr><td>连续变量，三组+</td><td>分布位置是否相同</td><td>Kruskal-Wallis</td><td>稳健秩方法或置换检验</td></tr>
 <tr><td>分类变量，r×c 表</td><td>是否独立</td><td>卡方独立性检验</td><td>Fisher 精确检验</td></tr>
 <tr><td>分类变量，1 维</td><td>是否符合理论分布</td><td>卡方拟合优度</td><td>精确多项式 / Monte Carlo</td></tr>
-<tr><td>连续变量，单样本</td><td>是否符合某连续分布</td><td>Kolmogorov-Smirnov</td><td>Anderson-Darling / Shapiro-Wilk</td></tr>
+<tr><td>连续变量，单样本</td><td>是否符合已确定参数的理论分布</td><td>Kolmogorov-Smirnov</td><td>Anderson-Darling</td></tr>
+<tr><td>连续变量，单样本</td><td>是否符合正态分布</td><td>Shapiro-Wilk</td><td>Lilliefors 校正 KS</td></tr>
 <tr><td>连续变量，单样本</td><td>均值是否等于 μ₀</td><td>单样本 t-test</td><td>Wilcoxon Signed-Rank</td></tr>
 <tr><td>任何分布，任何问题</td><td>最后一招</td><td>——</td><td>Bootstrap / 置换检验</td></tr>
 </tbody>
@@ -331,7 +333,7 @@ t = \frac{\bar{x} - \mu_0}{s / \sqrt{n}} \sim t_{n-1}
 </div>
 
 <div class="note-box">
-<strong>竞赛决策口诀：</strong>关心均值差异 → Welch t / ANOVA 或均值差的置换检验；关心秩或分布位置差异 → Mann-Whitney / Kruskal-Wallis（仅在两组分布形状相仿时才方便解释为中位数差异）；分类计数 → 卡方检验（小样本用 Fisher）；连续变量与连续分布比较 → KS 检验；不确定 → 置换检验。报告时：p 值 + 效应量 + 置信区间，三者缺一不可！
+<strong>竞赛决策口诀：</strong>关心均值差异 → Welch t / ANOVA 或均值差的置换检验（方差不齐≠自动换秩检验，先考虑 Welch 校正）；关心秩或分布位置差异 → Mann-Whitney / Kruskal-Wallis（仅在分布形状相仿时才方便解释为中位数差异）；分类计数 → 卡方检验（小样本用 Fisher）；连续与已确定参数的理论分布比较 → KS 检验（若参数由样本估计，需 Lilliefors 校正或参数 Bootstrap）；正态性检验 → Shapiro-Wilk；不确定 → 置换检验。报告时：p 值 + 效应量 + 置信区间，三者缺一不可！
 </div>
 
 <!-- ═══════════ INTERACTIVE 1: t-TEST ═══════════ -->
