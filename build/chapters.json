@@ -19,46 +19,7 @@
       "论文六问"
     ],
     "prev": null,
-    "next": "01_descriptive",
-    "quiz": [
-      {
-        "question": "在竞赛中，模型验证的核心目的是什么？",
-        "options": [
-          "证明模型的绝对正确性",
-          "验证模型的可靠性、评估其局限、确保其可复现",
-          "展示模型在所有数据集上都表现最优",
-          "证明模型优于所有其他方法"
-        ],
-        "correct": 1,
-        "explanation": "模型验证是为了评估模型的可靠性、局限性和可复现性，而非宣称绝对正确或最优。"
-      },
-      {
-        "question": "train_test_split的哪个参数可以确保类别比例在训练集和测试集中一致？",
-        "options": [
-          "random_state",
-          "shuffle",
-          "stratify",
-          "test_size"
-        ],
-        "correct": 2,
-        "explanation": "stratify=y 确保目标变量 y 的类别比例在训练/测试集中保持一致，对分类问题特别重要。"
-      },
-      {
-        "question": "以下哪个 colormap 对红绿色盲友好？",
-        "options": [
-          "RdYlGn",
-          "jet",
-          "RdYlBu",
-          "rainbow"
-        ],
-        "correct": 2,
-        "explanation": "RdYlBu（红-黄-蓝）是色盲友好选择。RdYlGn（红-黄-绿）是常见误区——红绿色盲无法分辨红绿两端。"
-      }
-    ],
-    "caseStudy": {
-      "title": "案例：古代玻璃成分分析",
-      "body": "2022年CUMCM C题：根据玻璃文物化学成分数据，区分高钾玻璃和铅钡玻璃。本案例贯穿所有章节——从数据清洗到模型评估的完整竞赛流程。"
-    }
+    "next": "01_descriptive"
   },
   {
     "slug": "01_descriptive",
@@ -84,46 +45,7 @@
       "MAD"
     ],
     "prev": "00_toolkit",
-    "next": "02_visualization",
-    "quiz": [
-      {
-        "question": "样本方差分母用 n−1 而不是 n 的原因是什么？",
-        "options": [
-          "为了让方差变大",
-          "使样本方差成为总体方差的无偏估计",
-          "这是约定俗成",
-          "为了简化计算"
-        ],
-        "correct": 1,
-        "explanation": "Bessel校正：E[s²]=σ²，使用 n−1 使样本方差成为总体方差的无偏估计量。这补偿了用样本均值估计总体均值所消耗的一个自由度。"
-      },
-      {
-        "question": "对于严重右偏的收入数据，哪个中心趋势度量最合适？",
-        "options": [
-          "均值",
-          "中位数",
-          "众数",
-          "标准差"
-        ],
-        "correct": 1,
-        "explanation": "中位数对极端值稳健。右偏分布中均值会被极端高值拉高，中位数更准确反映\"典型\"水平。"
-      },
-      {
-        "question": "Shapiro-Wilk检验的原假设是什么？",
-        "options": [
-          "数据不服从正态分布",
-          "数据服从正态分布",
-          "两组数据方差相等",
-          "两组数据中位数相等"
-        ],
-        "correct": 1,
-        "explanation": "SW检验的H₀：数据来自正态分布。p<0.05拒绝H₀，认为数据显著偏离正态。但大样本下SW过于敏感，建议配合Q-Q图。"
-      }
-    ],
-    "caseStudy": {
-      "title": "案例：玻璃成分的描述统计",
-      "body": "58个玻璃样品，14种化学成分（SiO₂, Na₂O, K₂O, CaO, MgO, Al₂O₃, Fe₂O₃, CuO, PbO, BaO, P₂O₅, SrO, SnO₂, SO₂）。高钾玻璃的K₂O均值远高于铅钡玻璃，而铅钡玻璃的PbO和BaO含量极高。数据存在风化导致成分变化的缺失值。"
-    }
+    "next": "02_visualization"
   },
   {
     "slug": "02_visualization",
@@ -149,11 +71,7 @@
       "热力图"
     ],
     "prev": "01_descriptive",
-    "next": "03_correlation",
-    "caseStudy": {
-      "title": "案例：玻璃成分的可视化",
-      "body": "PbO-K₂O散点图清楚地将两类玻璃分开。风化样品在SiO₂含量上系统性偏低。箱线图显示高钾玻璃的Al₂O₃分布更集中。相关性热力图揭示SiO₂与助熔剂氧化物（Na₂O+K₂O+PbO）有强负相关——玻璃工艺的基本化学规律。"
-    }
+    "next": "03_correlation"
   },
   {
     "slug": "03_correlation",
@@ -179,11 +97,7 @@
       "Cramér's V"
     ],
     "prev": "02_visualization",
-    "next": "04_hypothesis",
-    "caseStudy": {
-      "title": "案例：玻璃成分的相关分析",
-      "body": "14种化学成分的Pearson相关矩阵：SiO₂与PbO呈强负相关(r≈−0.85)——富铅玻璃必然少硅。PbO与BaO呈正相关(r≈0.72)——铅钡玻璃中两者共同出现。这些相关性反映了古代玻璃制造的原料配方差异。"
-    }
+    "next": "04_hypothesis"
   },
   {
     "slug": "04_hypothesis",
@@ -210,42 +124,7 @@
       "检验选择决策树"
     ],
     "prev": "03_correlation",
-    "next": "05_anova",
-    "quiz": [
-      {
-        "question": "为什么竞赛中建议默认使用Welch t检验而非Student t检验？",
-        "options": [
-          "Welch计算更简单",
-          "Welch不假设两组方差相等，更稳健",
-          "Welch的p值总是更小",
-          "Welch是唯一能做双侧检验的方法"
-        ],
-        "correct": 1,
-        "explanation": "Welch t检验不假设方差齐性（使用Satterthwaite近似自由度），在方差异质时也能控制I类错误。竞赛中默认使用Welch是更稳健的选择。"
-      },
-      {
-        "question": "p=0.03 在α=0.05时意味着什么？",
-        "options": [
-          "原假设有3%概率为真",
-          "在原假设为真的条件下，观察到当前或更极端结果的概率为3%",
-          "备择假设有97%概率为真",
-          "效应量是0.03"
-        ],
-        "correct": 1,
-        "explanation": "p值是在H₀为真的前提下，数据与H₀不一致的程度。p=0.03不意味着H₀为真的概率是3%。"
-      },
-      {
-        "question": "报告p值的同时需要报告什么？",
-        "options": [
-          "只需要p值就够了",
-          "效应量和置信区间",
-          "样本量就够了",
-          "平均值就够了"
-        ],
-        "correct": 1,
-        "explanation": "p值受样本量影响大——大样本下微小效应也能显著。效应量量化了效应的实际大小，不受样本量影响。置信区间给出参数估计的不确定性范围。"
-      }
-    ]
+    "next": "05_anova"
   },
   {
     "slug": "05_anova",
@@ -347,11 +226,7 @@
       "SMOTE"
     ],
     "prev": "07_logistic",
-    "next": "09_clustering",
-    "caseStudy": {
-      "title": "案例：玻璃类型的分类",
-      "body": "以14种化学成分为特征，分类目标：高钾玻璃 vs 铅钡玻璃。决策树用PbO>5%为关键分裂点（直观可解释）。随机森林特征重要性：PbO>BaO>K₂O>SiO₂。测试集准确率>95%。这是典型的高维小样本分类问题。"
-    }
+    "next": "09_clustering"
   },
   {
     "slug": "09_clustering",
@@ -377,11 +252,7 @@
       "Davies-Bouldin"
     ],
     "prev": "08_classification",
-    "next": "10_evaluation",
-    "caseStudy": {
-      "title": "案例：玻璃样品的聚类",
-      "body": "对标准化成分做K-Means（K=2）聚类，纯度高——仅2个样品与已知标签不一致（可能是风化导致的成分偏移）。层次聚类树状图直观展示了两个大类的分离。轮廓系数=0.62，表明聚类结构较好。"
-    }
+    "next": "10_evaluation"
   },
   {
     "slug": "10_evaluation",
@@ -408,11 +279,7 @@
       "特征选择"
     ],
     "prev": "09_clustering",
-    "next": "11_timeseries",
-    "caseStudy": {
-      "title": "案例：玻璃分类模型的评估",
-      "body": "留一交叉验证（n=58适合LOOCV）：逻辑回归AUC=0.97，随机森林AUC=0.99。混淆矩阵显示仅1个风化严重的铅钡玻璃被误判为高钾玻璃。PCA前2主成分解释68%方差，biplot显示两类在PC1方向完全分离。"
-    }
+    "next": "11_timeseries"
   },
   {
     "slug": "11_timeseries",
@@ -517,11 +384,7 @@
       "灵敏度"
     ],
     "prev": "13_optimization",
-    "next": "15_mechanism",
-    "caseStudy": {
-      "title": "案例：分类方法的综合评价",
-      "body": "用TOPSIS综合评价三种分类方法（逻辑回归、随机森林、SVM）在玻璃分类任务上的表现。指标：准确率、AUC、训练速度、可解释性。权重：准确率最重要（熵权法客观赋权）。随机森林综合得分最高。"
-    }
+    "next": "15_mechanism"
   },
   {
     "slug": "15_mechanism",
@@ -571,21 +434,6 @@
       "元胞自动机"
     ],
     "prev": "15_mechanism",
-    "next": "case_glass"
-  },
-  {
-    "slug": "case_glass",
-    "file": "stats_case_glass.html",
-    "num": "案例",
-    "title": "古代玻璃成分分析",
-    "short": "案例总览",
-    "deck": "2022年CUMCM C题完整复盘——从数据清洗到模型评估，贯穿全部17章的真实竞赛案例。展示一道题如何串联描述统计、可视化、相关分析、假设检验、分类、聚类、模型评估和综合评价。",
-    "prereqs": ["§I", "§VII", "§VIII", "§IX", "§X"],
-    "time": 30,
-    "difficulty": "intermediate",
-    "priority": "core",
-    "tags": ["案例", "CUMCM", "玻璃分类", "端到端", "分类", "聚类", "PCA"],
-    "prev": "16_graph",
     "next": null
   }
 ]

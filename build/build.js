@@ -41,16 +41,6 @@ function nextLink(ch) {
   return ' &nbsp;|&nbsp; 下一章：<a href="' + next.file + '">' + next.num + ' ' + next.short + ' →</a>';
 }
 
-// ── Build quiz HTML ──
-function buildQuiz(ch) {
-  if (!ch.quiz || !ch.quiz.length) return { section: '', script: '' };
-  const quizData = JSON.stringify(ch.quiz);
-  const quizTitle = ch.num + ' ' + ch.short + ' — 自测题';
-  return {
-    section: '<div id="quiz-widget" class="quiz-widget"></div>',
-    script: '<script>window.__QUIZ_DATA__=' + quizData + ';window.__QUIZ_TITLE__="' + quizTitle + '";</script>\n<script src="assets/js/quiz.js"></script>'
-  };
-}
 
 // ── Build all chapter pages ──
 console.log('Building chapter pages...');
@@ -72,16 +62,7 @@ for (const ch of chapters) {
   const prev = prevLink(ch);
   const next = nextLink(ch);
 
-  // Build case study box
-  let caseStudyHtml = '';
-  if (ch.caseStudy) {
-    caseStudyHtml = '<div class="case-box">\n  <h4>🔬 ' + ch.caseStudy.title + '</h4>\n  <p>' + ch.caseStudy.body + '</p>\n  <a href="stats_case_glass.html">→ 案例总览</a>\n</div>';
-  }
-
-  // Build quiz
-  const quiz = buildQuiz(ch);
-
-  // Substitute placeholders (replaceAll for multi-occurrence markers like {{CHAPTER_NUM}})
+  // Substitute placeholders
   const replacements = {
     '{{TITLE}}': ch.num + ' ' + ch.title,
     '{{CHAPTER_NUM}}': ch.num,
@@ -91,9 +72,9 @@ for (const ch of chapters) {
     '{{PAGE_CSS}}': pageCss,
     '{{PAGE_JS}}': pageJs,
     '{{CONTENT}}': bodyContent,
-    '{{CASE_STUDY}}': caseStudyHtml,
-    '{{QUIZ_SECTION}}': quiz.section,
-    '{{QUIZ_SCRIPT}}': quiz.script,
+    '{{CASE_STUDY}}': '',
+    '{{QUIZ_SECTION}}': '',
+    '{{QUIZ_SCRIPT}}': '',
     '{{PREV_LINK}}': prev,
     '{{NEXT_LINK}}': next,
   };
