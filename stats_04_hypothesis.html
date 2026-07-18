@@ -11,72 +11,6 @@
 <script src="assets/vendor/d3.v7.min.js"></script>
 <link rel="stylesheet" href="assets/css/site.css">
 <style>
-:root {
-  --parchment: #FDFBF5; --forest: #2D4A3E; --terracotta: #C75146;
-  --gold: #8B6914; --stone: #E8E0D5; --slate: #5B6E65; --surface: #FFFAF0;
-  --display: 'Noto Serif SC', 'Cormorant Garamond', 'STSong', serif;
-  --body: 'Noto Sans SC', 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  --mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Consolas', monospace;
-  --page-w: 1100px; --text-w: 72ch; --radius: 4px;
-}
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth;scroll-padding-top:40px}
-body{background:var(--parchment);color:var(--forest);font-family:var(--body);font-size:1.08rem;line-height:1.72}
-p{margin-bottom:14px;max-width:var(--text-w)}
-a{color:var(--terracotta);text-decoration:none}a:hover{text-decoration:underline}
-strong{font-weight:600}
-
-.page{max-width:var(--page-w);margin:0 auto;padding:0 32px 64px}
-.top-nav{padding:16px 0;font-family:var(--mono);font-size:0.78rem;border-bottom:1px solid var(--stone);margin-bottom:40px}
-.top-nav a{color:var(--slate)}.top-nav span{color:var(--gold)}
-
-.hero{padding:32px 0 40px}
-.hero .num{font-family:var(--mono);font-size:0.7rem;letter-spacing:0.18em;color:var(--gold);margin-bottom:6px}
-.hero h1{font-family:var(--display);font-weight:700;font-size:clamp(2rem,5vw,3rem);line-height:1.1;color:var(--forest);margin-bottom:12px}
-.hero .deck{font-size:1.05rem;color:var(--slate);max-width:var(--text-w)}
-
-h2{font-family:var(--display);font-weight:600;font-size:1.6rem;color:var(--forest);margin:36px 0 14px;padding-top:20px;border-top:1px solid var(--stone)}
-h3{font-family:var(--display);font-weight:500;font-size:1.2rem;color:var(--forest);margin:24px 0 10px}
-
-.math-block{text-align:center;padding:16px;background:var(--surface);border:1px solid var(--stone);border-radius:var(--radius);margin:16px 0;overflow-x:auto}
-.derive-box{background:#F5F8F6;border:1px solid var(--stone);border-left:3px solid var(--forest);padding:16px 20px;border-radius:0 var(--radius) var(--radius) 0;margin:16px 0;font-size:0.92rem}
-.derive-box h4{color:var(--forest);font-family:var(--display);text-transform:none;letter-spacing:0;font-size:1rem;margin:0 0 8px}
-.concept-box{background:var(--surface);border:1px solid var(--stone);border-radius:var(--radius);padding:16px 20px;margin:16px 0;font-size:0.93rem}
-.concept-box h4{font-family:var(--display);font-size:1.05rem;font-weight:600;color:var(--forest);margin:0 0 8px}
-.toolkit-box{background:#FFF5F3;border:1px solid var(--stone);border-left:3px solid var(--terracotta);padding:14px 18px;border-radius:0 var(--radius) var(--radius) 0;margin:16px 0;font-size:0.92rem}
-.toolkit-box h4{color:var(--terracotta);font-family:var(--display);font-size:1rem;margin:0 0 8px}
-.note-box{background:#FFF8F0;border-left:3px solid var(--gold);padding:14px 18px;border-radius:0 var(--radius) var(--radius) 0;margin:16px 0;font-size:0.93rem}
-.note-box strong{color:var(--gold)}
-.warn-box{background:#FFFBF0;border:1px solid #E8D5A0;border-radius:var(--radius);padding:14px 18px;margin:16px 0;font-size:0.92rem}
-.warn-box::before{content:'⚠ ';font-size:1.1rem}
-
-/* 竞赛场景框 */
-.competition-box{background:#F0F7F5;border:1px solid var(--forest);border-left:4px solid var(--forest);padding:18px 22px;border-radius:0 var(--radius) var(--radius) 0;margin:20px 0;font-size:0.93rem}
-.competition-box h4{color:var(--forest);font-family:var(--display);font-size:1.05rem;margin:0 0 8px}
-.competition-box .q{color:var(--terracotta);font-weight:600}
-
-.panel{background:var(--surface);border:1px solid var(--stone);border-radius:6px;box-shadow:inset 0 1px 0 rgba(255,255,255,0.7),0 2px 12px rgba(0,0,0,0.05);padding:24px;margin:20px 0;position:relative}
-.panel::before{content:'';position:absolute;top:0;left:12px;right:12px;height:1px;background:linear-gradient(to right,transparent,var(--gold),transparent);opacity:0.4}
-.panel-label{font-family:var(--mono);font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--stone)}
-.panel-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-
-.stat-cards{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
-.stat-card{background:var(--surface);border:1px solid var(--stone);border-radius:var(--radius);padding:10px 14px;text-align:center;min-width:72px}
-.stat-card .lbl{font-family:var(--mono);font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--slate);margin-bottom:3px}
-.stat-card .val{font-family:var(--mono);font-size:1.25rem;font-weight:600;color:var(--forest)}
-
-.slider-row{display:flex;align-items:center;gap:12px;margin:10px 0;flex-wrap:wrap}
-.slider-row label{font-family:var(--mono);font-size:0.85rem;color:var(--slate);min-width:100px}
-.slider-row input[type=range]{flex:1;min-width:100px;accent-color:var(--terracotta)}
-.slider-val{font-family:var(--mono);font-weight:600;color:var(--terracotta);min-width:36px;font-size:0.88rem}
-
-.chart-container{width:100%;overflow-x:auto}
-.chart-container svg{display:block;margin:0 auto}
-
-.compact-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:0.88rem;margin:16px 0}
-.compact-table th,.compact-table td{padding:7px 12px;text-align:left;border-bottom:1px solid var(--stone)}
-.compact-table th{font-family:var(--body);font-size:0.72rem;letter-spacing:0.08em;color:var(--slate);border-bottom:2px solid var(--stone)}
-
 .chi-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:0.9rem;margin:16px 0}
 .chi-table th,.chi-table td{padding:8px 14px;text-align:center;border:1px solid var(--stone)}
 .chi-table th{background:var(--stone);font-family:var(--body);font-size:0.72rem;letter-spacing:0.08em;color:var(--slate)}
@@ -84,12 +18,6 @@ h3{font-family:var(--display);font-weight:500;font-size:1.2rem;color:var(--fores
 .chi-table td[contenteditable]:focus{background:rgba(199,81,70,0.1);box-shadow:inset 0 0 0 1px var(--terracotta)}
 .chi-table .row-total,.chi-table .col-total{font-weight:600;color:var(--forest);background:var(--stone)}
 .chi-table .grand-total{font-weight:700;color:var(--terracotta);background:var(--stone)}
-
-.btn{font-family:var(--mono);font-size:0.75rem;border:1px solid var(--stone);border-radius:var(--radius);background:var(--surface);color:var(--forest);padding:6px 14px;cursor:pointer;transition:all 0.15s}
-.btn:hover{border-color:var(--terracotta);color:var(--terracotta)}
-
-footer{text-align:center;padding:32px 0;font-size:0.82rem;color:var(--slate);border-top:1px solid var(--stone);margin-top:40px}
-footer a{color:var(--slate);text-decoration:underline}
 </style>
 </head>
 <body>
@@ -129,7 +57,7 @@ footer a{color:var(--slate);text-decoration:underline}
 
 <div class="derive-box">
 <h4>p 值的精确含义与 ASA 2016 声明</h4>
-<p>\[ p = P(T \geq t_{\text{obs}} \mid H_0 \text{ 为真}) \]——在零假设为真的前提下，观察到当前或更极端检验统计量的概率。<br>
+<p>\[ p = P(T \geq t_{\text{obs}} \mid H_0 \text{ 为真}) \]——在零假设为真的前提下，观察到当前或更极端检验统计量的概率（右侧检验示例；双侧检验还需考虑另一侧）。<br>
 <strong>p 值不是什么：</strong>① p 不是 P(H₀ 为真 | 数据)——这是贝叶斯后验概率。② p 不是效应大小。③ p > 0.05 不意味着 H₀ 为真——只意味着数据不足以拒绝 H₀。④ p = 0.049 和 p = 0.051 没有本质区别。<br>
 <strong>ASA 2016 声明：</strong>美国统计协会正式声明「p 值不能衡量假设为真的概率或数据仅由随机因素产生的概率」。论文中应报告效应量 + 置信区间 + p 值，三者缺一不可。</p>
 </div>
@@ -139,7 +67,7 @@ footer a{color:var(--slate);text-decoration:underline}
 
 <div class="derive-box">
 <h4>Power = 1 − β 由四个因素决定</h4>
-<p>① 效应量 Δ（越大 → 功效越高）② 样本量 n（越大 → 功效越高）③ 显著性水平 α（越大 → 功效越高）④ 检验类型（参数检验比非参数检验功效更高）。<br>
+<p>① 效应量 Δ（越大 → 功效越高）② 样本量 n（越大 → 功效越高）③ 显著性水平 α（越大 → 功效越高）④ 检验类型（当总体分布假设成立时，参数检验比非参数检验功效更高）。<br>
 <strong>先验功效分析：</strong>在实验前确定所需样本量。给定期望效应量 d、α=0.05、目标 Power=0.80，算出最小 n。</p>
 </div>
 
@@ -149,7 +77,7 @@ footer a{color:var(--slate);text-decoration:underline}
 </div>
 
 <div class="note-box">
-<strong>竞赛实用值：</strong>α=0.05, Power=0.80 → z_{α/2}=1.96, z_β=0.84。n ≈ 15.7/d²。若 d=0.5（中等效应），每组需要约 63 人。若 d=0.2（小效应），每组需要约 393 人。数模中如果样本量太小，可以用 Bootstrap 或非参数方法作为补充。
+<strong>竞赛实用值：</strong>α=0.05, Power=0.80 → z_{α/2}=1.96, z_β=0.84。n ≈ 15.7/d²。若 d=0.5（中等效应），每组需要约 63 人。若 d=0.2（小效应），每组需要约 393 人。数模中如果样本量太小，Bootstrap 或非参数方法可作为辅助（但 Bootstrap 不会增加样本信息，只是更好地利用已有数据）。
 </div>
 
 <!-- ═══════════ 4.3 多重检验校正 ═══════════ -->
@@ -220,6 +148,7 @@ footer a{color:var(--slate);text-decoration:underline}
 
 <div class="math-block">
 \[ \text{Fisher's Exact Test (2×2): } p = \frac{\binom{a+b}{a}\binom{c+d}{c}}{\binom{N}{a+c}} = \frac{(a+b)!(c+d)!(a+c)!(b+d)!}{a!b!c!d!N!} \]
+<p style="font-size:0.8rem;color:var(--slate);">注：上式给出某一张固定列联表出现的概率。完整双侧 Fisher p 值需累加所有「同样或更极端」的列联表概率。</p>
 </div>
 
 <div class="warn-box">
@@ -400,7 +329,7 @@ t = \frac{\bar{x} - \mu_0}{s / \sqrt{n}} \sim t_{n-1}
 </div>
 
 <div class="note-box">
-<strong>竞赛决策口诀：</strong>连续数据 → t 检验 / ANOVA；不满足正态 → Mann-Whitney / Kruskal-Wallis；分类计数 → 卡方检验；样本量太小 → Fisher 精确检验；不确定 → 置换检验（永远有效的最后堡垒）。报告时：p 值 + 效应量 + 置信区间，三者缺一不可！
+<strong>竞赛决策口诀：</strong>连续数据 → t 检验 / ANOVA；不满足正态 → Mann-Whitney / Kruskal-Wallis；分类计数 → 卡方检验；样本量太小 → Fisher 精确检验；不确定 → 置换检验（弱假设的最后堡垒，依赖可交换性）。报告时：p 值 + 效应量 + 置信区间，三者缺一不可！
 </div>
 
 <!-- ═══════════ INTERACTIVE 1: t-TEST ═══════════ -->

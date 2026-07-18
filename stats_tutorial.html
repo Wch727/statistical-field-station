@@ -245,6 +245,7 @@ footer {
 @media (max-width: 700px) {
   .entry-grid { grid-template-columns: 1fr; }
   .keyword-grid { grid-template-columns: 1fr; }
+  .roadmap-grid { grid-template-columns: 1fr; }
 }
 </style>
 </head>
@@ -272,16 +273,16 @@ footer {
     <div class="entry-path">清洗 → 统计 → 回归 → 分类/聚类 → 预测 → 优化</div>
     <div class="entry-desc">按竞赛数据处理流程组织。从数据清洗到模型构建，逐步深入，覆盖数据类题目全流程。</div>
   </a>
-  <div class="entry-card" style="cursor:default;" onclick="document.querySelector('.keyword-search').scrollIntoView({behavior:'smooth'})">
+  <a class="entry-card" href="#keyword-search">
     <div class="entry-icon">🔍</div>
     <h3>按题目查方法</h3>
     <div class="entry-path">"是否有关" → 相关分析 · "预测未来" → 时间序列 · "成本最低" → 优化</div>
     <div class="entry-desc">拿到题目不知道用什么方法？从题目关键词出发，直接定位到对应章节和模型。</div>
-  </div>
+  </a>
 </div>
 
 <!-- ═══════════ 关键词 → 方法速查 ═══════════ -->
-<div class="keyword-search">
+<div class="keyword-search" id="keyword-search">
   <h2>题目关键词 → 对应方法</h2>
   <div class="keyword-grid">
     <div><span class="kw">"是否有关"</span> <span class="kw-dest">→ §III 相关分析 / §IV 卡方检验</span></div>

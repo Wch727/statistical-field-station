@@ -11,50 +11,7 @@
 <script src="assets/vendor/d3.v7.min.js"></script>
 <link rel="stylesheet" href="assets/css/site.css">
 <style>
-:root {
-  --parchment: #FDFBF5; --forest: #2D4A3E; --terracotta: #C75146;
-  --gold: #8B6914; --stone: #E8E0D5; --slate: #5B6E65; --surface: #FFFAF0;
-  --display: 'Noto Serif SC', 'Cormorant Garamond', 'STSong', serif;
-  --body: 'Noto Sans SC', 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  --mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Consolas', monospace;
-  --page-w: 1100px; --text-w: 72ch; --radius: 4px;
-}
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth;scroll-padding-top:40px}
-body{background:var(--parchment);color:var(--forest);font-family:var(--body);font-size:1.08rem;line-height:1.72}
-p{margin-bottom:14px;max-width:var(--text-w)}
-a{color:var(--terracotta);text-decoration:none}a:hover{text-decoration:underline}
-strong{font-weight:600}
-
-.page{max-width:var(--page-w);margin:0 auto;padding:0 32px 64px}
-.top-nav{padding:16px 0;font-family:var(--mono);font-size:0.78rem;border-bottom:1px solid var(--stone);margin-bottom:40px}
-.top-nav a{color:var(--slate)}.top-nav span{color:var(--gold)}
-
-.hero{padding:32px 0 40px}
-.hero .num{font-family:var(--mono);font-size:0.7rem;letter-spacing:0.18em;color:var(--gold);margin-bottom:6px}
-.hero h1{font-family:var(--display);font-weight:700;font-size:clamp(2rem,5vw,3rem);line-height:1.1;color:var(--forest);margin-bottom:12px}
-.hero .deck{font-size:1.05rem;color:var(--slate);max-width:var(--text-w)}
-
-h2{font-family:var(--display);font-weight:600;font-size:1.6rem;color:var(--forest);margin:36px 0 14px;padding-top:20px;border-top:1px solid var(--stone)}
-h3{font-family:var(--display);font-weight:500;font-size:1.2rem;color:var(--forest);margin:24px 0 10px}
 h4{font-family:var(--display);font-weight:500;font-size:1.05rem;color:var(--forest);margin:16px 0 8px}
-
-.math-block{text-align:center;padding:16px;background:var(--surface);border:1px solid var(--stone);border-radius:var(--radius);margin:16px 0;overflow-x:auto}
-.derive-box{background:#F5F8F6;border:1px solid var(--stone);border-left:3px solid var(--forest);padding:16px 20px;border-radius:0 var(--radius) var(--radius) 0;margin:16px 0;font-size:0.92rem}
-.derive-box h4{color:var(--forest);font-family:var(--display);text-transform:none;letter-spacing:0;font-size:1rem;margin:0 0 8px}
-.concept-box{background:var(--surface);border:1px solid var(--stone);border-radius:var(--radius);padding:16px 20px;margin:16px 0;font-size:0.93rem}
-.concept-box h4{font-family:var(--display);font-size:1.05rem;font-weight:600;color:var(--forest);margin:0 0 8px}
-.toolkit-box{background:#FFF5F3;border:1px solid var(--stone);border-left:3px solid var(--terracotta);padding:14px 18px;border-radius:0 var(--radius) var(--radius) 0;margin:16px 0;font-size:0.92rem}
-.toolkit-box h4{color:var(--terracotta);font-family:var(--display);font-size:1rem;margin:0 0 8px}
-.note-box{background:#FFF8F0;border-left:3px solid var(--gold);padding:14px 18px;border-radius:0 var(--radius) var(--radius) 0;margin:16px 0;font-size:0.93rem}
-.note-box strong{color:var(--gold)}
-.warn-box{background:#FFFBF0;border:1px solid #E8D5A0;border-radius:var(--radius);padding:14px 18px;margin:16px 0;font-size:0.92rem}
-.warn-box::before{content:'⚠ ';font-size:1.1rem}
-.competition-box{background:#F0F7F5;border:1px solid var(--forest);border-left:4px solid var(--forest);padding:18px 22px;border-radius:0 var(--radius) var(--radius) 0;margin:20px 0;font-size:0.93rem}
-.competition-box h4{color:var(--forest);font-family:var(--display);font-size:1.05rem;margin:0 0 8px}
-.competition-box .q{color:var(--terracotta);font-weight:600}
-
-/* Code blocks */
 .code-block{background:#1E2A24;border:1px solid #2D4A3E;border-radius:var(--radius);padding:16px 20px;margin:14px 0;overflow-x:auto;font-family:var(--mono);font-size:0.82rem;line-height:1.65;color:#D4E0D8}
 .code-block .kw{color:#7EC89C;font-weight:600}
 .code-block .fn{color:#E8C56D}
@@ -63,60 +20,20 @@ h4{font-family:var(--display);font-weight:500;font-size:1.05rem;color:var(--fore
 .code-block .num{color:#C792EA}
 .code-block .op{color:#89DDFF}
 .code-block .pkg{color:#F07178}
-
-/* Quick-ref table */
 .quick-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:0.85rem;margin:14px 0}
 .quick-table th,.quick-table td{padding:8px 12px;text-align:left;border-bottom:1px solid var(--stone)}
 .quick-table th{font-family:var(--body);font-size:0.72rem;letter-spacing:0.08em;color:var(--slate);border-bottom:2px solid var(--stone)}
 .quick-table td:first-child{color:var(--terracotta);font-weight:500}
 .quick-table code{background:var(--stone);padding:1px 6px;border-radius:2px;font-family:var(--mono);font-size:0.82em}
-
-.panel{background:var(--surface);border:1px solid var(--stone);border-radius:6px;box-shadow:inset 0 1px 0 rgba(255,255,255,0.7),0 2px 12px rgba(0,0,0,0.05);padding:24px;margin:20px 0;position:relative}
-.panel::before{content:'';position:absolute;top:0;left:12px;right:12px;height:1px;background:linear-gradient(to right,transparent,var(--gold),transparent);opacity:0.4}
-.panel-label{font-family:var(--mono);font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--stone)}
-.panel-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-
-.stat-cards{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
-.stat-card{background:var(--surface);border:1px solid var(--stone);border-radius:var(--radius);padding:10px 14px;text-align:center;min-width:72px}
-.stat-card .lbl{font-family:var(--mono);font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--slate);margin-bottom:3px}
-.stat-card .val{font-family:var(--mono);font-size:1.25rem;font-weight:600;color:var(--forest)}
-
-.slider-row{display:flex;align-items:center;gap:12px;margin:10px 0;flex-wrap:wrap}
-.slider-row label{font-family:var(--mono);font-size:0.85rem;color:var(--slate);min-width:100px}
-.slider-row input[type=range]{flex:1;min-width:100px;accent-color:var(--terracotta)}
-.slider-val{font-family:var(--mono);font-weight:600;color:var(--terracotta);min-width:36px;font-size:0.88rem}
-
-.chart-container{width:100%;overflow-x:auto}
-.chart-container svg{display:block;margin:0 auto}
-
-.compact-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:0.88rem;margin:16px 0}
-.compact-table th,.compact-table td{padding:7px 12px;text-align:left;border-bottom:1px solid var(--stone)}
-.compact-table th{font-family:var(--body);font-size:0.72rem;letter-spacing:0.08em;color:var(--slate);border-bottom:2px solid var(--stone)}
-
-.btn{font-family:var(--mono);font-size:0.75rem;border:1px solid var(--stone);border-radius:var(--radius);background:var(--surface);color:var(--forest);padding:6px 14px;cursor:pointer;transition:all 0.15s}
-.btn:hover{border-color:var(--terracotta);color:var(--terracotta)}
-.btn.active{background:var(--forest);color:#fff;border-color:var(--forest)}
-.btn-group{display:flex;gap:4px;flex-wrap:wrap;margin:8px 0}
-
-.legend{display:flex;gap:16px;flex-wrap:wrap;margin:8px 0;font-family:var(--mono);font-size:0.78rem}
-.legend-item{display:flex;align-items:center;gap:6px}
-.legend-dot{width:10px;height:10px;border-radius:50%;display:inline-block}
-
-/* Checklist styles */
 .checklist{margin:12px 0;padding:0;list-style:none}
 .checklist li{padding:6px 0 6px 28px;position:relative;font-size:0.95rem}
 .checklist li::before{content:'☐';position:absolute;left:0;color:var(--slate);font-size:1rem}
 .checklist li.done::before{content:'☑';color:var(--forest)}
-
-/* Six-question framework */
 .q6-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0}
 .q6-card{background:var(--surface);border:1px solid var(--stone);border-radius:var(--radius);padding:16px 18px}
 .q6-card .q6-num{font-family:var(--mono);font-size:0.7rem;color:var(--gold);letter-spacing:0.1em;margin-bottom:4px}
 .q6-card .q6-q{font-family:var(--display);font-weight:600;font-size:1.1rem;color:var(--forest);margin-bottom:8px}
 .q6-card .q6-hint{font-size:0.88rem;color:var(--slate)}
-
-footer{text-align:center;padding:32px 0;font-size:0.82rem;color:var(--slate);border-top:1px solid var(--stone);margin-top:40px}
-footer a{color:var(--slate);text-decoration:underline}
 </style>
 </head>
 <body>
@@ -247,7 +164,7 @@ df = df[(df[<span class="str">'col'</span>] > mean - <span class="num">3</span>*
 </div>
 
 <div class="warn-box">
-<strong>竞赛陷阱：</strong>fillna(0) 是最危险的操作——如果该列是价格/销量，填 0 会严重扭曲均值和回归系数。优先考虑：插值 &gt; 中位数填充 &gt; 均值填充 &gt; 删除 &gt; 填 0。论文中必须说明缺失值处理方式及其合理性。
+<strong>竞赛陷阱：</strong>缺失值处理没有固定优先级，应首先根据变量含义和缺失机制判断。未检出值（如仪器检测下限以下）填 0 或 LOD/√2 可能是正确操作；时间序列可用插值；随机缺失可用中位数/均值填充或多重插补；信息完全缺失只能删除。无论采用何种方法，论文中应说明理由并通过敏感性分析比较不同处理方式对结论的影响。
 </div>
 
 <!-- ══════════════════════════════════════════════ -->
@@ -260,8 +177,8 @@ df = df[(df[<span class="str">'col'</span>] > mean - <span class="num">3</span>*
 
 <span class="cm"># 创建数组</span>
 a = np.<span class="fn">array</span>([<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>])
-b = np.<span class="fn">zeros</span>(<span class="num">10</span>)              <span class="cm"># 全零向量</span>
-c = np.<span class="fn">ones</span>(<span class="num">5</span>)                <span class="cm"># 全一向量</span>
+b = np.<span class="fn">array</span>([<span class="num">4</span>, <span class="num">5</span>, <span class="num">6</span>])           <span class="cm"># 另一个向量</span>
+c = np.<span class="fn">zeros</span>(<span class="num">5</span>)                <span class="cm"># 全零向量</span>
 d = np.<span class="fn">arange</span>(<span class="num">0</span>, <span class="num">10</span>, <span class="num">0.1</span>)     <span class="cm"># 等差数列 [0, 0.1, ..., 9.9]</span>
 e = np.<span class="fn">linspace</span>(<span class="num">0</span>, <span class="num">1</span>, <span class="num">100</span>)     <span class="cm"># 等间距 [0, 0.0101..., ..., 1]</span>
 
@@ -283,7 +200,8 @@ C = np.<span class="fn">diag</span>([<span class="num">1</span>,<span class="num
 <span class="cm"># 线性代数（竞赛高频）</span>
 invA = np.linalg.<span class="fn">inv</span>(A)       <span class="cm"># 逆矩阵</span>
 w, v = np.linalg.<span class="fn">eig</span>(A)       <span class="cm"># 特征值 + 特征向量</span>
-x = np.linalg.<span class="fn">solve</span>(A, b)     <span class="cm"># 解 Ax = b（比 inv(A)@b 更快更稳定）</span>
+rhs = np.<span class="fn">array</span>([<span class="num">5</span>, <span class="num">11</span>])
+sol = np.linalg.<span class="fn">solve</span>(A, rhs) <span class="cm"># 解 Ax = b（比 inv(A)@b 更快更稳定）</span>
 detA = np.linalg.<span class="fn">det</span>(A)       <span class="cm"># 行列式</span>
 U, s, Vt = np.linalg.<span class="fn">svd</span>(A)   <span class="cm"># 奇异值分解（PCA 底层）</span>
 </div>
@@ -292,6 +210,8 @@ U, s, Vt = np.linalg.<span class="fn">svd</span>(A)   <span class="cm"># 奇异�
 
 <div class="code-block">
 <span class="cm"># 统计函数</span>
+x = np.<span class="fn">array</span>([<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>, <span class="num">4</span>, <span class="num">5</span>])
+y = np.<span class="fn">array</span>([<span class="num">2</span>, <span class="num">4</span>, <span class="num">5</span>, <span class="num">4</span>, <span class="num">5</span>])
 np.<span class="fn">mean</span>(x); np.<span class="fn">median</span>(x); np.<span class="fn">std</span>(x); np.<span class="fn">var</span>(x)
 np.<span class="fn">min</span>(x); np.<span class="fn">max</span>(x); np.<span class="fn">percentile</span>(x, <span class="num">25</span>)
 np.<span class="fn">corrcoef</span>(x, y)            <span class="cm"># 相关系数矩阵</span>
@@ -302,7 +222,8 @@ np.random.<span class="fn">seed</span>(<span class="num">42</span>)          <sp
 np.random.<span class="fn">rand</span>(<span class="num">100</span>)           <span class="cm"># [0,1) 均匀分布</span>
 np.random.<span class="fn">randn</span>(<span class="num">100</span>)          <span class="cm"># 标准正态分布</span>
 np.random.<span class="fn">randint</span>(<span class="num">0</span>, <span class="num">10</span>, <span class="num">50</span>)  <span class="cm"># [0,10) 随机整数</span>
-np.random.<span class="fn">choice</span>(arr, size=<span class="num">30</span>, replace=<span class="kw">True</span>)  <span class="cm"># 有放回抽样</span>
+arr = np.<span class="fn">array</span>([<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>, <span class="num">4</span>, <span class="num">5</span>])
+np.random.<span class="fn">choice</span>(arr, size=<span class="num">3</span>, replace=<span class="kw">True</span>)  <span class="cm"># 有放回抽样</span>
 np.random.<span class="fn">permutation</span>(arr)   <span class="cm"># 随机排列（交叉验证打乱数据）</span>
 </div>
 
