@@ -72,6 +72,16 @@ for (const ch of chapters) {
   const prev = prevLink(ch);
   const next = nextLink(ch);
 
+  // Build case study box
+  let caseStudyHtml = '';
+  if (ch.caseStudy) {
+    caseStudyHtml = `<div class="case-box">
+  <h4>🔬 ${ch.caseStudy.title}</h4>
+  <p>${ch.caseStudy.body}</p>
+  <a href="stats_glossary.html">→ 案例总览</a>
+</div>`;
+  }
+
   // Build quiz
   const quiz = buildQuiz(ch);
 
@@ -85,6 +95,7 @@ for (const ch of chapters) {
     .replace('{{PAGE_CSS}}', pageCss)
     .replace('{{PAGE_JS}}', pageJs)
     .replace('{{CONTENT}}', bodyContent)
+    .replace('{{CASE_STUDY}}', caseStudyHtml)
     .replace('{{QUIZ_SECTION}}', quiz.section)
     .replace('{{QUIZ_SCRIPT}}', quiz.script)
     .replace('{{PREV_LINK}}', prev)

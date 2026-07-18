@@ -54,7 +54,11 @@
         "correct": 2,
         "explanation": "RdYlBu（红-黄-蓝）是色盲友好选择。RdYlGn（红-黄-绿）是常见误区——红绿色盲无法分辨红绿两端。"
       }
-    ]
+    ],
+    "caseStudy": {
+      "title": "案例：古代玻璃成分分析",
+      "body": "2022年CUMCM C题：根据玻璃文物化学成分数据，区分高钾玻璃和铅钡玻璃。本案例贯穿所有章节——从数据清洗到模型评估的完整竞赛流程。"
+    }
   },
   {
     "slug": "01_descriptive",
@@ -115,7 +119,11 @@
         "correct": 1,
         "explanation": "SW检验的H₀：数据来自正态分布。p<0.05拒绝H₀，认为数据显著偏离正态。但大样本下SW过于敏感，建议配合Q-Q图。"
       }
-    ]
+    ],
+    "caseStudy": {
+      "title": "案例：玻璃成分的描述统计",
+      "body": "58个玻璃样品，14种化学成分（SiO₂, Na₂O, K₂O, CaO, MgO, Al₂O₃, Fe₂O₃, CuO, PbO, BaO, P₂O₅, SrO, SnO₂, SO₂）。高钾玻璃的K₂O均值远高于铅钡玻璃，而铅钡玻璃的PbO和BaO含量极高。数据存在风化导致成分变化的缺失值。"
+    }
   },
   {
     "slug": "02_visualization",
@@ -141,7 +149,11 @@
       "热力图"
     ],
     "prev": "01_descriptive",
-    "next": "03_correlation"
+    "next": "03_correlation",
+    "caseStudy": {
+      "title": "案例：玻璃成分的可视化",
+      "body": "PbO-K₂O散点图清楚地将两类玻璃分开。风化样品在SiO₂含量上系统性偏低。箱线图显示高钾玻璃的Al₂O₃分布更集中。相关性热力图揭示SiO₂与助熔剂氧化物（Na₂O+K₂O+PbO）有强负相关——玻璃工艺的基本化学规律。"
+    }
   },
   {
     "slug": "03_correlation",
@@ -167,7 +179,11 @@
       "Cramér's V"
     ],
     "prev": "02_visualization",
-    "next": "04_hypothesis"
+    "next": "04_hypothesis",
+    "caseStudy": {
+      "title": "案例：玻璃成分的相关分析",
+      "body": "14种化学成分的Pearson相关矩阵：SiO₂与PbO呈强负相关(r≈−0.85)——富铅玻璃必然少硅。PbO与BaO呈正相关(r≈0.72)——铅钡玻璃中两者共同出现。这些相关性反映了古代玻璃制造的原料配方差异。"
+    }
   },
   {
     "slug": "04_hypothesis",
@@ -331,7 +347,11 @@
       "SMOTE"
     ],
     "prev": "07_logistic",
-    "next": "09_clustering"
+    "next": "09_clustering",
+    "caseStudy": {
+      "title": "案例：玻璃类型的分类",
+      "body": "以14种化学成分为特征，分类目标：高钾玻璃 vs 铅钡玻璃。决策树用PbO>5%为关键分裂点（直观可解释）。随机森林特征重要性：PbO>BaO>K₂O>SiO₂。测试集准确率>95%。这是典型的高维小样本分类问题。"
+    }
   },
   {
     "slug": "09_clustering",
@@ -357,7 +377,11 @@
       "Davies-Bouldin"
     ],
     "prev": "08_classification",
-    "next": "10_evaluation"
+    "next": "10_evaluation",
+    "caseStudy": {
+      "title": "案例：玻璃样品的聚类",
+      "body": "对标准化成分做K-Means（K=2）聚类，纯度高——仅2个样品与已知标签不一致（可能是风化导致的成分偏移）。层次聚类树状图直观展示了两个大类的分离。轮廓系数=0.62，表明聚类结构较好。"
+    }
   },
   {
     "slug": "10_evaluation",
@@ -384,7 +408,11 @@
       "特征选择"
     ],
     "prev": "09_clustering",
-    "next": "11_timeseries"
+    "next": "11_timeseries",
+    "caseStudy": {
+      "title": "案例：玻璃分类模型的评估",
+      "body": "留一交叉验证（n=58适合LOOCV）：逻辑回归AUC=0.97，随机森林AUC=0.99。混淆矩阵显示仅1个风化严重的铅钡玻璃被误判为高钾玻璃。PCA前2主成分解释68%方差，biplot显示两类在PC1方向完全分离。"
+    }
   },
   {
     "slug": "11_timeseries",
@@ -489,7 +517,11 @@
       "灵敏度"
     ],
     "prev": "13_optimization",
-    "next": "15_mechanism"
+    "next": "15_mechanism",
+    "caseStudy": {
+      "title": "案例：分类方法的综合评价",
+      "body": "用TOPSIS综合评价三种分类方法（逻辑回归、随机森林、SVM）在玻璃分类任务上的表现。指标：准确率、AUC、训练速度、可解释性。权重：准确率最重要（熵权法客观赋权）。随机森林综合得分最高。"
+    }
   },
   {
     "slug": "15_mechanism",

@@ -427,6 +427,13 @@ p(x) = \sum_{k=1}^{K} \pi_k \cdot \mathcal{N}(x \mid \mu_k, \Sigma_k)
 </div>
 </main>
 
+<div class="case-box">
+  <h4>🔬 案例：玻璃样品的聚类</h4>
+  <p>对标准化成分做K-Means（K=2）聚类，纯度高——仅2个样品与已知标签不一致（可能是风化导致的成分偏移）。层次聚类树状图直观展示了两个大类的分离。轮廓系数=0.62，表明聚类结构较好。</p>
+  <a href="stats_glossary.html">→ 案例总览</a>
+</div>
+
+
 <footer class="page-footer">
   <div class="footer-nav">
     <a href="stats_08_classification.html">← §VIII 分类</a> &nbsp;|&nbsp; 
@@ -443,6 +450,7 @@ p(x) = \sum_{k=1}^{K} \pi_k \cdot \mathcal{N}(x \mid \mu_k, \Sigma_k)
 
 </div>
 <script src="assets/js/statistics.js"></script>
+
 <script>
 // ============ Dependency Load Guard ============
 if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
