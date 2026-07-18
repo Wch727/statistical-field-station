@@ -75,5 +75,3 @@ function updateBoxplot() {
 
 updateCharts();
 window.addEventListener('resize',()=>{clearTimeout(window._rt);window._rt=setTimeout(updateCharts,250)});
-
-',display:false}],throwOnError:false,strict:false});}

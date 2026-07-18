@@ -149,5 +149,3 @@ function randomChiSquare(){
 // ═══════════ Init ═══════════
 updateTTest();updateChiSquare();
 window.addEventListener('resize',()=>{clearTimeout(window._rt);window._rt=setTimeout(()=>{updateTTest();updateChiSquare();},250)});
-
-',display:false}],throwOnError:false,strict:false});}

@@ -50,5 +50,3 @@ function addCorrPoint(){corrData.push({x:20+Math.random()*60,y:20+Math.random()*
 
 updateCorrelation();
 window.addEventListener('resize',()=>{clearTimeout(window._rt);window._rt=setTimeout(updateCorrelation,250)});
-
-',display:false}],throwOnError:false,strict:false});}
