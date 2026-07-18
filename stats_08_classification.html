@@ -37,7 +37,7 @@
 
 <div class="concept-box">
 <h4>核心思想</h4>
-<p>决策树通过<strong>递归二分</strong>将特征空间划分为矩形区域。每次分裂选择最优特征和最优切分点，使得子节点尽可能「纯」——即同一类样本聚集在一起。最终生成一棵可以翻译为 if-then 规则的树。</p>
+<p>决策树通过<strong>递归二分</strong>将特征空间划分为矩形区域。每次分裂贪心地选择当前最优特征和切分点（局部最优而非全局最优），使得子节点尽可能「纯」——即同一类样本聚集在一起。最终生成一棵可以翻译为 if-then 规则的树。</p>
 </div>
 
 <h3>8.1.1 信息增益与熵</h3>
@@ -206,11 +206,11 @@ F_m(x) = F_{m-1}(x) + \nu \cdot h_m(x)
 <table class="compact-table">
 <thead><tr><th>特性</th><th>XGBoost</th><th>LightGBM</th></tr></thead>
 <tbody>
-<tr><td>树生长策略</td><td>Level-wise（按层生长）</td><td>Leaf-wise（按叶子生长）</td></tr>
-<tr><td>特征离散化</td><td>精确贪心 / 近似</td><td>GOSS + EFB（基于直方图）</td></tr>
-<tr><td>类别特征</td><td>需要 One-Hot / Label Encode</td><td>原生支持类别特征</td></tr>
-<tr><td>训练速度</td><td>快</td><td>更快（10× 以上）</td></tr>
-<tr><td>内存占用</td><td>中</td><td>低</td></tr>
+<tr><td>树生长策略</td><td>常见为 Level-wise（按层生长）</td><td>Leaf-wise（按叶子生长）</td></tr>
+<tr><td>连续特征处理</td><td>直方图 / 近似分裂</td><td>直方图分箱</td></tr>
+<tr><td>类别特征</td><td>当前版本支持原生类别特征</td><td>原生类别特征</td></tr>
+<tr><td>采样优化</td><td>行列采样等</td><td>Bagging / GOSS（样本选择）；EFB（稀疏特征捆绑）</td></tr>
+<tr><td>速度</td><td colspan="2">取决于数据、参数和硬件，非固定倍数</td></tr>
 </tbody>
 </table>
 
@@ -335,7 +335,7 @@ R_{kNN} \le R^* \left(2 - \frac{K}{K-1}R^*\right)
 R_{kNN} \to R^*
 \]
 </div>
-<p>其中 \(R^*\) 是贝叶斯错误率（任何分类器能达到的最低错误率）。这两个结论给出了 KNN 强大的理论保证：足够大样本下，它几乎是最优的非参数分类器。</p>
+<p>其中 \(R^*\) 是贝叶斯错误率（任何分类器能达到的最低错误率）。这两个结论给出了 KNN 强大的理论保证：足够大样本下，它是渐近一致的非参数分类器。</p>
 </div>
 
 <!-- ══════════════════════════════════════════════ -->
@@ -531,7 +531,7 @@ x_{\text{new}} = x_i + \lambda \cdot (x_{nn} - x_i), \quad \lambda \sim U(0,1)
 </ol>
 
 <div class="note-box">
-<strong>竞赛选择：</strong>当数据中<strong>分类特征很多</strong>（如城市、职业、产品类别等）且不想手动编码时，CatBoost 是最佳选择。当特征主要是数值型时，LightGBM 通常更快，XGBoost 更稳定。三者性能差异通常很小——竞赛中三者都值得尝试，选交叉验证最好的。
+<strong>竞赛选择：</strong>当数据中<strong>分类特征很多</strong>（如城市、职业、产品类别等）且不想手动编码时，CatBoost 值得优先尝试（原生类别特征支持最完善）。当特征主要是数值型时，LightGBM 通常更快，XGBoost 更稳定。三者性能差异通常很小——竞赛中都值得尝试，选交叉验证最好的即可。
 </div>
 
 <!-- ══════════════════════════════════════════════ -->
@@ -590,7 +590,7 @@ x_{\text{new}} = x_i + \lambda \cdot (x_{nn} - x_i), \quad \lambda \sim U(0,1)
 <strong>Step 4：</strong>进阶模型——随机森林或 SVM（RBF 核），调参 + 交叉验证。<br>
 <strong>Step 5：</strong>模型比较——报告准确率、精确率、召回率、F1、AUC（见 §X）。<br>
 <strong>Step 6：</strong>特征重要性分析——哪些特征对分类贡献最大？用随机森林的特征重要性。<br>
-<strong>Step 7：</strong>结果解释——不只报告数字，要解释为什么这个模型最好。</p>
+<strong>Step 7：</strong>结果解释——不只报告数字，要解释为什么选择这个模型（结合数据特征，而非仅凭指标排序）。</p>
 </div>
 
 <footer>

@@ -229,7 +229,7 @@ obj_vals = []
     res = <span class="fn" style="color:#E8C56D">linprog</span>(c_perturbed, A_ub=A, b_ub=b_perturbed)
     obj_vals.<span class="fn" style="color:#E8C56D">append</span>(res.fun)
 
-<span class="kw" style="color:#7EC89C;font-weight:600">print</span>(<span class="str" style="color:#D4956B">f'最优值: {np.mean(obj_vals):.2f} ± {np.std(obj_vals):.2f}'</span>)
+<span class="kw" style="color:#7EC89C;font-weight:600">print</span>(<span class="str" style="color:#D4956B">f'最优值: {np.mean(obj_vals):.2f} ± {np.std(obj_vals, ddof=1):.2f}  <span class="cm" style="color:#6A8A7A;font-style:italic"># ddof=1 样本标准差</span>'</span>)
 </div>
 
 <p><strong>② 约束鲁棒性：</strong>逐个放松或收紧约束（如 ±10%），检查最优解是否发生结构性变化。如果某约束稍微收紧就导致不可行，说明方案对该约束极为敏感——这是论文中需要讨论的风险点。</p>

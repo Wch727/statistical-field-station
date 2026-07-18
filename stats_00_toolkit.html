@@ -55,7 +55,7 @@ h4{font-family:var(--display);font-weight:500;font-size:1.05rem;color:var(--fore
 <!-- ══════════════════════════════════════════════ -->
 <h2>0.1 Pandas 数据处理速查</h2>
 
-<p>Pandas 是数模竞赛的<strong>绝对核心</strong>。赛题数据几乎都是 Excel/CSV 格式，Pandas 是唯一的入口。以下 7 个操作覆盖了 80% 的竞赛数据处理需求。</p>
+<p>Pandas 是数模竞赛<strong>最常用的工具之一</strong>。赛题数据几乎都是 Excel/CSV 格式，Pandas 是 Python 生态的核心入口（R、MATLAB 等也是可行选择）。以下 7 个操作覆盖了 80% 的竞赛数据处理需求。</p>
 
 <h3>0.1.1 读取数据</h3>
 
@@ -147,8 +147,8 @@ ct = pd.<span class="fn">crosstab</span>(df[<span class="str">'gender'</span>], 
 df.<span class="fn">isnull</span>().<span class="fn">sum</span>()                    <span class="cm"># 每列缺失值计数</span>
 df = df.<span class="fn">fillna</span>(<span class="num">0</span>)                      <span class="cm"># 填充为 0</span>
 df = df.<span class="fn">fillna</span>(df.<span class="fn">mean</span>())              <span class="cm"># 填充为列均值</span>
-df = df.<span class="fn">fillna</span>(method=<span class="str">'ffill'</span>)         <span class="cm"># 前向填充（时间序列常用）</span>
-df = df.<span class="fn">fillna</span>(method=<span class="str">'bfill'</span>)         <span class="cm"># 后向填充</span>
+df = df.<span class="fn">ffill</span>()                          <span class="cm"># 前向填充（时间序列常用；pandas 2.1+）</span>
+df = df.<span class="fn">bfill</span>()                          <span class="cm"># 后向填充</span>
 
 <span class="cm"># 插值（比简单填充更合理）</span>
 df[<span class="str">'col'</span>] = df[<span class="str">'col'</span>].<span class="fn">interpolate</span>()  <span class="cm"># 线性插值</span>
@@ -248,23 +248,23 @@ plt.<span class="fn">plot</span>(x, y, <span class="str">'o-'</span>, color=<spa
 plt.<span class="fn">bar</span>(categories, values, color=<span class="str">'#C75146'</span>, alpha=<span class="num">0.85</span>)
 
 <span class="cm"># ③ 散点图 —— 相关性、分布</span>
-plt.<span class="fn">scatter</span>(x, y, c=z, cmap=<span class="str">'RdYlGn'</span>, s=<span class="num">30</span>, alpha=<span class="num">0.7</span>)
+plt.<span class="fn">scatter</span>(x, y, c=z, cmap=<span class="str">'RdYlBu'</span>, s=<span class="num">30</span>, alpha=<span class="num">0.7</span>)  <span class="cm"># RdYlBu: 色盲友好</span>
 
 <span class="cm"># ④ 箱线图 —— 分布对比、异常值检测</span>
-plt.<span class="fn">boxplot</span>([group1, group2, group3], labels=[<span class="str">'A'</span>,<span class="str">'B'</span>,<span class="str">'C'</span>])
+plt.<span class="fn">boxplot</span>([group1, group2, group3], tick_labels=[<span class="str">'A'</span>,<span class="str">'B'</span>,<span class="str">'C'</span>])  <span class="cm"># matplotlib 3.9+</span>
 
 <span class="cm"># ⑤ 直方图 —— 分布形态</span>
 plt.<span class="fn">hist</span>(data, bins=<span class="num">30</span>, color=<span class="str">'#2D4A3E'</span>, alpha=<span class="num">0.7</span>, edgecolor=<span class="str">'white'</span>)
 
 <span class="cm"># ⑥ 热力图 —— 矩阵可视化（相关性、混淆矩阵）</span>
-plt.<span class="fn">imshow</span>(matrix, cmap=<span class="str">'RdYlGn'</span>, aspect=<span class="str">'auto'</span>)
+plt.<span class="fn">imshow</span>(matrix, cmap=<span class="str">'RdYlBu'</span>, aspect=<span class="str">'auto'</span>)  <span class="cm"># RdYlBu: 色盲友好</span>
 plt.<span class="fn">colorbar</span>()
 </div>
 
 <div class="toolkit-box">
-<h4>数模论文绘图黄金法则</h4>
+<h4>数模论文绘图最佳实践</h4>
 <ol style="margin:8px 0 0 18px;font-size:0.92rem">
-  <li><strong>每张图必须有标题和轴标签</strong>——缺少标签的图直接扣分</li>
+  <li><strong>每张图应有标题和轴标签</strong>——缺少标签的图直接扣分</li>
   <li><strong>字体不能太小</strong>——论文中的图经常被缩小，确保 8pt 以上</li>
   <li><strong>配色克制</strong>——不超过 4 种颜色，避免大红大绿的默认配色</li>
   <li><strong>分辨率 300 dpi</strong>——<code>plt.savefig('fig.png', dpi=300, bbox_inches='tight')</code></li>
@@ -276,7 +276,7 @@ plt.<span class="fn">colorbar</span>()
 <!-- ══════════════════════════════════════════════ -->
 <h2>0.4 模型验证完整流程</h2>
 
-<p>这是<strong>初学者最容易忽略的部分</strong>。建立一个模型只完成了 30% 的工作——证明这个模型可信、可靠、可推广，才是剩下的 70%。</p>
+<p>这是<strong>初学者最容易忽略的部分</strong>。建立一个模型只完成了 30% 的工作——验证模型的可靠性、评估其局限、确保其可复现，才是剩下的 70%。</p>
 
 <h3>0.4.1 训练集与测试集</h3>
 
@@ -284,12 +284,13 @@ plt.<span class="fn">colorbar</span>()
 <span class="kw">from</span> sklearn.model_selection <span class="kw">import</span> train_test_split
 
 X_train, X_test, y_train, y_test = <span class="fn">train_test_split</span>(
-    X, y, test_size=<span class="num">0.3</span>, random_state=<span class="num">42</span>
+    X, y, test_size=<span class="num">0.3</span>, random_state=<span class="num">42</span>,
+    stratify=y  <span class="cm"># 分类问题必加：保持训练/测试集的类别比例一致</span>
 )
 <span class="cm"># 关键参数：</span>
 <span class="cm">#   test_size: 测试集比例（常用 0.2-0.3）</span>
 <span class="cm">#   random_state: 固定随机种子，保证可复现</span>
-<span class="cm">#   stratify=y: 分类问题保持类别比例</span>
+<span class="cm">#   stratify=y: 分类问题保持类别比例（不平衡数据集必须使用）</span>
 </div>
 
 <div class="warn-box">
@@ -476,7 +477,7 @@ score_noisy = model.<span class="fn">score</span>(X_noisy, y)
 </div>
 
 <div class="competition-box">
-<h4>「局限性」写作的黄金法则</h4>
+<h4>「局限性」写作建议</h4>
 <p>每个局限性 = <strong>一个具体问题 + 一个已做的缓解措施 + 一个未来的改进方向</strong>。不要只写「模型可能不够好」——这等于什么都没说。正确的写法是：「模型假设残差独立，但时间序列数据可能存在自相关（问题）。我们通过 Durbin-Watson 检验确认了残差独立性（缓解）。若 DW 统计量不理想，可采用 GLS 或引入滞后项（改进）。」</p>
 </div>
 

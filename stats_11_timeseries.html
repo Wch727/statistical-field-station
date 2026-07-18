@@ -195,7 +195,7 @@ y_t = \mu + \varepsilon_t + \theta_1 \varepsilon_{t-1} + \theta_2 \varepsilon_{t
 <strong>Step 3：</strong>画 ACF/PACF 图 → 初步确定 \(p\) 和 \(q\) 的范围。<br>
 <strong>Step 4：</strong>网格搜索 \(p,q \in \{0,1,2,3\}\)，用 AICc 选择最优模型。<br>
 <strong>Step 5：</strong>残差诊断——残差应为白噪声（Ljung-Box 检验 p > 0.05）。<br>
-<strong>Step 6：</strong>预测 + 预测区间（95% 置信带）。<br>
+<strong>Step 6：</strong>预测 + 预测区间（95% 预测区间）。<br>
 <strong>竞赛技巧：</strong>如果数据有明显的季节性，优先考虑 SARIMA 而非简单 ARIMA。另外，对数变换可以稳定方差（乘法模型 → 加法模型）。</p>
 </div>
 
