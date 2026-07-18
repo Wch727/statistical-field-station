@@ -88,6 +88,18 @@ xdg-open stats_tutorial.html    # Linux
 - [scikit-learn 文档](https://scikit-learn.org/) — Python 机器学习库
 - [SciPy 文档](https://docs.scipy.org/) — 科学计算库（优化、统计、积分）
 
+## 开发与测试
+
+```bash
+npm ci                       # 安装依赖（需 Node.js 22+）
+npx playwright install chromium  # 安装冒烟测试浏览器
+
+npm test                     # 统计函数 + 链接 + 资源检查
+npm run test:all             # 包含全部页面的浏览器冒烟测试
+```
+
+CI 在 push / PR 时并行运行四个 job：统计计算、内部链接、本地资源完整性、Playwright 浏览器冒烟。
+
 ## 许可
 
 MIT License — 自由使用、修改和分发。
