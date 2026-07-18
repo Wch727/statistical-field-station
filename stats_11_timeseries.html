@@ -272,7 +272,7 @@ y_t = \mu + \varepsilon_t + \theta_1 \varepsilon_{t-1} + \theta_2 \varepsilon_{t
 \Delta y_t = \alpha (y_{t-1} - \beta_0 - \beta_1 x_{t-1}) + \gamma \Delta x_t + \varepsilon_t
 \]
 </div>
-<p>其中 \(\alpha\) 是<strong>误差修正系数</strong>（-1 < α < 0）——衡量偏离均衡后向均衡「拉回」的速度。α 越接近 -1，修正越快。\(y_{t-1} - \beta_0 - \beta_1 x_{t-1}\) 是<strong>误差修正项</strong>——上一期的偏离量。</p>
+<p>其中 \(\alpha\) 是<strong>误差修正系数</strong>。由平稳性条件 \(|1+\alpha| < 1\) 得 \(-2 < \alpha < 0\)。其中 \(-1 < \alpha < 0\) 对应单调回归均衡，\(-2 < \alpha < -1\) 对应振荡式回归均衡。\(y_{t-1} - \beta_0 - \beta_1 x_{t-1}\) 是<strong>误差修正项</strong>——上一期的偏离量。在多变量 VECM 中不能给出统一的单个区间，具体稳定性应根据系统特征根判断。</p>
 </div>
 
 <div class="note-box">
@@ -320,7 +320,7 @@ y_t = \mu + \varepsilon_t + \theta_1 \varepsilon_{t-1} + \theta_2 \varepsilon_{t
 \]
 </div>
 
-<p>GARCH(1,1) 的解释：\(\omega\) = 长期平均方差，\(\alpha\) = 昨日冲击对今日波动的影响（ARCH 效应），\(\beta\) = 昨日波动对今日波动的影响（GARCH 效应）。\(\alpha + \beta < 1\) 保证方差过程平稳，\(\alpha + \beta\) 越接近 1 → 波动持续越久。</p>
+<p>GARCH(1,1) 的解释：\(\omega\) = 方差方程截距（常数项），\(\alpha\) = 昨日冲击对今日波动的影响（ARCH 效应），\(\beta\) = 昨日波动对今日波动的影响（GARCH 效应）。当 \(\alpha + \beta < 1\) 时过程平稳，无条件长期方差为 \(\sigma^2 = \omega/(1 - \alpha - \beta)\)。\(\alpha + \beta\) 越接近 1 → 波动持续越久。</p>
 
 <div class="note-box">
 <strong>竞赛技巧：</strong>GARCH 在金融建模竞赛中几乎是标配——股票收益率、汇率、比特币价格等的波动率预测。论文中：「Ljung-Box 检验显示收益率序列的平方存在显著自相关 (Q(20)=87.3, p&lt;0.001)，表明存在 ARCH 效应。我们拟合 GARCH(1,1) 模型，α=0.12 (p=0.003)，β=0.83 (p&lt;0.001)，α+β=0.95——表明波动冲击具有高度持续性，半衰期约为 ln(0.5)/ln(0.95) ≈ 13.5 天。」

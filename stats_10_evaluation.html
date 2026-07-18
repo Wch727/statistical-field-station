@@ -97,11 +97,11 @@ F_\beta = (1+\beta^2)\frac{P \cdot R}{\beta^2 P + R}
 
 <div class="math-block">
 \[
-\text{AUC} \in [0.5, 1.0]
+\text{AUC} \in [0, 1]
 \]
 </div>
 
-<p>AUC = 1：完美分类器；AUC = 0.5：随机猜测；AUC 的统计解释：<strong>随机选一个正样本和一个负样本，分类器给正样本更高分数的概率</strong>。</p>
+<p>AUC = 1：完美分类器；AUC = 0.5：随机猜测；AUC &lt; 0.5：排序方向系统性反向（将分数取负后新 AUC = 1 − 原 AUC）；AUC 的统计解释：<strong>随机选一个正样本和一个负样本，分类器给正样本更高分数的概率</strong>。</p>
 
 <div class="note-box">
 <strong>竞赛技巧：</strong>在类别不平衡的情况下，<strong>不要报告准确率</strong>——报告精确率、召回率、F1 和 AUC。如果正类只占 5%，模型把所有样本都预测为负类，准确率仍有 95%，但正类召回率为 0，正类 F1 也为 0。ROC-AUC 对类别比例的直接变化相对不敏感，但在严重类别不平衡问题中可能显得过于乐观，此时应同时报告 PR-AUC、Precision、Recall 和 F1。

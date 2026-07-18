@@ -236,8 +236,8 @@ w_i = \frac{\left(\prod_{j=1}^{n} a_{ij}\right)^{1/n}}{\sum_{k=1}^{n} \left(\pro
 <h4>PCA 综合评价步骤</h4>
 <p><strong>Step 1：</strong>Z-score 标准化原始数据。<br>
 <strong>Step 2：</strong>计算相关系数矩阵的特征值 \(\lambda_1 \geq \lambda_2 \geq \cdots \geq \lambda_n\) 和特征向量。<br>
-<strong>Step 3：</strong>确定保留的主成分个数 \(k\)（通常取 \(\lambda_k > 1\) 或累积方差贡献率 > 85%）。<br>
-<strong>Step 4：</strong>计算各主成分得分：\(F_p = \sum_{j=1}^{n} l_{pj} z_j\)，其中 \(l_{pj}\) 是第 \(p\) 个主成分在第 \(j\) 个指标上的载荷。<br>
+<strong>Step 3：</strong>确定保留的主成分个数 \(k\)（累积方差贡献率 > 85% 为常用参考；\(\lambda_k > 1\) 的 Kaiser 准则主要适用于对标准化变量做相关矩阵 PCA，并非所有 PCA 的普遍规则）。<br>
+<strong>Step 4：</strong>计算各主成分得分：\(F_p = \sum_{j=1}^{n} w_{pj} z_j\)，其中 \(w_{pj}\) 是特征向量第 \(j\) 个分量（得分系数）。<strong>注意：</strong>载荷 \(l_{pj} = w_{pj} \cdot \sqrt{\lambda_p}\) 表示变量与主成分的相关系数，不直接用于计算得分。不同软件（sklearn、SPSS、R）对「loading」的定义可能不同，代入前应先确认。<br>
 <strong>Step 5：</strong>以方差贡献率为权重计算综合得分：</p>
 <div class="math-block">
 \[

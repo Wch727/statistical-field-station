@@ -163,8 +163,8 @@ N(t) = \frac{K}{1 + \left(\frac{K - N_0}{N_0}\right) e^{-rt}}
 \]
 </div>
 <p>其中 \(\beta\) = 传播率（单位时间一个感染者传染的人数），\(\gamma\) = 恢复率（\(1/\gamma\) = 平均感染期），\(N = S + I + R\) = 总人口。</p>
-<p><strong>基本再生数：</strong>\(R_0 = \beta / \gamma\)——一个感染者在完全易感人群中平均传染的人数。\(R_0 > 1\) → 疫情扩散；\(R_0 < 1\) → 疫情消亡。</p>
-<p><strong>峰值条件：</strong>当 \(S = \gamma / \beta = N / R_0\) 时，\(I\) 达到最大值。最终规模由超越方程 \(S_\infty = S_0 \exp\left(-\frac{\beta}{\gamma}(N - S_\infty)\right)\) 决定。</p>
+<p><strong>基本再生数：</strong>\(R_0 = \beta / \gamma\)——一个感染者在完全易感人群中平均传染的人数。注意：\(R_0 > 1\) 是疫情扩散的<strong>必要条件</strong>；初始阶段是否增长取决于有效再生数 \(R_{\text{eff}}(0) = R_0 \cdot S_0/N\)——只有当 \(R_{\text{eff}}(0) > 1\) 即 \(S_0 > N/R_0\) 时，感染人数才会在初期增长。</p>
+<p><strong>峰值条件：</strong>令 \(dI/dt = \beta SI/N - \gamma I = 0\)，得 \(S = \gamma N / \beta = N / R_0\) 时 \(I\) 达到最大值。若使用比例 \(s = S/N\)，则峰值条件简洁地写为 \(s = 1 / R_0\)。最终规模由超越方程 \(S_\infty = S_0 \exp\left(-\frac{\beta}{\gamma N}(N - S_\infty)\right)\)（人数形式）或 \(s_\infty = s_0 \exp\left(-R_0(1 - s_\infty)\right)\)（比例形式）决定。</p>
 </div>
 
 <h3>15.4.4 捕食者-猎物模型 (Lotka-Volterra)</h3>

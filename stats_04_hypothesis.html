@@ -166,9 +166,11 @@
 </div>
 
 <div class="math-block">
-\[ U_1 = n_1 n_2 + \frac{n_1(n_1+1)}{2} - R_1 \qquad U_2 = n_1 n_2 - U_1 \qquad U = \min(U_1, U_2) \]
+\[ U_1 = R_1 - \frac{n_1(n_1+1)}{2} \qquad U_2 = n_1 n_2 - U_1 \qquad U = \min(U_1, U_2) \]
 \[ \mu_U = \frac{n_1 n_2}{2} \qquad \sigma_U = \sqrt{\frac{n_1 n_2 (n_1 + n_2 + 1)}{12}} \qquad z = \frac{U - \mu_U}{\sigma_U} \]
 </div>
+
+<p style="font-size:0.88rem;color:var(--slate)"><strong>注意：</strong>① 有重复值时，正态近似方差需要 ties 校正（各软件实现方式不同）。② 小样本（n₁,n₂ < 10）优先使用精确 p 值而非正态近似。③ 不同软件可能报告 U₁、U₂ 或两者最小值——论文中应说明采用的定义。</p>
 
 <!-- ═══════════ 4.7 Bootstrap 与置换检验 ═══════════ -->
 <h2>4.7 Bootstrap 与置换检验</h2>
@@ -241,7 +243,7 @@ t = \frac{\bar{d}}{s_d / \sqrt{n}}, \quad \text{df} = n-1
 s_{\text{pooled}} = \sqrt{\frac{(n_1-1)s_1^2 + (n_2-1)s_2^2}{n_1 + n_2 - 2}}
 \]
 </div>
-<p>当两组方差相等时，这是总体标准差的最优无偏估计。如果方差不等，使用 Glass's Δ（以控制组的标准差为分母）或 Hedges' g（使用每组各自的标准差）。</p>
+<p>当两组方差相等时，这是总体标准差的最优无偏估计。如果方差不等，使用 Glass's Δ（以控制组的标准差为分母）。Hedges' g 对 Cohen's d 做小样本偏差修正（\(g = d \cdot J\)），仍基于合并标准差，并非使用每组各自的标准差。</p>
 </div>
 
 <div class="note-box">

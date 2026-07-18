@@ -89,7 +89,7 @@ em{font-style:italic}
 <h4>当数据不是连续变量时</h4>
 <p>Pearson 和 Spearman 都要求变量是连续或有序的。当两个变量都是分类变量时（如「性别 × 是否吸烟」「学历 × 投票意向」），需要用 Cramér's V：</p>
 \[ V = \sqrt{\frac{\chi^2}{N \cdot \min(r-1, c-1)}} \]
-<p>其中 χ² 是卡方独立性检验的统计量，N 是总样本量，r 和 c 是列联表的行数和列数。V ∈ [0, 1]，0 表示完全独立，1 表示完全关联。对于 2×2 表，V = φ 系数（即 Matthews 相关系数）。<br>
+<p>其中 χ² 是卡方独立性检验的统计量，N 是总样本量，r 和 c 是列联表的行数和列数。V ∈ [0, 1]，0 表示完全独立，1 表示完全关联。对于 2×2 表，V = |φ|，而 φ 系数（即 Matthews 相关系数，MCC）可正可负表示关联方向。<br>
 <strong>解读：</strong>df=1（2×2 表）：V ≥ 0.1 / 0.3 / 0.5（小/中/大）。df=2：V ≥ 0.07 / 0.21 / 0.35。df=3：V ≥ 0.06 / 0.17 / 0.29。</p>
 </div>
 
@@ -107,7 +107,7 @@ em{font-style:italic}
 
 <div class="concept-box">
 <h4>dCor：检测任意类型的依赖关系</h4>
-<p>Pearson r 只能检测线性关系，Spearman ρ 只能检测单调关系。dCor (Székely et al., 2007) 能检测<strong>任意类型</strong>的依赖关系。性质：dCor ∈ [0, 1]，dCor = 0 ⇔ X 和 Y 独立（这是 r 和 ρ 都不具备的强性质）。dCor = 1 表示存在确定的函数关系。计算基于距离矩阵的双中心化，有 R 包 <code>energy</code> 和 Python 包 <code>dcor</code> 可直接调用。</p>
+<p>Pearson r 只能检测线性关系，Spearman ρ 只能检测单调关系。dCor (Székely et al., 2007) 能检测<strong>任意类型</strong>的依赖关系。性质：dCor ∈ [0, 1]，dCor = 0 ⇔ X 和 Y 独立（这是 r 和 ρ 都不具备的强性质）。dCor 越大表示距离意义下的依赖越强；dCor = 1 是非常严格的特殊情形，不能简单解释为「存在任意确定函数关系」。计算基于距离矩阵的双中心化，有 R 包 <code>energy</code> 和 Python 包 <code>dcor</code> 可直接调用。</p>
 </div>
 
 <!-- ══════════════════════════════════════════════ -->

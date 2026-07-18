@@ -321,14 +321,21 @@ F_m(x) = F_{m-1}(x) + \nu \cdot h_m(x)
 </ul>
 
 <div class="derive-box">
-<h4>推导：KNN 的泛化误差界</h4>
-<p>可以证明，当 \(n \to \infty\)，\(K \to \infty\)，\(K/n \to 0\) 时，KNN 的错误率收敛到不超过贝叶斯最优错误率的两倍：</p>
+<h4>推导：KNN 的渐近性质</h4>
+<p>KNN 有两个重要的渐近结论，容易混淆：</p>
+<p><strong>① 固定 K，\(n \to \infty\)（Cover &amp; Hart, 1967）：</strong>对于 1-NN，渐近错误率满足 \(R^* \le R_{1NN} \le 2R^*(1 - R^*)\)，即不超过贝叶斯错误率的两倍。对于一般固定 K，有更紧的界：</p>
 <div class="math-block">
 \[
-P(\text{error}) \le 2 \cdot P^*(\text{error}) - \frac{K}{K-1} \cdot P^*(\text{error})^2
+R_{kNN} \le R^* \left(2 - \frac{K}{K-1}R^*\right)
 \]
 </div>
-<p>其中 \(P^*(\text{error})\) 是贝叶斯错误率（任何分类器能达到的最低错误率）。这意味着在无限数据极限下，KNN 的错误率被严格控制在贝叶斯错误率的两倍以内——这是 KNN 强大的理论保证。</p>
+<p><strong>② K → ∞，K/n → 0（Stone, 1977）：</strong>当 K 随样本量增长同时满足 \(K \to \infty\) 且 \(K/n \to 0\) 时，在适当条件下 KNN 是<strong>贝叶斯一致的</strong>——风险收敛到贝叶斯风险：</p>
+<div class="math-block">
+\[
+R_{kNN} \to R^*
+\]
+</div>
+<p>其中 \(R^*\) 是贝叶斯错误率（任何分类器能达到的最低错误率）。这两个结论给出了 KNN 强大的理论保证：足够大样本下，它几乎是最优的非参数分类器。</p>
 </div>
 
 <!-- ══════════════════════════════════════════════ -->
