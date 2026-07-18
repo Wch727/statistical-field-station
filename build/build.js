@@ -41,6 +41,17 @@ function nextLink(ch) {
   return ` &nbsp;|&nbsp; 下一章：<a href="${next.file}">${next.num} ${next.short} →</a>`;
 }
 
+// ── Build quiz HTML ──
+function buildQuiz(ch) {
+  if (!ch.quiz || !ch.quiz.length) return { section: '', script: '' };
+  const quizData = JSON.stringify(ch.quiz);
+  const quizTitle = `${ch.num} ${ch.short} — 自测题`;
+  return {
+    section: `<div id="quiz-widget" class="quiz-widget"></div>`,
+    script: `<script>window.__QUIZ_DATA__=${quizData};window.__QUIZ_TITLE__="${quizTitle}";</script>\n<script src="assets/js/quiz.js"></script>`
+  };
+}
+
 // ── Build all chapter pages ──
 console.log('Building chapter pages...');
 let built = 0;
@@ -61,6 +72,9 @@ for (const ch of chapters) {
   const prev = prevLink(ch);
   const next = nextLink(ch);
 
+  // Build quiz
+  const quiz = buildQuiz(ch);
+
   // Substitute placeholders
   let html = chapterTemplate
     .replace('{{TITLE}}', `${ch.num} ${ch.title}`)
@@ -71,6 +85,8 @@ for (const ch of chapters) {
     .replace('{{PAGE_CSS}}', pageCss)
     .replace('{{PAGE_JS}}', pageJs)
     .replace('{{CONTENT}}', bodyContent)
+    .replace('{{QUIZ_SECTION}}', quiz.section)
+    .replace('{{QUIZ_SCRIPT}}', quiz.script)
     .replace('{{PREV_LINK}}', prev)
     .replace('{{NEXT_LINK}}', next);
 

@@ -524,6 +524,8 @@ score_noisy = model.<span class="fn">score</span>(X_noisy, y)
 </div>
 </main>
 
+<div id="quiz-widget" class="quiz-widget"></div>
+
 <footer class="page-footer">
   <div class="footer-nav">
     
@@ -540,6 +542,8 @@ score_noisy = model.<span class="fn">score</span>(X_noisy, y)
 
 </div>
 <script src="assets/js/statistics.js"></script>
+<script>window.__QUIZ_DATA__=[{"question":"在竞赛中，模型验证的核心目的是什么？","options":["证明模型的绝对正确性","验证模型的可靠性、评估其局限、确保其可复现","展示模型在所有数据集上都表现最优","证明模型优于所有其他方法"],"correct":1,"explanation":"模型验证是为了评估模型的可靠性、局限性和可复现性，而非宣称绝对正确或最优。"},{"question":"train_test_split的哪个参数可以确保类别比例在训练集和测试集中一致？","options":["random_state","shuffle","stratify","test_size"],"correct":2,"explanation":"stratify=y 确保目标变量 y 的类别比例在训练/测试集中保持一致，对分类问题特别重要。"},{"question":"以下哪个 colormap 对红绿色盲友好？","options":["RdYlGn","jet","RdYlBu","rainbow"],"correct":2,"explanation":"RdYlBu（红-黄-蓝）是色盲友好选择。RdYlGn（红-黄-绿）是常见误区——红绿色盲无法分辨红绿两端。"}];window.__QUIZ_TITLE__="§0 工具箱 — 自测题";</script>
+<script src="assets/js/quiz.js"></script>
 <script>
 // ============ Dependency Load Guard ============
 if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {

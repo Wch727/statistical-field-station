@@ -331,6 +331,8 @@ Q_3 &= P_{75} \quad \text{（第三四分位数，上四分位数）} \\
 </div>
 </main>
 
+<div id="quiz-widget" class="quiz-widget"></div>
+
 <footer class="page-footer">
   <div class="footer-nav">
     <a href="stats_00_toolkit.html">← §0 工具箱</a> &nbsp;|&nbsp; 
@@ -347,6 +349,8 @@ Q_3 &= P_{75} \quad \text{（第三四分位数，上四分位数）} \\
 
 </div>
 <script src="assets/js/statistics.js"></script>
+<script>window.__QUIZ_DATA__=[{"question":"样本方差分母用 n−1 而不是 n 的原因是什么？","options":["为了让方差变大","使样本方差成为总体方差的无偏估计","这是约定俗成","为了简化计算"],"correct":1,"explanation":"Bessel校正：E[s²]=σ²，使用 n−1 使样本方差成为总体方差的无偏估计量。这补偿了用样本均值估计总体均值所消耗的一个自由度。"},{"question":"对于严重右偏的收入数据，哪个中心趋势度量最合适？","options":["均值","中位数","众数","标准差"],"correct":1,"explanation":"中位数对极端值稳健。右偏分布中均值会被极端高值拉高，中位数更准确反映\"典型\"水平。"},{"question":"Shapiro-Wilk检验的原假设是什么？","options":["数据不服从正态分布","数据服从正态分布","两组数据方差相等","两组数据中位数相等"],"correct":1,"explanation":"SW检验的H₀：数据来自正态分布。p<0.05拒绝H₀，认为数据显著偏离正态。但大样本下SW过于敏感，建议配合Q-Q图。"}];window.__QUIZ_TITLE__="§I 描述统计 — 自测题";</script>
+<script src="assets/js/quiz.js"></script>
 <script>
 // ============ Dependency Load Guard ============
 if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {

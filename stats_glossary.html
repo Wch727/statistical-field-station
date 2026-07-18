@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>统计术语表 — Statistical Field Station</title>
+<link rel="stylesheet" href="assets/vendor/google-fonts.css">
+<link rel="stylesheet" href="assets/css/site.css">
+<style>
+.glossary-hero{text-align:center;padding:32px 0 20px}
+.glossary-hero h1{font-family:var(--display);font-weight:700;font-size:clamp(2rem,5vw,3rem);color:var(--forest)}
+.glossary-hero .deck{color:var(--slate);margin-top:8px}
+.glossary-filter{max-width:500px;margin:0 auto 24px}
+.glossary-input{width:100%;padding:10px 16px;font-family:var(--mono);font-size:0.9rem;border:1px solid var(--stone);border-radius:6px;background:var(--parchment);color:var(--forest)}
+.glossary-input:focus{outline:none;border-color:var(--terracotta);box-shadow:0 0 0 3px rgba(199,81,70,0.1)}
+.glossary-index{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin-bottom:20px}
+.gi-letter{font-family:var(--mono);font-size:0.78rem;padding:4px 10px;border-radius:var(--radius);background:var(--surface);border:1px solid var(--stone);color:var(--slate);cursor:pointer;text-decoration:none;transition:all 0.15s}
+.gi-letter:hover,.gi-letter.active{background:var(--forest);color:#fff;border-color:var(--forest)}
+.glossary-term{margin-bottom:16px;padding:12px 16px;background:var(--surface);border:1px solid var(--stone);border-radius:6px}
+.glossary-term h3{font-family:var(--display);font-size:1.05rem;font-weight:600;color:var(--forest);margin:0 0 4px;padding:0;border:none}
+.glossary-term .gt-en{font-family:var(--mono);font-size:0.75rem;color:var(--gold);margin-bottom:6px}
+.glossary-term .gt-def{font-size:0.9rem;color:var(--slate);line-height:1.6}
+.glossary-term .gt-see{font-size:0.78rem;color:var(--terracotta);margin-top:6px;font-family:var(--mono)}
+.glossary-empty{text-align:center;padding:40px;color:var(--slate);font-style:italic}
+@media(max-width:700px){.glossary-index{gap:2px}.gi-letter{padding:3px 7px;font-size:0.7rem}}
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main-content">跳到内容</a>
+<div class="page">
+
+<nav class="top-nav" aria-label="面包屑导航">
+  <a href="stats_tutorial.html">← Field Station</a> <span aria-hidden="true">|</span> 统计术语表
+</nav>
+
+<header class="glossary-hero">
+  <h1>统计术语表</h1>
+  <p class="deck">按字母索引查阅 · 共 <span id="glossary-count">0</span> 条</p>
+</header>
+
+<main id="main-content">
+<div class="glossary-filter">
+  <input type="search" class="glossary-input" id="glossary-input" placeholder="搜索术语… 例如：p值、Bessel校正、ROC" autocomplete="off">
+</div>
+<div class="glossary-index" id="glossary-index"></div>
+<div id="glossary-list"></div>
+</main>
+
+<footer class="page-footer">
+  <div class="footer-nav">
+    <a href="stats_tutorial.html">← Field Station 总目录</a>
+  </div>
+  <div class="footer-meta">
+    <span>版本 v1.2.0</span> <span>|</span>
+    <span>统计审校: 已完成三轮</span> <span>|</span>
+    <span>最后更新: 2026-07</span>
+  </div>
+  <p>Statistical Field Station &copy; 2026 · KaTeX + D3.js</p>
+</footer>
+
+</div>
+<script>
+(async function(){
+  const resp = await fetch('assets/data/glossary.json');
+  const glossary = await resp.json();
+  document.getElementById('glossary-count').textContent = glossary.length;
+
+  const list = document.getElementById('glossary-list');
+  const input = document.getElementById('glossary-input');
+  const indexEl = document.getElementById('glossary-index');
+
+  // Build alphabet index
+  const firstChars = [...new Set(glossary.map(g => g.term[0].toUpperCase()))].sort();
+  indexEl.innerHTML = firstChars.map(c =>
+    `<a href="#g-${c}" class="gi-letter" data-letter="${c}">${c}</a>`
+  ).join('');
+
+  function render(filter='') {
+    const q = filter.toLowerCase();
+    const filtered = q ? glossary.filter(g =>
+      g.term.includes(q) || g.en.toLowerCase().includes(q) || g.def.includes(q)
+    ) : glossary;
+
+    if (filtered.length === 0) {
+      list.innerHTML = '<div class="glossary-empty">没有匹配的术语。试试其他关键词？</div>';
+      return;
+    }
+
+    let html = '';
+    let lastChar = '';
+    for (const g of filtered) {
+      const c = g.term[0].toUpperCase();
+      if (c !== lastChar) {
+        html += `<h2 id="g-${c}" style="margin-top:24px">${c}</h2>`;
+        lastChar = c;
+      }
+      html += `<div class="glossary-term">
+        <h3>${g.term}</h3>
+        <div class="gt-en">${g.en}</div>
+        <div class="gt-def">${g.def}</div>
+        ${g.see ? `<div class="gt-see">📖 相关章节：${g.see}</div>` : ''}
+      </div>`;
+    }
+    list.innerHTML = html;
+  }
+
+  input.addEventListener('input', e => render(e.target.value));
+  indexEl.addEventListener('click', e => {
+    if (e.target.classList.contains('gi-letter')) {
+      input.value = '';
+      render();
+      document.querySelector(`#g-${e.target.dataset.letter}`)?.scrollIntoView({behavior:'smooth'});
+    }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

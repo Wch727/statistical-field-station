@@ -409,6 +409,8 @@ t = \frac{\bar{x} - \mu_0}{s / \sqrt{n}} \sim t_{n-1}
 </div>
 </main>
 
+<div id="quiz-widget" class="quiz-widget"></div>
+
 <footer class="page-footer">
   <div class="footer-nav">
     <a href="stats_03_correlation.html">← §III 相关分析</a> &nbsp;|&nbsp; 
@@ -425,6 +427,8 @@ t = \frac{\bar{x} - \mu_0}{s / \sqrt{n}} \sim t_{n-1}
 
 </div>
 <script src="assets/js/statistics.js"></script>
+<script>window.__QUIZ_DATA__=[{"question":"为什么竞赛中建议默认使用Welch t检验而非Student t检验？","options":["Welch计算更简单","Welch不假设两组方差相等，更稳健","Welch的p值总是更小","Welch是唯一能做双侧检验的方法"],"correct":1,"explanation":"Welch t检验不假设方差齐性（使用Satterthwaite近似自由度），在方差异质时也能控制I类错误。竞赛中默认使用Welch是更稳健的选择。"},{"question":"p=0.03 在α=0.05时意味着什么？","options":["原假设有3%概率为真","在原假设为真的条件下，观察到当前或更极端结果的概率为3%","备择假设有97%概率为真","效应量是0.03"],"correct":1,"explanation":"p值是在H₀为真的前提下，数据与H₀不一致的程度。p=0.03不意味着H₀为真的概率是3%。"},{"question":"报告p值的同时需要报告什么？","options":["只需要p值就够了","效应量和置信区间","样本量就够了","平均值就够了"],"correct":1,"explanation":"p值受样本量影响大——大样本下微小效应也能显著。效应量量化了效应的实际大小，不受样本量影响。置信区间给出参数估计的不确定性范围。"}];window.__QUIZ_TITLE__="§IV 假设检验 — 自测题";</script>
+<script src="assets/js/quiz.js"></script>
 <script>
 // ============ Dependency Load Guard ============
 if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {

@@ -10,9 +10,51 @@
     "time": 60,
     "difficulty": "beginner",
     "priority": "core",
-    "tags": ["Pandas", "NumPy", "Matplotlib", "交叉验证", "鲁棒性", "论文六问"],
+    "tags": [
+      "Pandas",
+      "NumPy",
+      "Matplotlib",
+      "交叉验证",
+      "鲁棒性",
+      "论文六问"
+    ],
     "prev": null,
-    "next": "01_descriptive"
+    "next": "01_descriptive",
+    "quiz": [
+      {
+        "question": "在竞赛中，模型验证的核心目的是什么？",
+        "options": [
+          "证明模型的绝对正确性",
+          "验证模型的可靠性、评估其局限、确保其可复现",
+          "展示模型在所有数据集上都表现最优",
+          "证明模型优于所有其他方法"
+        ],
+        "correct": 1,
+        "explanation": "模型验证是为了评估模型的可靠性、局限性和可复现性，而非宣称绝对正确或最优。"
+      },
+      {
+        "question": "train_test_split的哪个参数可以确保类别比例在训练集和测试集中一致？",
+        "options": [
+          "random_state",
+          "shuffle",
+          "stratify",
+          "test_size"
+        ],
+        "correct": 2,
+        "explanation": "stratify=y 确保目标变量 y 的类别比例在训练/测试集中保持一致，对分类问题特别重要。"
+      },
+      {
+        "question": "以下哪个 colormap 对红绿色盲友好？",
+        "options": [
+          "RdYlGn",
+          "jet",
+          "RdYlBu",
+          "rainbow"
+        ],
+        "correct": 2,
+        "explanation": "RdYlBu（红-黄-蓝）是色盲友好选择。RdYlGn（红-黄-绿）是常见误区——红绿色盲无法分辨红绿两端。"
+      }
+    ]
   },
   {
     "slug": "01_descriptive",
@@ -21,13 +63,59 @@
     "title": "描述性统计",
     "short": "描述统计",
     "deck": "中心趋势、离散程度、分布形态 —— 数据分析的第一步。从 Bessel 校正的数学推导到 Box-Cox 变换，从异常值检测到正态性检验。数模论文的数据分析部分，第一段永远是描述性统计。",
-    "prereqs": ["§0"],
+    "prereqs": [
+      "§0"
+    ],
     "time": 45,
     "difficulty": "beginner",
     "priority": "core",
-    "tags": ["均值/中位数/众数", "方差/SD/SEM", "偏度/峰度", "Bessel校正", "Box-Cox", "Q-Q图", "Shapiro-Wilk", "MAD"],
+    "tags": [
+      "均值/中位数/众数",
+      "方差/SD/SEM",
+      "偏度/峰度",
+      "Bessel校正",
+      "Box-Cox",
+      "Q-Q图",
+      "Shapiro-Wilk",
+      "MAD"
+    ],
     "prev": "00_toolkit",
-    "next": "02_visualization"
+    "next": "02_visualization",
+    "quiz": [
+      {
+        "question": "样本方差分母用 n−1 而不是 n 的原因是什么？",
+        "options": [
+          "为了让方差变大",
+          "使样本方差成为总体方差的无偏估计",
+          "这是约定俗成",
+          "为了简化计算"
+        ],
+        "correct": 1,
+        "explanation": "Bessel校正：E[s²]=σ²，使用 n−1 使样本方差成为总体方差的无偏估计量。这补偿了用样本均值估计总体均值所消耗的一个自由度。"
+      },
+      {
+        "question": "对于严重右偏的收入数据，哪个中心趋势度量最合适？",
+        "options": [
+          "均值",
+          "中位数",
+          "众数",
+          "标准差"
+        ],
+        "correct": 1,
+        "explanation": "中位数对极端值稳健。右偏分布中均值会被极端高值拉高，中位数更准确反映\"典型\"水平。"
+      },
+      {
+        "question": "Shapiro-Wilk检验的原假设是什么？",
+        "options": [
+          "数据不服从正态分布",
+          "数据服从正态分布",
+          "两组数据方差相等",
+          "两组数据中位数相等"
+        ],
+        "correct": 1,
+        "explanation": "SW检验的H₀：数据来自正态分布。p<0.05拒绝H₀，认为数据显著偏离正态。但大样本下SW过于敏感，建议配合Q-Q图。"
+      }
+    ]
   },
   {
     "slug": "02_visualization",
@@ -36,11 +124,22 @@
     "title": "数据可视化",
     "short": "可视化",
     "deck": "直方图、箱线图、小提琴图、Q-Q 图、KDE 密度估计。Anscombe 四重奏与 Datasaurus Dozen 的教训：永远先画图。竞赛中一张好图胜过一千个数字。",
-    "prereqs": ["§I"],
+    "prereqs": [
+      "§I"
+    ],
     "time": 40,
     "difficulty": "beginner",
     "priority": "core",
-    "tags": ["直方图", "箱线图", "小提琴图", "KDE", "Q-Q图", "Sturges/FD规则", "散点图矩阵", "热力图"],
+    "tags": [
+      "直方图",
+      "箱线图",
+      "小提琴图",
+      "KDE",
+      "Q-Q图",
+      "Sturges/FD规则",
+      "散点图矩阵",
+      "热力图"
+    ],
     "prev": "01_descriptive",
     "next": "03_correlation"
   },
@@ -51,11 +150,22 @@
     "title": "相关分析",
     "short": "相关分析",
     "deck": "Pearson r、Spearman ρ、Kendall τ、偏相关、距离相关、Cramér's V、典型相关分析 CCA。Fisher z-变换、置信区间、相关矩阵。回答「哪些因素与目标变量有关？」—— 相关 ≠ 因果。",
-    "prereqs": ["§I", "§II"],
+    "prereqs": [
+      "§I",
+      "§II"
+    ],
     "time": 50,
     "difficulty": "beginner",
     "priority": "core",
-    "tags": ["Pearson r", "Spearman ρ", "Kendall τ", "CCA", "偏相关", "距离相关", "Cramér's V"],
+    "tags": [
+      "Pearson r",
+      "Spearman ρ",
+      "Kendall τ",
+      "CCA",
+      "偏相关",
+      "距离相关",
+      "Cramér's V"
+    ],
     "prev": "02_visualization",
     "next": "04_hypothesis"
   },
@@ -66,13 +176,60 @@
     "title": "假设检验",
     "short": "假设检验",
     "deck": "t 检验、卡方检验、Mann-Whitney U、配对检验、效应量系统（Cohen's d / Hedges' g）、方差齐性检验、统计功效、多重校正、Bootstrap 与置换检验。",
-    "prereqs": ["§I", "§III"],
+    "prereqs": [
+      "§I",
+      "§III"
+    ],
     "time": 60,
     "difficulty": "intermediate",
     "priority": "core",
-    "tags": ["Welch t-test", "配对t检验", "Cohen's d", "Levene", "χ²检验", "Mann-Whitney", "Bootstrap", "检验选择决策树"],
+    "tags": [
+      "Welch t-test",
+      "配对t检验",
+      "Cohen's d",
+      "Levene",
+      "χ²检验",
+      "Mann-Whitney",
+      "Bootstrap",
+      "检验选择决策树"
+    ],
     "prev": "03_correlation",
-    "next": "05_anova"
+    "next": "05_anova",
+    "quiz": [
+      {
+        "question": "为什么竞赛中建议默认使用Welch t检验而非Student t检验？",
+        "options": [
+          "Welch计算更简单",
+          "Welch不假设两组方差相等，更稳健",
+          "Welch的p值总是更小",
+          "Welch是唯一能做双侧检验的方法"
+        ],
+        "correct": 1,
+        "explanation": "Welch t检验不假设方差齐性（使用Satterthwaite近似自由度），在方差异质时也能控制I类错误。竞赛中默认使用Welch是更稳健的选择。"
+      },
+      {
+        "question": "p=0.03 在α=0.05时意味着什么？",
+        "options": [
+          "原假设有3%概率为真",
+          "在原假设为真的条件下，观察到当前或更极端结果的概率为3%",
+          "备择假设有97%概率为真",
+          "效应量是0.03"
+        ],
+        "correct": 1,
+        "explanation": "p值是在H₀为真的前提下，数据与H₀不一致的程度。p=0.03不意味着H₀为真的概率是3%。"
+      },
+      {
+        "question": "报告p值的同时需要报告什么？",
+        "options": [
+          "只需要p值就够了",
+          "效应量和置信区间",
+          "样本量就够了",
+          "平均值就够了"
+        ],
+        "correct": 1,
+        "explanation": "p值受样本量影响大——大样本下微小效应也能显著。效应量量化了效应的实际大小，不受样本量影响。置信区间给出参数估计的不确定性范围。"
+      }
+    ]
   },
   {
     "slug": "05_anova",
@@ -81,11 +238,21 @@
     "title": "方差分析",
     "short": "ANOVA",
     "deck": "单因素与双因素 ANOVA、交互效应、ANCOVA（协方差分析）、MANOVA（多元方差分析）、Kruskal-Wallis 检验、事后检验、效应量。回答「某因素对结果有多大影响？」",
-    "prereqs": ["§IV"],
+    "prereqs": [
+      "§IV"
+    ],
     "time": 50,
     "difficulty": "intermediate",
     "priority": "core",
-    "tags": ["One-Way ANOVA", "Two-Way ANOVA", "ANCOVA", "MANOVA", "Kruskal-Wallis", "Tukey HSD", "η²/ω²/f"],
+    "tags": [
+      "One-Way ANOVA",
+      "Two-Way ANOVA",
+      "ANCOVA",
+      "MANOVA",
+      "Kruskal-Wallis",
+      "Tukey HSD",
+      "η²/ω²/f"
+    ],
     "prev": "04_hypothesis",
     "next": "06_regression"
   },
@@ -96,11 +263,23 @@
     "title": "线性回归",
     "short": "回归",
     "deck": "OLS 矩阵推导、多元回归、交互项与多项式、多重共线性 (VIF)、变量选择 (LASSO/Ridge)、WLS（加权最小二乘）、分位数回归、残差诊断、AIC/BIC。",
-    "prereqs": ["§III", "§IV"],
+    "prereqs": [
+      "§III",
+      "§IV"
+    ],
     "time": 60,
     "difficulty": "advanced",
     "priority": "advanced",
-    "tags": ["OLS矩阵推导", "WLS", "分位数回归", "VIF", "LASSO/Ridge", "Cook's D", "DW检验", "AIC/BIC"],
+    "tags": [
+      "OLS矩阵推导",
+      "WLS",
+      "分位数回归",
+      "VIF",
+      "LASSO/Ridge",
+      "Cook's D",
+      "DW检验",
+      "AIC/BIC"
+    ],
     "prev": "05_anova",
     "next": "07_logistic"
   },
@@ -111,11 +290,21 @@
     "title": "逻辑回归",
     "short": "逻辑回归",
     "deck": "Logit-Odds-概率三层解读、MLE 数值求解、ROC 与 AUC、校准曲线、Hosmer-Lemeshow 检验、类别不平衡、多分类与有序逻辑回归、GLM 统一框架。",
-    "prereqs": ["§VI"],
+    "prereqs": [
+      "§VI"
+    ],
     "time": 55,
     "difficulty": "advanced",
     "priority": "advanced",
-    "tags": ["Sigmoid", "MLE/IRLS", "ROC/AUC", "校准曲线", "HL检验", "Odds Ratio", "GLM框架"],
+    "tags": [
+      "Sigmoid",
+      "MLE/IRLS",
+      "ROC/AUC",
+      "校准曲线",
+      "HL检验",
+      "Odds Ratio",
+      "GLM框架"
+    ],
     "prev": "06_regression",
     "next": "08_classification"
   },
@@ -126,11 +315,21 @@
     "title": "分类方法",
     "short": "分类",
     "deck": "决策树（熵/基尼/剪枝）、随机森林（Bagging/OOB）、XGBoost / LightGBM、SVM（最大间隔/核技巧）、KNN、朴素贝叶斯、SMOTE 类别不平衡。回答「这个样本属于哪一类？」",
-    "prereqs": ["§VII"],
+    "prereqs": [
+      "§VII"
+    ],
     "time": 65,
     "difficulty": "advanced",
     "priority": "advanced",
-    "tags": ["决策树", "随机森林", "XGBoost", "SVM", "KNN", "朴素贝叶斯", "SMOTE"],
+    "tags": [
+      "决策树",
+      "随机森林",
+      "XGBoost",
+      "SVM",
+      "KNN",
+      "朴素贝叶斯",
+      "SMOTE"
+    ],
     "prev": "07_logistic",
     "next": "09_clustering"
   },
@@ -141,11 +340,22 @@
     "title": "聚类分析",
     "short": "聚类",
     "deck": "K-Means（Lloyd 算法/肘部法则）、层次聚类（Ward/树状图）、DBSCAN（密度聚类）、高斯混合模型 GMM、聚类评估指标（轮廓系数/DB/CH）。回答「数据能否划分亚类？」",
-    "prereqs": ["§I", "§II"],
+    "prereqs": [
+      "§I",
+      "§II"
+    ],
     "time": 55,
     "difficulty": "advanced",
     "priority": "advanced",
-    "tags": ["K-Means", "层次聚类", "DBSCAN", "GMM", "EM算法", "轮廓系数", "Davies-Bouldin"],
+    "tags": [
+      "K-Means",
+      "层次聚类",
+      "DBSCAN",
+      "GMM",
+      "EM算法",
+      "轮廓系数",
+      "Davies-Bouldin"
+    ],
     "prev": "08_classification",
     "next": "10_evaluation"
   },
@@ -156,11 +366,23 @@
     "title": "模型评估与降维",
     "short": "评估与降维",
     "deck": "混淆矩阵、精确率/召回率/F1、ROC/AUC、K 折交叉验证、PCA、偏最小二乘 PLS、偏差-方差权衡、特征选择、数据标准化。回答「模型好不好？」",
-    "prereqs": ["§VI", "§VII", "§VIII"],
+    "prereqs": [
+      "§VI",
+      "§VII",
+      "§VIII"
+    ],
     "time": 60,
     "difficulty": "intermediate",
     "priority": "core",
-    "tags": ["混淆矩阵", "F1/AUC", "交叉验证", "PCA", "PLS", "偏差-方差", "特征选择"],
+    "tags": [
+      "混淆矩阵",
+      "F1/AUC",
+      "交叉验证",
+      "PCA",
+      "PLS",
+      "偏差-方差",
+      "特征选择"
+    ],
     "prev": "09_clustering",
     "next": "11_timeseries"
   },
@@ -171,11 +393,23 @@
     "title": "时间序列分析",
     "short": "时间序列",
     "deck": "趋势-季节-残差分解、平稳性（ADF 检验）、ACF/PACF、ARIMA(p,d,q)、SARIMA 季节模型、指数平滑/ETS、AICc 模型选择、预测与置信区间。回答「未来趋势如何？」",
-    "prereqs": ["§I", "§II", "§VI"],
+    "prereqs": [
+      "§I",
+      "§II",
+      "§VI"
+    ],
     "time": 60,
     "difficulty": "advanced",
     "priority": "advanced",
-    "tags": ["ARIMA", "SARIMA", "ACF/PACF", "ADF检验", "季节分解", "Holt-Winters", "预测"],
+    "tags": [
+      "ARIMA",
+      "SARIMA",
+      "ACF/PACF",
+      "ADF检验",
+      "季节分解",
+      "Holt-Winters",
+      "预测"
+    ],
     "prev": "10_evaluation",
     "next": "12_prediction"
   },
@@ -186,11 +420,22 @@
     "title": "预测问题专论",
     "short": "预测",
     "deck": "回归预测评估指标（RMSE/MAE/MAPE）、预测区间 vs 置信区间、灰色预测 GM(1,1)（小样本预测标配）、多模型比较框架、数据泄漏防御。回答「预测的可信度有多高？」",
-    "prereqs": ["§VI", "§XI"],
+    "prereqs": [
+      "§VI",
+      "§XI"
+    ],
     "time": 50,
     "difficulty": "intermediate",
     "priority": "core",
-    "tags": ["RMSE/MAE/MAPE", "预测区间", "GM(1,1)", "灰色预测", "多模型比较", "数据泄漏", "集成"],
+    "tags": [
+      "RMSE/MAE/MAPE",
+      "预测区间",
+      "GM(1,1)",
+      "灰色预测",
+      "多模型比较",
+      "数据泄漏",
+      "集成"
+    ],
     "prev": "11_timeseries",
     "next": "13_optimization"
   },
@@ -201,11 +446,22 @@
     "title": "优化与决策",
     "short": "优化",
     "deck": "把自然语言翻译成数学模型——线性规划（单纯形/对偶/影子价格）、整数规划（分支定界）、0-1 规划与逻辑约束、非线性规划（KKT）、多目标优化（Pareto/TOPSIS）、动态规划（Bellman 方程）、背包/选址/TSP/VRP 经典模型。",
-    "prereqs": ["§I", "§VI"],
+    "prereqs": [
+      "§I",
+      "§VI"
+    ],
     "time": 70,
     "difficulty": "intermediate",
     "priority": "core",
-    "tags": ["线性规划", "整数规划", "0-1规划", "多目标优化", "动态规划", "TSP/VRP", "灵敏度分析"],
+    "tags": [
+      "线性规划",
+      "整数规划",
+      "0-1规划",
+      "多目标优化",
+      "动态规划",
+      "TSP/VRP",
+      "灵敏度分析"
+    ],
     "prev": "12_prediction",
     "next": "14_evaluation"
   },
@@ -216,11 +472,22 @@
     "title": "综合评价与排序",
     "short": "综合评价",
     "deck": "哪个方案最好？如何构造综合指标？—— 熵权法（客观赋权）、TOPSIS（逼近理想解）、AHP 层次分析法（一致性检验）、PCA 降维评价、因子分析、模糊综合评价、灰色关联分析。强调指标体系论证与灵敏度分析，避免机械套用模板。",
-    "prereqs": ["§X", "§XIII"],
+    "prereqs": [
+      "§X",
+      "§XIII"
+    ],
     "time": 55,
     "difficulty": "intermediate",
     "priority": "core",
-    "tags": ["熵权法", "TOPSIS", "AHP", "PCA", "模糊综合评价", "灰色关联", "灵敏度"],
+    "tags": [
+      "熵权法",
+      "TOPSIS",
+      "AHP",
+      "PCA",
+      "模糊综合评价",
+      "灰色关联",
+      "灵敏度"
+    ],
     "prev": "13_optimization",
     "next": "15_mechanism"
   },
@@ -231,11 +498,21 @@
     "title": "机理建模与微分方程",
     "short": "机理建模",
     "deck": "从第一性原理推导系统方程。差分方程、常微分方程、Logistic 增长、SIR 传染病模型、Lotka-Volterra 捕食者-猎物、扩散方程、数值求解 (solve_ivp)、参数估计 (curve_fit)。回答「系统如何随时间演化？」",
-    "prereqs": ["§I", "§XIII"],
+    "prereqs": [
+      "§I",
+      "§XIII"
+    ],
     "time": 60,
     "difficulty": "advanced",
     "priority": "advanced",
-    "tags": ["微分方程", "Logistic", "SIR", "捕食者-猎物", "solve_ivp", "参数估计"],
+    "tags": [
+      "微分方程",
+      "Logistic",
+      "SIR",
+      "捕食者-猎物",
+      "solve_ivp",
+      "参数估计"
+    ],
     "prev": "14_evaluation",
     "next": "16_graph"
   },
@@ -246,11 +523,21 @@
     "title": "图论、网络与仿真",
     "short": "图论与仿真",
     "deck": "图论 + 随机仿真的组合工具箱。最短路径 (Dijkstra/Floyd)、最小生成树 (Prim/Kruskal)、网络中心性、蒙特卡洛模拟、排队论 (M/M/1)、元胞自动机 (交通流 NASCH)。回答「最短路线？关键节点？如何模拟随机系统？」",
-    "prereqs": ["§I", "§XV"],
+    "prereqs": [
+      "§I",
+      "§XV"
+    ],
     "time": 55,
     "difficulty": "advanced",
     "priority": "advanced",
-    "tags": ["Dijkstra", "MST", "中心性", "蒙特卡洛", "排队论", "元胞自动机"],
+    "tags": [
+      "Dijkstra",
+      "MST",
+      "中心性",
+      "蒙特卡洛",
+      "排队论",
+      "元胞自动机"
+    ],
     "prev": "15_mechanism",
     "next": null
   }
