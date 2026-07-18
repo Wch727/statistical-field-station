@@ -53,8 +53,18 @@ jobs:
       - run: pip install -r tests/python/requirements.txt
       - run: pytest tests/python/ -v
 
+  build-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm run build
+      - run: git diff --exit-code
+
   deploy:
-    needs: [statistics, links, assets, smoke, python-golden]
+    needs: [statistics, links, assets, smoke, python-golden, build-check]
     if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     permissions:

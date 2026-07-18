@@ -59,10 +59,11 @@
 </footer>
 
 </div>
+<!-- Glossary data loaded as script (no fetch – works offline with file://) -->
+<script src="assets/data/glossary.js"></script>
 <script>
-(async function(){
-  const resp = await fetch('assets/data/glossary.json');
-  const glossary = await resp.json();
+(function(){
+  const glossary = window.GLOSSARY_DATA || [];
   document.getElementById('glossary-count').textContent = glossary.length;
 
   const list = document.getElementById('glossary-list');

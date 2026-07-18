@@ -104,10 +104,22 @@ async function main() {
     }
   }
 
-  // ── Mobile viewport check (first 3 pages as sample) ──
+  // ── Mobile viewport check (5 representative pages) ──
   console.log('\n── Mobile viewport check (375×812) ──');
+  const mobilePages = [
+    'stats_tutorial.html',      // homepage: decision tree + search + TOC
+    'stats_01_descriptive.html', // dense KaTeX formulas
+    'stats_10_evaluation.html',  // interactive D3 charts (confusion matrix, PCA, ROC)
+    'stats_13_optimization.html',// largest page, complex tables
+    'stats_glossary.html',       // standalone page with search/filter
+  ];
   const mobileContext = await browser.newContext({ viewport: { width: 375, height: 812 } });
-  for (const pageFile of pages.slice(0, 3)) {
+  for (const pageFile of mobilePages) {
+    if (!fs.existsSync(pageFile)) {
+      console.error(`MISSING: ${pageFile} — skipping mobile check`);
+      failures++;
+      continue;
+    }
     const url = `http://localhost:${PORT}/${pageFile}`;
     try {
       const page = await mobileContext.newPage();
@@ -134,7 +146,8 @@ async function main() {
   await browser.close();
   server.close();
 
-  console.log(`\n${pages.length - failures}/${pages.length + 3} checks OK, ${failures} failed.`);
+  const totalChecks = pages.length + mobilePages.length;
+  console.log(`\n${totalChecks - failures}/${totalChecks} checks OK, ${failures} failed.`);
   if (failures > 0) process.exitCode = 1;
 }
 

@@ -571,6 +571,21 @@
       "元胞自动机"
     ],
     "prev": "15_mechanism",
+    "next": "case_glass"
+  },
+  {
+    "slug": "case_glass",
+    "file": "stats_case_glass.html",
+    "num": "案例",
+    "title": "古代玻璃成分分析",
+    "short": "案例总览",
+    "deck": "2022年CUMCM C题完整复盘——从数据清洗到模型评估，贯穿全部17章的真实竞赛案例。展示一道题如何串联描述统计、可视化、相关分析、假设检验、分类、聚类、模型评估和综合评价。",
+    "prereqs": ["§I", "§VII", "§VIII", "§IX", "§X"],
+    "time": 30,
+    "difficulty": "intermediate",
+    "priority": "core",
+    "tags": ["案例", "CUMCM", "玻璃分类", "端到端", "分类", "聚类", "PCA"],
+    "prev": "16_graph",
     "next": null
   }
 ]

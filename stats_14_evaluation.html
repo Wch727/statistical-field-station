@@ -27,7 +27,7 @@
 </nav>
 
 <header class="hero">
-  <div class="num">{{CHAPTER_NUM}}</div>
+  <div class="num">§XIV</div>
   <h1>综合评价与排序</h1>
   <p class="deck">哪个方案最好？如何构造综合指标？—— 熵权法（客观赋权）、TOPSIS（逼近理想解）、AHP 层次分析法（一致性检验）、PCA 降维评价、因子分析、模糊综合评价、灰色关联分析。强调指标体系论证与灵敏度分析，避免机械套用模板。</p>
 </header>
@@ -463,6 +463,13 @@ F = \frac{\lambda_1}{\sum_{p=1}^{k} \lambda_p} F_1 + \frac{\lambda_2}{\sum_{p=1}
 </div>
 </main>
 
+<div class="case-box">
+  <h4>🔬 案例：分类方法的综合评价</h4>
+  <p>用TOPSIS综合评价三种分类方法（逻辑回归、随机森林、SVM）在玻璃分类任务上的表现。指标：准确率、AUC、训练速度、可解释性。权重：准确率最重要（熵权法客观赋权）。随机森林综合得分最高。</p>
+  <a href="stats_case_glass.html">→ 案例总览</a>
+</div>
+
+
 <footer class="page-footer">
   <div class="footer-nav">
     <a href="stats_13_optimization.html">← §XIII 优化</a> &nbsp;|&nbsp; 
@@ -479,6 +486,7 @@ F = \frac{\lambda_1}{\sum_{p=1}^{k} \lambda_p} F_1 + \frac{\lambda_2}{\sum_{p=1}
 
 </div>
 <script src="assets/js/statistics.js"></script>
+
 <script>
 // ============ Dependency Load Guard ============
 if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {

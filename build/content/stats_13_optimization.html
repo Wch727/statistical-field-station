@@ -192,12 +192,18 @@ b_3\ \text{（脂肪需求）} & 3 & — & 3.42 & 0
 <span class="kw" style="color:#7EC89C;font-weight:600">from</span> scipy.optimize <span class="kw" style="color:#7EC89C;font-weight:600">import</span> linprog
 
 obj_vals = []
+infeasible_count = <span class="num" style="color:#C792EA">0</span>
 <span class="kw" style="color:#7EC89C;font-weight:600">for</span> _ <span class="kw" style="color:#7EC89C;font-weight:600">in</span> <span class="fn" style="color:#E8C56D">range</span>(<span class="num" style="color:#C792EA">1000</span>):
     c_perturbed = c * (<span class="num" style="color:#C792EA">1</span> + np.random.<span class="fn" style="color:#E8C56D">uniform</span>(-<span class="num" style="color:#C792EA">0.05</span>, <span class="num" style="color:#C792EA">0.05</span>, <span class="fn" style="color:#E8C56D">len</span>(c)))
     b_perturbed = b * (<span class="num" style="color:#C792EA">1</span> + np.random.<span class="fn" style="color:#E8C56D">uniform</span>(-<span class="num" style="color:#C792EA">0.05</span>, <span class="num" style="color:#C792EA">0.05</span>, <span class="fn" style="color:#E8C56D">len</span>(b)))
     res = <span class="fn" style="color:#E8C56D">linprog</span>(c_perturbed, A_ub=A, b_ub=b_perturbed)
-    obj_vals.<span class="fn" style="color:#E8C56D">append</span>(res.fun)
+    <span class="kw" style="color:#7EC89C;font-weight:600">if</span> res.success:
+        obj_vals.<span class="fn" style="color:#E8C56D">append</span>(res.fun)
+    <span class="kw" style="color:#7EC89C;font-weight:600">else</span>:
+        infeasible_count += <span class="num" style="color:#C792EA">1</span>
 
+<span class="kw" style="color:#7EC89C;font-weight:600">print</span>(<span class="str" style="color:#D4956B">f'可行率: {len(obj_vals)/1000:.1%}'</span>)
+<span class="kw" style="color:#7EC89C;font-weight:600">print</span>(<span class="str" style="color:#D4956B">f'不可行次数: {infeasible_count}'</span>)
 <span class="kw" style="color:#7EC89C;font-weight:600">print</span>(<span class="str" style="color:#D4956B">f'最优值: {np.mean(obj_vals):.2f} ± {np.std(obj_vals, ddof=1):.2f}  <span class="cm" style="color:#6A8A7A;font-style:italic"># ddof=1 样本标准差</span>'</span>)
 </div>
 

@@ -406,6 +406,40 @@ footer {
 }
 .toc-done .num { color: #2D7A4E; }
 
+/* TOC metadata badges */
+.toc-meta {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+}
+.toc-meta-diff {
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+.toc-diff-beginner {
+  background: #E8F5E9;
+  color: #2E7D32;
+}
+.toc-diff-intermediate {
+  background: #FFF3E0;
+  color: #E65100;
+}
+.toc-diff-advanced {
+  background: #FBE9E7;
+  color: #BF360C;
+}
+.toc-meta-time {
+  color: var(--slate);
+}
+.toc-meta-prereqs {
+  color: var(--terracotta);
+}
+
 @media (max-width: 700px) {
   .entry-grid { grid-template-columns: 1fr; }
   .keyword-grid { grid-template-columns: 1fr; }

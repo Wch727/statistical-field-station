@@ -51,7 +51,7 @@
   }
 
   function computeAUC() {
-    const pts = computeROCPoints();
+    const pts = computeROCPoints().sort((a, b) => a.fpr - b.fpr);
     let auc = 0;
     for (let i = 1; i < pts.length; i++) {
       auc += (pts[i].fpr - pts[i-1].fpr) * (pts[i].tpr + pts[i-1].tpr) / 2;
