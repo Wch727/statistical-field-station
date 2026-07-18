@@ -1,0 +1,7 @@
+.cm-table{display:inline-grid;grid-template-columns:auto 80px 80px;grid-template-rows:auto 80px 80px;gap:2px;margin:12px 0;font-family:var(--mono);font-size:0.85rem}
+.cm-table .cm-cell{display:flex;align-items:center;justify-content:center;padding:8px;background:var(--surface);border:1px solid var(--stone);border-radius:var(--radius);font-weight:600;font-size:1.1rem}
+.cm-table .cm-cell.tp{background:rgba(45,107,160,0.15);color:#2D6BA0}
+.cm-table .cm-cell.tn{background:rgba(91,140,62,0.15);color:#5B8C3E}
+.cm-table .cm-cell.fp{background:rgba(199,81,70,0.12);color:var(--terracotta)}
+.cm-table .cm-cell.fn{background:rgba(199,81,70,0.2);color:var(--terracotta)}
+.cm-table .cm-header{display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:var(--slate);letter-spacing:0.08em}

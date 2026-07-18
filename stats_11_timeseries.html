@@ -13,16 +13,20 @@
 
 </head>
 <body>
+<a class="skip-link" href="#main-content">跳到内容</a>
 <div class="page">
 
-<nav class="top-nav"><a href="stats_tutorial.html">← Field Station</a> <span>|</span> §XI 时间序列分析</nav>
+<nav class="top-nav" aria-label="面包屑导航">
+  <a href="stats_tutorial.html">← Field Station</a> <span aria-hidden="true">|</span> §XI 时间序列
+</nav>
 
 <header class="hero">
-  <div class="num">§XI</div>
+  <div class="num">{{CHAPTER_NUM}}</div>
   <h1>时间序列分析</h1>
-  <p class="deck">当数据按时间顺序排列时，相邻观测之间不再独立——今天的气温与昨天相关，本月的销售额与上月相关。时间序列分析专门处理这种自相关结构，涵盖分解、平稳性检验、ARIMA 建模和预测。这是竞赛中处理经济、环境、交通等时序数据不可或缺的工具。</p>
+  <p class="deck">趋势-季节-残差分解、平稳性（ADF 检验）、ACF/PACF、ARIMA(p,d,q)、SARIMA 季节模型、指数平滑/ETS、AICc 模型选择、预测与置信区间。回答「未来趋势如何？」</p>
 </header>
 
+<main id="main-content">
 <div class="competition-box">
 <h4>竞赛真题场景</h4>
 <p><span class="q">Q：</span>国赛常考：根据历史数据预测未来趋势——如城市人口增长、污染物浓度变化、交通流量预测。<br>
@@ -413,19 +417,32 @@ F = \frac{(\text{RSS}_{\text{pooled}} - (\text{RSS}_1 + \text{RSS}_2)) / k}{(\te
 <strong>Step 7：</strong>预测 + 95% 置信区间 → 论文中最关键的图。<br>
 <strong>Step 8：</strong>模型对比 → 也可以跑一个 ETS 或朴素预测作为基线。</p>
 </div>
+</main>
 
-<footer>
-  <p><a href="stats_10_evaluation.html">← §X 模型评估与降维</a> &nbsp;|&nbsp; <a href="stats_tutorial.html">Field Station 总目录</a></p>
-  <p style="margin-top:8px">Statistical Field Station &copy; 2026 · KaTeX + D3.js</p>
+<footer class="page-footer">
+  <div class="footer-nav">
+    <a href="stats_10_evaluation.html">← §X 评估与降维</a> &nbsp;|&nbsp; 
+    <a href="stats_tutorial.html">Field Station 总目录</a>
+     &nbsp;|&nbsp; 下一章：<a href="stats_12_prediction.html">§XII 预测 →</a>
+  </div>
+  <div class="footer-meta">
+    <span>版本 v1.2.0</span> <span>|</span>
+    <span>统计审校: 已完成三轮</span> <span>|</span>
+    <span>最后更新: 2026-07</span>
+  </div>
+  <p>Statistical Field Station &copy; 2026 · KaTeX + D3.js</p>
 </footer>
 
 </div>
-
+<script src="assets/js/statistics.js"></script>
 <script>
-renderMathInElement(document.body, {
-  delimiters: [{left: '\\[', right: '\\]', display: true},{left: '\\(', right: '\\)', display: false},{left: '$$', right: '$$', display: true}],
-  throwOnError: false
-});
+// ============ Dependency Load Guard ============
+if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
+  document.body.insertAdjacentHTML('afterbegin',
+    '<div style="background:#C75146;color:#fff;padding:12px;text-align:center;font-family:Inter,sans-serif">' +
+    '⚠ 交互资源加载失败。请确认 assets 目录完整，并检查文件路径后刷新页面。</div>');
+} else {
+
 
 // ============ INSTRUMENT No.11: Time Series ============
 (function() {
@@ -612,6 +629,21 @@ renderMathInElement(document.body, {
   generateTrendSeasonal();
   update();
 })();
+
+
+// ============ KaTeX Auto-Render ============
+renderMathInElement(document.body, {
+  delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '\\[', right: '\\]', display: true},
+    {left: '$', right: '$', display: false},
+    {left: '\\(', right: '\\)', display: false}
+  ],
+  throwOnError: false,
+  strict: false
+});
+
+} // End CDN guard
 </script>
 </body>
 </html>

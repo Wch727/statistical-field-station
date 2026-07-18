@@ -1,0 +1,5 @@
+.form-step{display:flex;gap:16px;align-items:flex-start;margin:12px 0;padding:12px 16px;background:var(--surface);border:1px solid var(--stone);border-radius:var(--radius)}
+.form-step .step-num{font-family:var(--mono);font-size:1.4rem;font-weight:700;color:var(--terracotta);min-width:32px;text-align:center;line-height:1.3}
+.form-step .step-content{flex:1}
+.form-step .step-content strong{display:block;color:var(--forest);margin-bottom:2px}
+.form-step .step-content span{font-size:0.9rem;color:var(--slate)}

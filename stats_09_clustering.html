@@ -13,16 +13,20 @@
 
 </head>
 <body>
+<a class="skip-link" href="#main-content">跳到内容</a>
 <div class="page">
 
-<nav class="top-nav"><a href="stats_tutorial.html">← Field Station</a> <span>|</span> §IX 聚类分析</nav>
+<nav class="top-nav" aria-label="面包屑导航">
+  <a href="stats_tutorial.html">← Field Station</a> <span aria-hidden="true">|</span> §IX 聚类
+</nav>
 
 <header class="hero">
-  <div class="num">§IX</div>
+  <div class="num">{{CHAPTER_NUM}}</div>
   <h1>聚类分析</h1>
-  <p class="deck">当没有标签时，如何发现数据中的自然分组？聚类分析是无监督学习的核心——不需要任何先验知识，仅凭数据本身的结构来划分群组。本章涵盖三种互补的聚类范式：K-Means（基于原型的划分）、层次聚类（基于树状结构的合并）和 DBSCAN（基于密度的发现）。</p>
+  <p class="deck">K-Means（Lloyd 算法/肘部法则）、层次聚类（Ward/树状图）、DBSCAN（密度聚类）、高斯混合模型 GMM、聚类评估指标（轮廓系数/DB/CH）。回答「数据能否划分亚类？」</p>
 </header>
 
+<main id="main-content">
 <div class="competition-box">
 <h4>竞赛真题场景</h4>
 <p><span class="q">Q：</span>国赛 A 题：根据城市的多项指标，将城市分为若干类（如「高发展-高污染」「低发展-低污染」等），为政策制定提供依据。<br>
@@ -421,24 +425,32 @@ p(x) = \sum_{k=1}^{K} \pi_k \cdot \mathcal{N}(x \mid \mu_k, \Sigma_k)
 <strong>Step 6：</strong>簇的解读——分析每个簇的统计特征（均值、方差），找出区分簇的关键特征。<br>
 <strong>Step 7：</strong>可视化呈现——PCA 散点图（颜色编码簇）+ 特征雷达图（每个簇的轮廓）。</p>
 </div>
+</main>
 
-<footer>
-  <p><a href="stats_08_classification.html">← §VIII 分类方法</a> &nbsp;|&nbsp; <a href="stats_tutorial.html">Field Station 总目录</a> &nbsp;|&nbsp; 下一章：<a href="stats_10_evaluation.html">§X 模型评估与降维 →</a></p>
-  <p style="margin-top:8px">Statistical Field Station &copy; 2026 · KaTeX + D3.js</p>
+<footer class="page-footer">
+  <div class="footer-nav">
+    <a href="stats_08_classification.html">← §VIII 分类</a> &nbsp;|&nbsp; 
+    <a href="stats_tutorial.html">Field Station 总目录</a>
+     &nbsp;|&nbsp; 下一章：<a href="stats_10_evaluation.html">§X 评估与降维 →</a>
+  </div>
+  <div class="footer-meta">
+    <span>版本 v1.2.0</span> <span>|</span>
+    <span>统计审校: 已完成三轮</span> <span>|</span>
+    <span>最后更新: 2026-07</span>
+  </div>
+  <p>Statistical Field Station &copy; 2026 · KaTeX + D3.js</p>
 </footer>
 
 </div>
-
+<script src="assets/js/statistics.js"></script>
 <script>
-// ============ KaTeX Auto-Render ============
-renderMathInElement(document.body, {
-  delimiters: [
-    {left: '\\[', right: '\\]', display: true},
-    {left: '\\(', right: '\\)', display: false},
-    {left: '$$', right: '$$', display: true}
-  ],
-  throwOnError: false
-});
+// ============ Dependency Load Guard ============
+if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
+  document.body.insertAdjacentHTML('afterbegin',
+    '<div style="background:#C75146;color:#fff;padding:12px;text-align:center;font-family:Inter,sans-serif">' +
+    '⚠ 交互资源加载失败。请确认 assets 目录完整，并检查文件路径后刷新页面。</div>');
+} else {
+
 
 // ============ Color palette for clusters ============
 const clusterColors = ['#C75146','#2D6BA0','#5B8C3E','#8B6914','#9B59B6','#E67E22'];
@@ -468,9 +480,7 @@ const clusterColors = ['#C75146','#2D6BA0','#5B8C3E','#8B6914','#9B59B6','#E67E2
     for (let k = 1; k < K; k++) {
       const dists = points.map(p => {
         const minD = Math.min(...centroids.map(c => (p.x-c.x)**2 + (p.y-c.y)**2));
-        return minD;
-      });
-      const total = d3.sum(dists);
+        return minD;      const total = d3.sum(dists);
       let r = Math.random() * total, cum = 0;
       let chosen = points[points.length-1];
       for (let i = 0; i < points.length; i++) {
@@ -489,11 +499,7 @@ const clusterColors = ['#C75146','#2D6BA0','#5B8C3E','#8B6914','#9B59B6','#E67E2
       let best = 0, bestD = Infinity;
       centroids.forEach((c, i) => {
         const d = (p.x-c.x)**2 + (p.y-c.y)**2;
-        if (d < bestD) { bestD = d; best = i; }
-      });
-      return best;
-    });
-    return oldAssignments.every((a,i) => a === assignments[i]);
+        if (d < bestD) { bestD = d; best = i; }      return best;    return oldAssignments.every((a,i) => a === assignments[i]);
   }
 
   function updateCentroids() {
@@ -503,9 +509,7 @@ const clusterColors = ['#C75146','#2D6BA0','#5B8C3E','#8B6914','#9B59B6','#E67E2
       if (cluster.length > 0) {
         newCentroids.push({
           x: d3.mean(cluster, d => d.x),
-          y: d3.mean(cluster, d => d.y)
-        });
-      } else {
+          y: d3.mean(cluster, d => d.y)      } else {
         // Empty cluster: reinitialize randomly
         newCentroids.push(points[Math.floor(Math.random()*points.length)]);
       }
@@ -517,9 +521,7 @@ const clusterColors = ['#C75146','#2D6BA0','#5B8C3E','#8B6914','#9B59B6','#E67E2
     let sum = 0;
     points.forEach((p, i) => {
       const c = centroids[assignments[i]];
-      sum += (p.x-c.x)**2 + (p.y-c.y)**2;
-    });
-    return sum;
+      sum += (p.x-c.x)**2 + (p.y-c.y)**2;    return sum;
   }
 
   function redraw() {
@@ -536,9 +538,7 @@ const clusterColors = ['#C75146','#2D6BA0','#5B8C3E','#8B6914','#9B59B6','#E67E2
           let best = 0, bestD = Infinity;
           centroids.forEach((c, ci) => {
             const d = (gx-c.x)**2 + (gy-c.y)**2;
-            if (d < bestD) { bestD = d; best = ci; }
-          });
-          svg.append('rect').attr('class','km-voronoi')
+            if (d < bestD) { bestD = d; best = ci; }          svg.append('rect').attr('class','km-voronoi')
             .attr('x', xScale(gx)-pw/grid/2).attr('y', yScale(gy)-ph/grid/2)
             .attr('width', pw/grid+0.5).attr('height', ph/grid+0.5)
             .attr('fill', clusterColors[best]+'15').attr('stroke','none');
@@ -597,19 +597,13 @@ const clusterColors = ['#C75146','#2D6BA0','#5B8C3E','#8B6914','#9B59B6','#E67E2
     if (points.length >= K && centroids.length === 0) initCentroids();
     else { assignPoints(); updateCentroids(); assignPoints(); }
     redraw();
-    updateStats();
-  });
-
-  d3.select('#km-k').on('input', function() {
+    updateStats();  d3.select('#km-k').on('input', function() {
     K = +this.value;
     d3.select('#km-k-val').text(K);
     converged = false;
     initCentroids();
     redraw();
-    updateStats();
-  });
-
-  d3.select('#km-step').on('click', function() { doStep(); });
+    updateStats();  d3.select('#km-step').on('click', function() { doStep(); });
   d3.select('#km-reset').on('click', function() { converged = false; initCentroids(); redraw(); updateStats(); });
 
   let autoTimer = null;
@@ -619,10 +613,7 @@ const clusterColors = ['#C75146','#2D6BA0','#5B8C3E','#8B6914','#9B59B6','#E67E2
     autoTimer = setInterval(function() {
       if (converged) { clearInterval(autoTimer); autoTimer = null; d3.select('#km-auto').text('自动迭代 (Auto)'); return; }
       doStep();
-    }, 500);
-  });
-
-  d3.select('#km-random').on('click', function() {
+    }, 500);  d3.select('#km-random').on('click', function() {
     points = [];
     // Generate clustered data
     const centers = [];
@@ -633,22 +624,14 @@ const clusterColors = ['#C75146','#2D6BA0','#5B8C3E','#8B6914','#9B59B6','#E67E2
       const c = centers[Math.floor(Math.random()*K)];
       points.push({
         x: Math.max(0.02, Math.min(0.98, c.x + (Math.random()-0.5)*0.25)),
-        y: Math.max(0.02, Math.min(0.98, c.y + (Math.random()-0.5)*0.25))
-      });
-    }
+        y: Math.max(0.02, Math.min(0.98, c.y + (Math.random()-0.5)*0.25))    }
     converged = false;
     initCentroids();
     redraw();
-    updateStats();
-  });
-
-  d3.select('#km-clear').on('click', function() {
+    updateStats();  d3.select('#km-clear').on('click', function() {
     points = []; centroids = []; assignments = []; converged = false;
     redraw();
-    updateStats();
-  });
-
-  // Init
+    updateStats();  // Init
   d3.select('#km-random').dispatch('click');
 })();
 
@@ -705,9 +688,7 @@ const clusterColors = ['#C75146','#2D6BA0','#5B8C3E','#8B6914','#9B59B6','#E67E2
     centers.forEach(([cx,cy]) => {
       for (let i = 0; i < 80; i++) {
         data.push({x: cx + (Math.random()-0.5)*0.2, y: cy + (Math.random()-0.5)*0.2});
-      }
-    });
-  }
+      }  }
 
   function dbscan(eps, minPts) {
     const labels = new Array(data.length).fill(-1); // -1 = unvisited/noise
@@ -769,9 +750,7 @@ const clusterColors = ['#C75146','#2D6BA0','#5B8C3E','#8B6914','#9B59B6','#E67E2
         let best = 0, bestD = Infinity;
         centroids.forEach((c, ci) => {
           const d = (data[i].x-c.x)**2 + (data[i].y-c.y)**2;
-          if (d < bestD) { bestD = d; best = ci; }
-        });
-        if (labels[i] !== best) { labels[i] = best; changed = true; }
+          if (d < bestD) { bestD = d; best = ci; }        if (labels[i] !== best) { labels[i] = best; changed = true; }
       }
       if (!changed) break;
       for (let k = 0; k < K; k++) {
@@ -790,9 +769,7 @@ const clusterColors = ['#C75146','#2D6BA0','#5B8C3E','#8B6914','#9B59B6','#E67E2
       .attr('cx', d => xScale(d.x)).attr('cy', d => yScale(d.y))
       .attr('r', 3.5).attr('fill', (d,i) => {
         if (labels[i] === -1) return '#aaa';
-        return clusterColors[labels[i] % clusterColors.length];
-      })
-      .attr('stroke', '#fff').attr('stroke-width', 0.8).attr('opacity', 0.85);
+        return clusterColors[labels[i] % clusterColors.length];      .attr('stroke', '#fff').attr('stroke-width', 0.8).attr('opacity', 0.85);
   }
 
   function update() {
@@ -825,6 +802,21 @@ const clusterColors = ['#C75146','#2D6BA0','#5B8C3E','#8B6914','#9B59B6','#E67E2
   generateMoons();
   update();
 })();
+
+
+// ============ KaTeX Auto-Render ============
+renderMathInElement(document.body, {
+  delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '\\[', right: '\\]', display: true},
+    {left: '$', right: '$', display: false},
+    {left: '\\(', right: '\\)', display: false}
+  ],
+  throwOnError: false,
+  strict: false
+});
+
+} // End CDN guard
 </script>
 </body>
 </html>

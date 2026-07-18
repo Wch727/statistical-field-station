@@ -1,0 +1,239 @@
+<div class="competition-box">
+<h4>竞赛真题场景</h4>
+<p><span class="q">Q：</span>美赛 MCM：如何规划城市交通网络？→ 最短路径 + 最大流。<br>
+<span class="q">Q：</span>国赛/美赛：如何识别社交网络中的关键节点？→ 网络中心性分析。<br>
+<span class="q">Q：</span>美赛 ICM：如何模拟排队系统（如医院、收费站）？→ 排队模拟（离散事件仿真）。<br>
+<span class="q">Q：</span>国赛 B 题：如何模拟交通流或人群疏散？→ 元胞自动机。<br>
+<strong>→ 图论和仿真在竞赛中常作为「建模工具」出现——它们不是最终答案，而是分析和验证方案的手段。</strong></p>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>16.1 核心概念：图与网络</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>图的基本要素</h4>
+<p>图（Graph）由<strong>节点</strong>（Vertex / Node）和<strong>边</strong>（Edge）组成：\(G = (V, E)\)。边可以有权重（距离、成本、容量），可以有方向（有向图 vs 无向图）。</p>
+</div>
+
+<table class="compact-table">
+<thead><tr><th>图的类型</th><th>边特征</th><th>表示</th><th>竞赛应用</th></tr></thead>
+<tbody>
+<tr><td><strong>无向无权图</strong></td><td>对称，无权重</td><td>邻接矩阵/邻接表</td><td>社交网络、连通性</td></tr>
+<tr><td><strong>无向加权图</strong></td><td>对称，有权重</td><td>邻接矩阵（权重值）</td><td>交通网络、距离图</td></tr>
+<tr><td><strong>有向加权图</strong></td><td>不对称，有权重</td><td>邻接矩阵（非对称）</td><td>物流网络、资金流</td></tr>
+</tbody>
+</table>
+
+<div class="note-box">
+<strong>Python 工具：</strong>networkx 是 Python 图论的标准库。一行代码创建图：<code>G = nx.Graph()</code>，一行代码求最短路径：<code>nx.shortest_path(G, source, target)</code>。竞赛中画网络图：<code>nx.draw(G, pos, with_labels=True)</code>。本节涉及的最短路径、最小生成树、中心性等全部在 networkx 中有现成实现。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>16.2 最短路径</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>从 A 到 B 的最优路线</h4>
+<p>最短路径问题是图论中最基本也最实用的问题。在加权图中，找到两个节点之间<strong>权重之和最小</strong>的路径。</p>
+</div>
+
+<div class="derive-box">
+<h4>Dijkstra 算法（贪心）</h4>
+<p><strong>适用：</strong>非负权重的有向/无向图。复杂度 \(O((V+E)\log V)\)（使用优先队列）。</p>
+<p><strong>核心思想：</strong>维护一个「已确定最短距离」的节点集合。每次从未确定节点中选择<strong>当前距离最小</strong>的节点，将其加入已确定集合，然后更新其邻居的距离。</p>
+<p><strong>算法步骤：</strong><br>
+① 初始化：dist[source] = 0，dist[其他] = ∞。<br>
+② 选择 dist 最小且未确定的节点 u。<br>
+③ 对 u 的每个邻居 v：如果 dist[u] + w(u,v) < dist[v]，更新 dist[v] = dist[u] + w(u,v)，记录前驱 prev[v] = u。<br>
+④ 重复 ②-③ 直到所有节点确定或目标节点确定。<br>
+⑤ 从目标节点回溯 prev 链得到最短路径。</p>
+</div>
+
+<div class="derive-box">
+<h4>Floyd-Warshall 算法（动态规划）</h4>
+<p><strong>适用：</strong>所有节点对之间的最短路径。允许负权重（但不允许负环）。复杂度 \(O(V^3)\)。</p>
+<div class="math-block">
+\[
+d_{ij}^{(k)} = \min\left(d_{ij}^{(k-1)},\; d_{ik}^{(k-1)} + d_{kj}^{(k-1)}\right)
+\]
+</div>
+<p>其中 \(d_{ij}^{(k)}\) 表示只使用前 k 个节点作为中间节点时，从 i 到 j 的最短距离。Floyd 的核心洞察：从 i 到 j 的最短路径要么不经过 k，要么经过 k（即 i→k + k→j）。</p>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>16.3 最小生成树</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>用最小的代价连接所有节点</h4>
+<p>最小生成树（Minimum Spanning Tree, MST）是包含所有节点且边权重之和最小的无环连通子图。竞赛应用：铺设管网、布线、通信网络规划。</p>
+</div>
+
+<div class="derive-box">
+<h4>Prim 算法与 Kruskal 算法</h4>
+<p><strong>Prim（顶点扩展）：</strong>从任意节点开始，每次选择连接「树内」和「树外」且权重最小的边，将新节点加入树中。重复直到所有节点入树。与 Dijkstra 结构相似，但选择标准不同（Dijkstra：最小化 dist[源]；Prim：最小化边权重）。</p>
+<p><strong>Kruskal（边排序）：</strong>将所有边按权重升序排列。从小到大遍历每条边，如果加入这条边不会形成环（使用并查集判断），则将其加入 MST。重复直到边数 = V-1。</p>
+<p><strong>选择：</strong>稠密图（边多）→ Prim \(O(V^2)\)；稀疏图（边少）→ Kruskal \(O(E \log E)\)。</p>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>16.4 网络中心性</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>网络中哪些节点最重要？</h4>
+<p>中心性（Centrality）度量节点在网络中的「重要性」。不同中心性度量回答不同的问题。</p>
+</div>
+
+<table class="compact-table">
+<thead><tr><th>中心性</th><th>公式/定义</th><th>回答的问题</th></tr></thead>
+<tbody>
+<tr><td><strong>度中心性</strong></td><td>\(C_D(v) = \deg(v)\)</td><td>谁的联系最多？</td></tr>
+<tr><td><strong>介数中心性</strong></td><td>\(C_B(v) = \sum_{s \neq v \neq t} \frac{\sigma_{st}(v)}{\sigma_{st}}\)</td><td>谁是信息流通的「桥梁」？</td></tr>
+<tr><td><strong>接近中心性</strong></td><td>\(C_C(v) = \frac{1}{\sum_u d(v,u)}\)</td><td>谁离所有人最近？</td></tr>
+<tr><td><strong>特征向量中心性</strong></td><td>\(\mathbf{A}\mathbf{x} = \lambda \mathbf{x}\)（邻接矩阵特征向量）</td><td>谁连接了重要的人？</td></tr>
+<tr><td><strong>PageRank</strong></td><td>\(PR(v) = \frac{1-d}{N} + d \sum_{u \to v} \frac{PR(u)}{L(u)}\)</td><td>在有向图中谁被重要节点指向？</td></tr>
+</tbody>
+</table>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>介数中心性最有区分度——它识别的是「桥接」不同社区的关键节点。在社交网络分析中，高介数节点通常是信息传播的瓶颈。竞赛中同时报告 2-3 种中心性，然后分析排序是否一致，这是很好的论文内容。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>16.5 连通性与社区检测</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>图的结构分析</h4>
+<p><strong>连通分量：</strong>无向图中，如果两个节点之间存在路径，它们属于同一连通分量。竞赛中识别连通分量可以发现网络中的「孤岛」。</p>
+<p><strong>社区检测：</strong>将节点划分为若干组，使组内连接密集、组间连接稀疏。主要方法：① 模块度最大化（Girvan-Newman）② Louvain 算法 ③ 谱聚类（见 §IX）。竞赛中社区检测常用于发现社交网络中的群体结构。</p>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>16.6 蒙特卡洛模拟</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>用随机数解决问题</h4>
+<p>蒙特卡洛方法（Monte Carlo）的核心思想：通过<strong>大量随机采样</strong>来近似计算确定性问题的解。当问题难以解析求解时，蒙特卡洛是一种通用且强大的数值方法。</p>
+</div>
+
+<div class="derive-box">
+<h4>经典示例：用随机点估计 π</h4>
+<p>在 \([-1, 1] \times [-1, 1]\) 的正方形内随机撒点。单位圆内的点满足 \(x^2 + y^2 \leq 1\)。圆面积 / 正方形面积 = \(\pi r^2 / (2r)^2 = \pi/4\)。因此：</p>
+<div class="math-block">
+\[
+\pi \approx 4 \times \frac{\text{圆内点数}}{\text{总点数}}
+\]
+</div>
+<p>误差随点数 \(N\) 以 \(O(1/\sqrt{N})\) 的速度收敛。要增加一位小数精度，需要 100 倍的点数。</p>
+</div>
+
+<div class="derive-box">
+<h4>蒙特卡洛积分的通用形式</h4>
+<div class="math-block">
+\[
+\int_{\Omega} f(x) \, dx \approx \frac{\text{Vol}(\Omega)}{N} \sum_{i=1}^{N} f(x_i), \quad x_i \sim \text{Uniform}(\Omega)
+\]
+</div>
+<p><strong>竞赛应用：</strong>① 高维积分（维度 > 5 时蒙特卡洛比网格法更高效）。② 可靠性分析（结构失效概率估计）。③ 风险评估（金融风险 VaR 的蒙特卡洛估计）。④ 参数灵敏度的全局分析（Sobol 指数）。</p>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>16.7 排队模拟</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>等待线的数学</h4>
+<p>排队论（Queuing Theory）研究服务系统中顾客的等待行为。核心指标：平均等待时间、平均队列长度、服务台利用率。</p>
+</div>
+
+<div class="derive-box">
+<h4>M/M/1 排队模型</h4>
+<p>M/M/1 是最基本的排队模型：<strong>M</strong>arkov 到达（Poisson 过程，到达率 λ）、<strong>M</strong>arkov 服务（服务时间指数分布，服务率 μ）、<strong>1</strong> 个服务台。</p>
+<div class="math-block">
+\[
+\begin{aligned}
+\text{服务台利用率：}&\quad \rho = \frac{\lambda}{\mu} \quad (\rho < 1 \text{ 否则队列无限增长}) \\
+\text{平均队列长度：}&\quad L_q = \frac{\rho^2}{1 - \rho} \\
+\text{平均等待时间：}&\quad W_q = \frac{L_q}{\lambda} = \frac{\rho}{\mu - \lambda} \\
+\text{平均系统内人数：}&\quad L = \frac{\rho}{1 - \rho}
+\end{aligned}
+\]
+</div>
+<p><strong>竞赛中的排队模拟：</strong>当系统复杂（多服务台、非指数分布、优先级规则）时，解析解不存在或难以推导。此时用<strong>离散事件仿真</strong>——用 Python 的 simpy 库模拟每个顾客的到达、等待、服务和离开，统计输出指标。</p>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>16.8 元胞自动机</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>简单规则涌现复杂行为</h4>
+<p>元胞自动机（Cellular Automaton, CA）是离散的动力学系统：空间被划分为网格（元胞），每个元胞有有限个状态，所有元胞根据<strong>相同的局部规则</strong>同步更新。</p>
+</div>
+
+<div class="derive-box">
+<h4>经典示例：交通流 NASCH 模型</h4>
+<p>将道路离散化为元胞（每个元胞为空或被一辆车占据）。车辆速度 v ∈ {0, 1, ..., v_max}。每步更新四步：</p>
+<p><strong>Step 1 — 加速：</strong>\(v \to \min(v+1, v_{\max})\)<br>
+<strong>Step 2 — 减速（防撞）：</strong>\(v \to \min(v, d-1)\)，其中 d 是前方空元胞数<br>
+<strong>Step 3 — 随机慢化：</strong>以概率 p 减速：\(v \to \max(v-1, 0)\)<br>
+<strong>Step 4 — 运动：</strong>车辆向前移动 v 个元胞</p>
+<p>这个简单的四步规则可以复现交通流中的<strong>幽灵堵车</strong>（无外部原因的自发拥堵）和从自由流到拥堵的相变。竞赛中元胞自动机广泛用于交通流、人群疏散、森林火灾蔓延、城市扩张模拟。</p>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- INSTRUMENT No.16A: 最短路径 -->
+<!-- ══════════════════════════════════════════════ -->
+<h2>仪器 No.16A — 最短路径可视化</h2>
+<div class="panel">
+<div class="panel-label">INSTRUMENT No.16A · Dijkstra Shortest Path</div>
+<p style="font-size:0.9rem;color:var(--slate);margin-bottom:12px">点击节点选择起点和终点，Dijkstra 算法自动计算最短路径（红色高亮）。边上的数字是权重（距离）。</p>
+<div class="btn-group">
+  <button class="btn" id="sp-reset">重置选择</button>
+  <button class="btn" id="sp-preset">示例: 0→5</button>
+</div>
+<div class="panel-grid">
+  <div class="chart-container" id="sp-chart"></div>
+  <div>
+    <div class="stat-cards" id="sp-stats"></div>
+    <div id="sp-path-info" style="font-family:var(--mono);font-size:0.82rem;color:var(--slate);margin-top:8px;line-height:1.6"></div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- INSTRUMENT No.16B: 蒙特卡洛 π -->
+<!-- ══════════════════════════════════════════════ -->
+<h2>仪器 No.16B — 蒙特卡洛 π 估计</h2>
+<div class="panel">
+<div class="panel-label">INSTRUMENT No.16B · Monte Carlo π Estimation</div>
+<p style="font-size:0.9rem;color:var(--slate);margin-bottom:12px">在正方形 [-1,1]² 内随机撒点。蓝色点在单位圆内，灰色点在圆外。π ≈ 4 × (圆内点数 / 总点数)。收敛速度 O(1/√N)。</p>
+<div class="btn-group">
+  <button class="btn" id="mc-add100">+100 点</button>
+  <button class="btn" id="mc-add1000">+1000 点</button>
+  <button class="btn" id="mc-add5000">+5000 点</button>
+  <button class="btn" id="mc-reset">重置</button>
+</div>
+<div class="panel-grid">
+  <div class="chart-container" id="mc-chart"></div>
+  <div class="stat-cards" id="mc-stats"></div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>16.9 竞赛实战流程</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="toolkit-box">
+<h4>图论 + 仿真竞赛标准流程</h4>
+<p><strong>图论分析：</strong>① 将问题建模为图——节点是什么？边是什么？权重是什么？② 选择合适的算法（最短路径 / MST / 最大流 / 中心性）。③ 用 networkx 求解。④ 分析结果——哪些节点/边是关键？改变网络结构会怎样？<br>
+<strong>仿真分析：</strong>① 定义系统状态和演化规则。② 确定随机性来源（到达时间、服务时间、随机扰动）。③ 运行多次仿真（至少 100-1000 次独立运行）。④ 报告结果的均值 ± 标准差（因为仿真有随机性，单次结果不可靠）。⑤ 灵敏度分析——改变关键参数，观察结果如何变化。</p>
+</div>
+
+<div class="warn-box">
+<strong>竞赛陷阱：</strong>① 蒙特卡洛仿真只跑一次就报告结果——仿真结果有随机性，必须报告均值和置信区间。② 图论模型过于简化——忽略了实际约束（如道路不是直线、节点之间不是无限容量）。③ 元胞自动机不解释规则设计——评委需要知道你为什么选择这些规则、有什么依据。④ 排队模型用 M/M/1 硬套现实——大多数真实排队系统不是 Poisson 到达 + 指数服务。
+</div>

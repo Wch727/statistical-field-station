@@ -1,0 +1,372 @@
+<!-- ═══════════ 竞赛场景 ═══════════ -->
+<div class="competition-box">
+<h4>竞赛真题场景</h4>
+<p><span class="q">Q：</span>某地区对 A、B 两种污水处理方案各采集了 30 个样本，测得处理后 COD 浓度如下。问：两种方案的处理效果是否存在显著差异？<br>
+<span class="q">Q：</span>调查了 500 名居民对三个政策的支持情况，数据整理成 3×2 列联表。问：不同政策之间的支持率是否有显著差异？<br>
+<span class="q">Q：</span>某药物对 100 名患者进行临床试验，治疗组 50 人（有效 38 人），对照组 50 人（有效 22 人）。问：该药物是否有效？<br>
+<strong>→ 第一个用 t 检验，第二个用卡方检验，第三个用卡方检验或 Fisher 精确检验。本章教你如何选择。</strong></p>
+</div>
+
+<!-- ═══════════ 4.1 假设检验的逻辑框架 ═══════════ -->
+<h2>4.1 假设检验的逻辑框架</h2>
+
+<div class="concept-box">
+<h4>H₀ 与 H₁：零假设与备择假设</h4>
+<p><strong>H₀（零假设）：</strong>「没有效应」「没有差异」「变量独立」——我们想要<em>拒绝</em>的陈述。类比法庭上的「无罪推定」。<br>
+<strong>H₁（备择假设）：</strong>与 H₀ 相反的陈述。可以是双侧（≠）、左侧（<）或右侧（>）。<br>
+<strong>I 类错误 (α)：</strong>H₀ 为真却拒绝了（假阳性，冤案）。<strong>II 类错误 (β)：</strong>H₀ 为假却没拒绝（假阴性，漏网）。</p>
+</div>
+
+<div class="math-block">
+\[ \alpha = P(\text{Reject } H_0 \mid H_0 \text{ true}) \qquad \beta = P(\text{Fail to reject } H_0 \mid H_0 \text{ false}) \]
+\[ \text{Power} = 1 - \beta = P(\text{Reject } H_0 \mid H_1 \text{ true}) \]
+</div>
+
+<div class="derive-box">
+<h4>p 值的精确含义与 ASA 2016 声明</h4>
+<p>\[ p = P(T \geq t_{\text{obs}} \mid H_0 \text{ 为真}) \]——在零假设为真的前提下，观察到当前或更极端检验统计量的概率（右侧检验示例；双侧检验还需考虑另一侧）。<br>
+<strong>p 值不是什么：</strong>① p 不是 P(H₀ 为真 | 数据)——这是贝叶斯后验概率。② p 不是效应大小。③ p > 0.05 不意味着 H₀ 为真——只意味着数据不足以拒绝 H₀。④ p = 0.049 和 p = 0.051 没有本质区别。<br>
+<strong>ASA 2016 声明：</strong>美国统计协会正式声明「p 值不能衡量假设为真的概率或数据仅由随机因素产生的概率」。论文中应报告效应量 + 置信区间 + p 值，三者缺一不可。</p>
+</div>
+
+<!-- ═══════════ 4.2 统计功效 ═══════════ -->
+<h2>4.2 统计功效与样本量规划</h2>
+
+<div class="derive-box">
+<h4>Power = 1 − β 由四个因素决定</h4>
+<p>① 效应量 Δ（越大 → 功效越高）② 样本量 n（越大 → 功效越高）③ 显著性水平 α（越大 → 功效越高）④ 检验类型（当总体分布假设成立时，参数检验比非参数检验功效更高）。<br>
+<strong>先验功效分析：</strong>在实验前确定所需样本量。给定期望效应量 d、α=0.05、目标 Power=0.80，算出最小 n。</p>
+</div>
+
+<div class="math-block">
+\[ \text{Power} = \Phi\!\left(\frac{|\Delta|}{\sigma\sqrt{1/n_1 + 1/n_2}} - z_{\alpha/2}\right) \qquad n_{\text{per group}} \approx \frac{2(z_{\alpha/2} + z_\beta)^2}{d^2} \]
+\[ d = \frac{\bar{x}_1 - \bar{x}_2}{s_{\text{pooled}}} \qquad s_{\text{pooled}} = \sqrt{\frac{(n_1-1)s_1^2 + (n_2-1)s_2^2}{n_1+n_2-2}} \]
+</div>
+
+<div class="note-box">
+<strong>竞赛实用值：</strong>α=0.05, Power=0.80 → z_{α/2}=1.96, z_β=0.84。n ≈ 15.7/d²。若 d=0.5（中等效应），每组需要约 63 人。若 d=0.2（小效应），每组需要约 393 人。数模中如果样本量太小，Bootstrap 或非参数方法可作为辅助（但 Bootstrap 不会增加样本信息，只是更好地利用已有数据）。
+</div>
+
+<!-- ═══════════ 4.3 多重检验校正 ═══════════ -->
+<h2>4.3 多重检验校正</h2>
+
+<div class="derive-box">
+<h4>为什么不能做 20 次 t 检验</h4>
+<p>假设你做 k 次独立检验，每次 α=0.05。至少一次假阳性的概率：</p>
+\[ \text{FWER} = 1 - (1-\alpha)^k \qquad k=3 \rightarrow 14.3\% \quad k=10 \rightarrow 40.1\% \quad k=20 \rightarrow 64.2\% \]
+<p><strong>Bonferroni 校正：</strong>用 α/k 作为每次检验的显著性水平。等价于将 p 值乘以 k。非常保守（功效低），但简单。<br>
+<strong>Holm 校正：</strong>Bonferroni 的改进版。将 p 值排序，逐步拒绝。比 Bonferroni 功效更高，同时控制 FWER。<br>
+<strong>Benjamini-Hochberg (BH)：</strong>控制 FDR (False Discovery Rate) 而非 FWER。更宽松，适合探索性分析。</p>
+</div>
+
+<div class="math-block">
+\[ p_{\text{Bonf}} = \min(k \cdot p_i, 1) \qquad p_{\text{BH}(i)} = \min_{j \geq i} \min\!\left(\frac{k}{j} \cdot p_{(j)}, 1\right) \]
+</div>
+
+<!-- ═══════════ 4.4 两样本 t 检验 ═══════════ -->
+<h2>4.4 两样本 t 检验</h2>
+
+<div class="concept-box">
+<h4>三种 t 检验的区别</h4>
+<p><strong>单样本 t 检验：</strong>\[ t = \frac{\bar{x} - \mu_0}{s/\sqrt{n}} \]检验一个样本的均值是否等于某个已知值 μ₀。<br>
+<strong>独立样本 (Welch) t 检验：</strong>两组独立观测。不要求方差齐性。<strong>推荐默认使用 Welch。</strong><br>
+<strong>配对 t 检验：</strong>同一批对象前后测。计算差值 d_i = x_i − y_i，然后做单样本 t 检验。配对设计<strong>不能用</strong>独立样本 t 检验。</p>
+</div>
+
+<div class="math-block">
+\[ t_{\text{Welch}} = \frac{\bar{x}_1 - \bar{x}_2}{\sqrt{\frac{s_1^2}{n_1} + \frac{s_2^2}{n_2}}} \qquad df_{\text{Welch}} = \frac{\left(\frac{s_1^2}{n_1} + \frac{s_2^2}{n_2}\right)^2}{\frac{(s_1^2/n_1)^2}{n_1-1} + \frac{(s_2^2/n_2)^2}{n_2-1}} \]
+\[ t_{\text{paired}} = \frac{\bar{d}}{s_d/\sqrt{n}} \quad \text{where } d_i = x_i - y_i \qquad df = n-1 \]
+</div>
+
+<!-- ═══════════ 4.5 卡方检验 ═══════════ -->
+<h2>4.5 卡方检验：分类数据的假设检验</h2>
+
+<div class="concept-box">
+<h4>卡方检验解决什么问题？</h4>
+<p>t 检验处理的是<strong>连续数据</strong>（如身高、成绩、COD 浓度）。但当数据是<strong>分类/计数</strong>形式时——如「性别 × 是否吸烟」「政策 × 支持/反对」——t 检验不适用。卡方检验比较<strong>观测频数</strong>和<strong>期望频数</strong>的差异。</p>
+</div>
+
+<h3>4.5.1 卡方拟合优度检验 (Goodness of Fit)</h3>
+
+<div class="derive-box">
+<h4>检验观测分布是否符合理论分布</h4>
+<p>例：掷骰子 60 次，得到 1-6 点的频数分别为 [8, 12, 9, 11, 10, 10]。问：这个骰子是否公平？（H₀：每个面概率均为 1/6）</p>
+\[ \chi^2 = \sum_{i=1}^{k} \frac{(O_i - E_i)^2}{E_i} \sim \chi^2_{k-1} \qquad E_i = n \cdot p_i \]
+<p>若 H₀ 为真，每个格子的期望频数 E_i = 60 × 1/6 = 10。χ² = (8-10)²/10 + (12-10)²/10 + ... + (10-10)²/10 = 0.4+0.4+0.1+0.1+0+0 = 1.0。df = 6-1 = 5。p = P(χ²₅ ≥ 1.0) ≈ 0.96 → 不拒绝 H₀，骰子看起来是公平的。</p>
+</div>
+
+<h3>4.5.2 卡方独立性检验 (Test of Independence)</h3>
+
+<div class="derive-box">
+<h4>检验两个分类变量是否独立</h4>
+<p>最常用的卡方检验形式。数据以 r×c 列联表呈现。<strong>期望频数：</strong>在 H₀（独立）下，E_{ij} = (行总和ᵢ × 列总和ⱼ) / 总样本量。</p>
+</div>
+
+<div class="math-block">
+\[ \chi^2 = \sum_{i=1}^{r}\sum_{j=1}^{c} \frac{(O_{ij} - E_{ij})^2}{E_{ij}} \sim \chi^2_{(r-1)(c-1)} \qquad E_{ij} = \frac{(\text{row}_i) \cdot (\text{col}_j)}{N} \]
+\[ \text{Cramér's V} = \sqrt{\frac{\chi^2}{N \cdot \min(r-1, c-1)}} \quad \text{df=1: } V \geq 0.1/0.3/0.5 \text{ (小/中/大)} \]
+</div>
+
+<div class="concept-box">
+<h4>卡方检验的适用条件</h4>
+<p>① 所有期望频数 E_{ij} ≥ 1。② 不超过 20% 的格子有 E_{ij} < 5。③ 若条件不满足，使用 <strong>Fisher 精确检验</strong>（尤其 2×2 表）。④ 卡方检验是双侧检验——它只检验「是否独立」，不检验方向。<br>
+<strong>Yates 连续性校正：</strong>对 2×2 表，χ² 可能高估 → 用 Yates 校正：χ²_{Yates} = Σ (|O-E| - 0.5)²/E。但现代统计更推荐直接用 Fisher 精确检验。</p>
+</div>
+
+<div class="math-block">
+\[ \text{Fisher's Exact Test (2×2): } p = \frac{\binom{a+b}{a}\binom{c+d}{c}}{\binom{N}{a+c}} = \frac{(a+b)!(c+d)!(a+c)!(b+d)!}{a!b!c!d!N!} \]
+<p style="font-size:0.8rem;color:var(--slate);">注：上式给出某一张固定列联表出现的概率。完整双侧 Fisher p 值需累加所有「同样或更极端」的列联表概率。</p>
+</div>
+
+<div class="warn-box">
+<strong>数模陷阱：</strong>① 对百分比数据直接用卡方检验——必须用原始频数（不是百分比！）。② 单元格期望频数 < 5 时仍用卡方而不改用 Fisher。③ 卡方显著但 Cramér's V 很小（大样本下几乎任何 χ² 都显著，必须报告效应量 V）。④ 混淆「拟合优度」和「独立性」检验——前者是 1 维 vs 理论分布，后者是 2 维列联表。
+</div>
+
+<!-- ═══════════ 4.6 Mann-Whitney U ═══════════ -->
+<h2>4.6 Mann-Whitney U 检验</h2>
+
+<div class="concept-box">
+<h4>秩和检验的原理</h4>
+<p><strong>Step 1：</strong>合并两组数据，从小到大排序，分配秩次。遇相同值时取平均秩次。<br>
+<strong>Step 2：</strong>计算组 1 的秩和 R₁。如果两组分布相同，R₁ 应在 n₁(N+1)/2 附近。<br>
+<strong>Step 3：</strong>U₁ = R₁ − n₁(n₁+1)/2，U₂ = n₁n₂ − U₁，U = min(U₁, U₂)。</p>
+</div>
+
+<div class="math-block">
+\[ U_1 = R_1 - \frac{n_1(n_1+1)}{2} \qquad U_2 = n_1 n_2 - U_1 \qquad U = \min(U_1, U_2) \]
+\[ \mu_U = \frac{n_1 n_2}{2} \qquad \sigma_U = \sqrt{\frac{n_1 n_2 (n_1 + n_2 + 1)}{12}} \qquad z = \frac{U - \mu_U}{\sigma_U} \]
+</div>
+
+<p style="font-size:0.88rem;color:var(--slate)"><strong>注意：</strong>① 有重复值时，正态近似方差需要 ties 校正（各软件实现方式不同）。② 小样本（n₁,n₂ < 10）优先使用精确 p 值而非正态近似。③ 不同软件可能报告 U₁、U₂ 或两者最小值——论文中应说明采用的定义。</p>
+
+<!-- ═══════════ 4.7 Bootstrap 与置换检验 ═══════════ -->
+<h2>4.7 Bootstrap 与置换检验</h2>
+
+<div class="derive-box">
+<h4>Bootstrap 置信区间：不需要正态假设</h4>
+<p>传统 CI 依赖正态近似（x̄ ± 1.96·SEM）。Bootstrap 绕过这个假设：① 从原始样本中有放回地抽取 n 个 → Bootstrap 样本 ② 计算统计量 ③ 重复 B=1000-10000 次 ④ 取百分位数 [α/2, 1-α/2] 作为 CI。</p>
+</div>
+
+<div class="derive-box">
+<h4>置换检验：不依赖分布的假设检验</h4>
+<p>原理：如果 H₀ 为真（两组无差异），组标签可以任意打乱而不影响检验统计量。打乱标签 B 次，每次计算检验统计量，得到 H₀ 下的零分布。</p>
+\[ p_{\text{perm}} = \frac{1 + \sum_{b=1}^{B} \mathbf{1}\{|T_b| \geq |T_{\text{obs}}|\}}{B + 1} \]
+</div>
+
+<!-- ═══════════ 4.7A 配对检验 ═══════════ -->
+<h2>4.7A 配对检验</h2>
+
+<div class="concept-box">
+<h4>什么时候用配对检验？</h4>
+<p>当同一个体被测量两次（前后对照），或两个体被有意匹配（如按年龄、性别配对）时，两样本不再是独立的。配对检验利用这种配对结构，通过分析<strong>差异</strong>来提高检验功效。</p>
+</div>
+
+<h3>配对 t 检验</h3>
+
+<p>设 \(d_i = x_i^{\text{after}} - x_i^{\text{before}}\) 为第 \(i\) 对的差值。检验 \(H_0: \mu_d = 0\)：</p>
+
+<div class="math-block">
+\[
+t = \frac{\bar{d}}{s_d / \sqrt{n}}, \quad \text{df} = n-1
+\]
+</div>
+
+<p>这本质上是对差值做<strong>单样本 t 检验</strong>。配对 t 检验的功效通常高于独立样本 t 检验——因为去除了个体间变异。</p>
+
+<h3>Wilcoxon 符号秩检验</h3>
+
+<p>配对 t 检验的非参数版本（不假设差值正态）。步骤：① 计算差值 \(d_i\)，去掉 \(d_i=0\)。② 对 \(|d_i|\) 排序。③ 检验统计量 \(W = \sum \text{sign}(d_i) \times \text{rank}(|d_i|)\)。</p>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>配对设计是提升统计功效的免费午餐——如果能够对样本进行配对，就一定要配对。在论文中，报告配对检验的结果比独立检验更有说服力。但注意：<strong>配对必须是合理的</strong>——不能随意配对不相关的样本。
+</div>
+
+<!-- ═══════════ 4.7B 效应量系统 ═══════════ -->
+<h2>4.7B 效应量：p 值之外</h2>
+
+<div class="concept-box">
+<h4>为什么需要效应量？</h4>
+<p>p 值只告诉你「差异是否可能由随机产生」，但不告诉你「差异有多大」。在大样本下，微小的差异也可能显著（p < 0.001），但实际意义可能为零。效应量衡量的是<strong>差异的实际大小</strong>，不依赖于样本量。</p>
+</div>
+
+<table class="compact-table">
+<thead><tr><th>效应量</th><th>公式</th><th>适用检验</th><th>小/中/大阈值</th></tr></thead>
+<tbody>
+<tr><td>Cohen's d</td><td>\(d = \frac{\bar{x}_1 - \bar{x}_2}{s_{\text{pooled}}}\)</td><td>独立 t 检验</td><td>0.2 / 0.5 / 0.8</td></tr>
+<tr><td>Hedges' g</td><td>\(g = d \cdot (1 - \frac{3}{4n-9})\)</td><td>小样本修正</td><td>同 Cohen's d</td></tr>
+<tr><td>Cohen's d_z</td><td>\(d_z = \frac{\bar{d}}{s_d}\)</td><td>配对 t 检验</td><td>0.2 / 0.5 / 0.8</td></tr>
+<tr><td>η² (Eta-squared)</td><td>\(\eta^2 = \frac{SS_{\text{between}}}{SS_{\text{total}}}\)</td><td>ANOVA</td><td>0.01 / 0.06 / 0.14</td></tr>
+<tr><td>Cohen's f</td><td>\(f = \sqrt{\frac{\eta^2}{1-\eta^2}}\)</td><td>ANOVA</td><td>0.1 / 0.25 / 0.4</td></tr>
+<tr><td>Cramér's V</td><td>\(V = \sqrt{\frac{\chi^2}{n \cdot \min(r-1,c-1)}}\)</td><td>卡方检验</td><td>0.1 / 0.3 / 0.5</td></tr>
+<tr><td>Odds Ratio</td><td>\(\text{OR} = \frac{p_1/(1-p_1)}{p_2/(1-p_2)}\)</td><td>逻辑回归</td><td>1.5 / 2.5 / 4.0</td></tr>
+</tbody>
+</table>
+
+<div class="derive-box">
+<h4>推导：Cohen's d 的合并标准差</h4>
+<p>合并标准差 (pooled SD) 是两组方差的加权平均：</p>
+<div class="math-block">
+\[
+s_{\text{pooled}} = \sqrt{\frac{(n_1-1)s_1^2 + (n_2-1)s_2^2}{n_1 + n_2 - 2}}
+\]
+</div>
+<p>当两组方差相等时，这是总体标准差的最优无偏估计。如果方差不等，使用 Glass's Δ（以控制组的标准差为分母）。Hedges' g 对 Cohen's d 做小样本偏差修正（\(g = d \cdot J\)），仍基于合并标准差，并非使用每组各自的标准差。</p>
+</div>
+
+<div class="note-box">
+<strong>竞赛要求：</strong>越来越多的竞赛评审要求同时报告 p 值和效应量。仅报告 p < 0.05 是不够的——你需要告诉读者这个差异「有多大」。在论文中，建议的格式是：「两组之间存在显著差异（t(58) = 2.34, p = 0.023, Cohen's d = 0.62, 中等效应）」。
+</div>
+
+<!-- ═══════════ 4.7C 方差齐性检验 ═══════════ -->
+<h2>4.7C 方差齐性检验</h2>
+
+<p>许多参数检验（t 检验、ANOVA）假设各组方差相等。方差齐性检验用于验证这个假设：</p>
+
+<table class="compact-table">
+<thead><tr><th>检验</th><th>适用场景</th><th>稳健性</th></tr></thead>
+<tbody>
+<tr><td>Levene's Test</td><td>通用，基于绝对离差</td><td>对非正态较稳健</td></tr>
+<tr><td>Brown-Forsythe</td><td>Levene 的变体，基于中位数离差</td><td>对非正态更稳健</td></tr>
+<tr><td>Bartlett's Test</td><td>数据正态时使用</td><td>对非正态非常敏感</td></tr>
+<tr><td>F-test (两组)</td><td>\(F = s_1^2 / s_2^2\)</td><td>仅两组，对非正态敏感</td></tr>
+</tbody>
+</table>
+
+<div class="warn-box">
+<strong>关键提醒：</strong>如果 Levene 检验显著（p < 0.05），说明方差不等——此时应使用 Welch t 检验（不假设等方差）或 Welch ANOVA，而非标准 t 检验或 ANOVA。在竞赛中，报告 Levene 检验结果 + 相应的修正方法，是严谨性的体现。
+</div>
+
+<!-- ═══════════ 4.7D 单样本检验 ═══════════ -->
+<h2>4.7D 单样本检验</h2>
+
+<div class="concept-box">
+<h4>与已知值比较</h4>
+<p>前面的检验都是比较<strong>两个组</strong>。但竞赛中经常需要比较<strong>一个样本与一个已知值</strong>——例如「该城市 PM2.5 均值是否超过国家标准 35 μg/m³？」「产品的平均寿命是否达到标称的 1000 小时？」</p>
+</div>
+
+<h3>单样本 t 检验</h3>
+<div class="math-block">
+\[
+t = \frac{\bar{x} - \mu_0}{s / \sqrt{n}} \sim t_{n-1}
+\]
+</div>
+<p>检验 \(H_0: \mu = \mu_0\) vs \(H_1: \mu \neq \mu_0\)（或单侧 > 或 <）。其中 \(\mu_0\) 是已知的参考值。</p>
+
+<h3>单样本 Wilcoxon 符号秩检验</h3>
+<p>当数据不满足正态性时，用 Wilcoxon 符号秩检验——检验<strong>中位数</strong>是否等于 \(\mu_0\)。计算 \(d_i = x_i - \mu_0\)，对 \(|d_i|\) 排序，统计正差值的秩和。</p>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>单样本检验在竞赛中通常出现在「达标判定」场景——某个指标是否达到国家标准？某地区均值是否显著高于全国平均水平？报告时写成：「单样本 t 检验表明，该城市 PM2.5 年均值 (42.3 ± 15.6 μg/m³) 显著高于国家标准 35 μg/m³ (t(29) = 2.56, p = 0.016, Cohen's d = 0.47)。」
+</div>
+
+<!-- ═══════════ 4.7E 单侧 vs 双侧检验 ═══════════ -->
+<h2>4.7E 单侧 vs 双侧检验</h2>
+
+<div class="concept-box">
+<h4>你的方向有先验依据吗？</h4>
+<p><strong>双侧检验：</strong>\(H_1: \mu_1 \neq \mu_2\)——不预设方向，只看「是否有差异」。<br>
+<strong>单侧检验：</strong>\(H_1: \mu_1 > \mu_2\) 或 \(H_1: \mu_1 < \mu_2\)——预设方向，只看「是否大于」或「是否小于」。</p>
+</div>
+
+<div class="derive-box">
+<h4>单侧的代价和收益</h4>
+<p>单侧检验将 α 全部放在一侧，同等效应量下更容易显著（统计功效更高）。但代价是<strong>如果真实效应在相反方向，无论效应多大，检验都无法检测到</strong>。</p>
+<p><strong>选择原则：</strong>① 只有在有<strong>强烈先验理由</strong>预期方向时才能用单侧（如「新药不可能比安慰剂差」）。② 竞赛中，<strong>默认使用双侧检验</strong>——评委不会质疑你「为什么用双侧」。③ 如果用了单侧检验，必须在论文中明确说明理由。④ 单侧检验的 p 值 = 双侧检验的 p 值 / 2（当效应方向与预期一致时）。</p>
+</div>
+
+<div class="warn-box">
+<strong>竞赛陷阱：</strong>做完双侧检验后发现 p=0.06，然后说「我们用单侧检验，p=0.03 显著」——这属于 p-hacking，评委会识破。检验方向必须在<strong>看到数据之前</strong>确定。
+</div>
+
+<!-- ═══════════ 4.8 检验选择决策树 ═══════════ -->
+<h2>4.8 检验选择决策树</h2>
+
+<div class="toolkit-box">
+<h4>建模工具箱：根据数据类型选择正确的检验</h4>
+<table class="compact-table">
+<thead><tr><th>你的数据</th><th>你的问题</th><th>推荐检验</th><th>备选方案</th></tr></thead>
+<tbody>
+<tr><td>连续变量，两组独立</td><td>均值是否相等</td><td>Welch t-test</td><td>均值差的置换检验</td></tr>
+<tr><td>连续变量，两组独立</td><td>分布位置是否相同</td><td>Mann-Whitney U</td><td>Brunner-Munzel 检验</td></tr>
+<tr><td>连续变量，两组配对</td><td>差值是否为 0</td><td>配对 t-test</td><td>Wilcoxon Signed-Rank</td></tr>
+<tr><td>连续变量，三组+</td><td>均值是否全相等</td><td>ANOVA；方差不齐用 Welch ANOVA</td><td>均值差的置换检验</td></tr>
+<tr><td>连续变量，三组+</td><td>分布位置是否相同</td><td>Kruskal-Wallis</td><td>稳健秩方法或置换检验</td></tr>
+<tr><td>分类变量，r×c 表</td><td>是否独立</td><td>卡方独立性检验</td><td>Fisher 精确检验</td></tr>
+<tr><td>分类变量，1 维</td><td>是否符合理论分布</td><td>卡方拟合优度</td><td>精确多项式 / Monte Carlo</td></tr>
+<tr><td>连续变量，单样本</td><td>是否符合已确定参数的理论分布</td><td>Kolmogorov-Smirnov</td><td>Anderson-Darling</td></tr>
+<tr><td>连续变量，单样本</td><td>是否符合正态分布</td><td>Shapiro-Wilk</td><td>Lilliefors 校正 KS</td></tr>
+<tr><td>连续变量，单样本</td><td>均值是否等于 μ₀</td><td>单样本 t-test</td><td>Wilcoxon Signed-Rank</td></tr>
+<tr><td>任何分布，任何问题</td><td>最后一招</td><td>——</td><td>Bootstrap / 置换检验</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="note-box">
+<strong>竞赛决策口诀：</strong>关心均值差异 → Welch t / ANOVA 或均值差的置换检验（方差不齐≠自动换秩检验，先考虑 Welch 校正）；关心秩或分布位置差异 → Mann-Whitney / Kruskal-Wallis（仅在分布形状相仿时才方便解释为中位数差异）；分类计数 → 卡方检验（小样本用 Fisher）；连续与已确定参数的理论分布比较 → KS 检验（若参数由样本估计，需 Lilliefors 校正或参数 Bootstrap）；正态性检验 → Shapiro-Wilk；不确定 → 置换检验。报告时：p 值 + 效应量 + 置信区间，三者缺一不可！
+</div>
+
+<!-- ═══════════ INTERACTIVE 1: t-TEST ═══════════ -->
+<h2>4.9 交互式 t 检验面板</h2>
+<p>调整两组数据的均值和标准差，观察 t 统计量和 p 值的变化。注意：即使均值差相同，样本量越大 p 越小。</p>
+
+<div class="panel">
+<div class="panel-label">INSTRUMENT No.4A — t-TEST COMPARATOR</div>
+<div class="panel-grid">
+  <div>
+    <h4>组 A</h4>
+    <div class="slider-row"><label>μ₁</label><input type="range" id="ttest-m1" min="0" max="100" value="50" oninput="updateTTest()"><span class="slider-val" id="ttest-m1-val">50</span></div>
+    <div class="slider-row"><label>σ₁</label><input type="range" id="ttest-s1" min="1" max="30" value="10" oninput="updateTTest()"><span class="slider-val" id="ttest-s1-val">10</span></div>
+    <div class="slider-row"><label>n₁</label><input type="range" id="ttest-n1" min="5" max="100" value="30" oninput="updateTTest()"><span class="slider-val" id="ttest-n1-val">30</span></div>
+  </div>
+  <div>
+    <h4>组 B</h4>
+    <div class="slider-row"><label>μ₂</label><input type="range" id="ttest-m2" min="0" max="100" value="55" oninput="updateTTest()"><span class="slider-val" id="ttest-m2-val">55</span></div>
+    <div class="slider-row"><label>σ₂</label><input type="range" id="ttest-s2" min="1" max="30" value="12" oninput="updateTTest()"><span class="slider-val" id="ttest-s2-val">12</span></div>
+    <div class="slider-row"><label>n₂</label><input type="range" id="ttest-n2" min="5" max="100" value="30" oninput="updateTTest()"><span class="slider-val" id="ttest-n2-val">30</span></div>
+  </div>
+</div>
+<div id="ttest-results" style="margin-top:20px;"></div>
+<div class="chart-container" id="ttest-plot" style="margin-top:16px;"></div>
+</div>
+
+<!-- ═══════════ INTERACTIVE 2: CHI-SQUARE ═══════════ -->
+<h2>4.10 交互式卡方检验面板</h2>
+<p>编辑下方 2×2 列联表中的频数，观察 χ² 统计量、p 值和 Cramér's V 的实时变化。双击数字即可编辑。尝试让行和列的比例完全相同（独立），看 χ² 如何趋近 0。</p>
+
+<div class="panel">
+<div class="panel-label">INSTRUMENT No.4B — CHI-SQUARE ANALYZER</div>
+<div style="display:flex;gap:32px;flex-wrap:wrap;">
+  <div style="flex:1;min-width:280px;">
+    <table class="chi-table" id="chi-contingency">
+      <thead>
+        <tr><th></th><th>列 1</th><th>列 2</th><th style="color:var(--terracotta);">行合计</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>行 1</th>
+          <td contenteditable="true" id="chi-o11" onblur="updateChiSquare()">38</td>
+          <td contenteditable="true" id="chi-o12" onblur="updateChiSquare()">12</td>
+          <td class="row-total" id="chi-r1">50</td>
+        </tr>
+        <tr>
+          <th>行 2</th>
+          <td contenteditable="true" id="chi-o21" onblur="updateChiSquare()">22</td>
+          <td contenteditable="true" id="chi-o22" onblur="updateChiSquare()">28</td>
+          <td class="row-total" id="chi-r2">50</td>
+        </tr>
+        <tr>
+          <td class="col-total" id="chi-c1">60</td>
+          <td class="col-total" id="chi-c2">40</td>
+          <td class="grand-total" id="chi-N">100</td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="margin-top:8px;display:flex;gap:8px;">
+      <button class="btn" onclick="resetChiSquare()">↩ 重置</button>
+      <button class="btn" onclick="randomChiSquare()">🎲 随机</button>
+    </div>
+  </div>
+  <div style="flex:1;min-width:280px;" id="chi-results"></div>
+</div>
+<div class="chart-container" id="chi-plot" style="margin-top:16px;"></div>
+</div>

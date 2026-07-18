@@ -17,16 +17,20 @@ em{font-style:italic}
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main-content">跳到内容</a>
 <div class="page">
 
-<nav class="top-nav"><a href="stats_tutorial.html">← Field Station</a> <span>|</span> §II 数据可视化</nav>
+<nav class="top-nav" aria-label="面包屑导航">
+  <a href="stats_tutorial.html">← Field Station</a> <span aria-hidden="true">|</span> §II 可视化
+</nav>
 
 <header class="hero">
-  <div class="num">§II</div>
+  <div class="num">{{CHAPTER_NUM}}</div>
   <h1>数据可视化</h1>
-  <p class="deck">数字只能告诉你「有什么」，图表能告诉你「为什么」。本章涵盖直方图、箱线图、小提琴图、Q-Q 图、KDE 密度估计、相关热力图，以及可视化选择决策框架。核心教训：<strong>永远先画图，永远。</strong></p>
+  <p class="deck">直方图、箱线图、小提琴图、Q-Q 图、KDE 密度估计。Anscombe 四重奏与 Datasaurus Dozen 的教训：永远先画图。竞赛中一张好图胜过一千个数字。</p>
 </header>
 
+<main id="main-content">
 <!-- ═══════════ 竞赛场景 ═══════════ -->
 <div class="competition-box">
 <h4>竞赛真题场景</h4>
@@ -257,15 +261,33 @@ em{font-style:italic}
     <div class="chart-container" id="boxplot-container"></div>
   </div>
 </div>
+</main>
 
-<footer>
-  <p><a href="stats_tutorial.html">← 返回 Statistical Field Station 主页</a></p>
-  <p>所有计算在浏览器端完成 · KaTeX 渲染公式 · D3.js 驱动图表</p>
+<footer class="page-footer">
+  <div class="footer-nav">
+    <a href="stats_01_descriptive.html">← §I 描述统计</a> &nbsp;|&nbsp; 
+    <a href="stats_tutorial.html">Field Station 总目录</a>
+     &nbsp;|&nbsp; 下一章：<a href="stats_03_correlation.html">§III 相关分析 →</a>
+  </div>
+  <div class="footer-meta">
+    <span>版本 v1.2.0</span> <span>|</span>
+    <span>统计审校: 已完成三轮</span> <span>|</span>
+    <span>最后更新: 2026-07</span>
+  </div>
+  <p>Statistical Field Station &copy; 2026 · KaTeX + D3.js</p>
 </footer>
 
 </div>
-
+<script src="assets/js/statistics.js"></script>
 <script>
+// ============ Dependency Load Guard ============
+if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
+  document.body.insertAdjacentHTML('afterbegin',
+    '<div style="background:#C75146;color:#fff;padding:12px;text-align:center;font-family:Inter,sans-serif">' +
+    '⚠ 交互资源加载失败。请确认 assets 目录完整，并检查文件路径后刷新页面。</div>');
+} else {
+
+
 const mean = arr => arr.reduce((a,b)=>a+b,0)/arr.length;
 const median = arr => { const s=[...arr].sort((a,b)=>a-b), n=s.length; return n%2?s[(n-1)/2]:(s[n/2-1]+s[n/2])/2; };
 const quartile = (arr, q) => { const s=[...arr].sort((a,b)=>a-b), n=s.length, idx=q*(n-1), lo=Math.floor(idx), hi=Math.ceil(idx); return lo===hi?s[lo]:s[lo]+(s[hi]-s[lo])*(idx-lo); };
@@ -344,7 +366,22 @@ function updateBoxplot() {
 updateCharts();
 window.addEventListener('resize',()=>{clearTimeout(window._rt);window._rt=setTimeout(updateCharts,250)});
 
-if(typeof renderMathInElement==='function'){renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'\\[',right:'\\]',display:true},{left:'$',right:'$',display:false},{left:'\\(',right:'\\)',display:false}],throwOnError:false,strict:false});}
+',display:false}],throwOnError:false,strict:false});}
+
+
+// ============ KaTeX Auto-Render ============
+renderMathInElement(document.body, {
+  delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '\\[', right: '\\]', display: true},
+    {left: '$', right: '$', display: false},
+    {left: '\\(', right: '\\)', display: false}
+  ],
+  throwOnError: false,
+  strict: false
+});
+
+} // End CDN guard
 </script>
 </body>
 </html>

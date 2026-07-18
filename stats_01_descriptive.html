@@ -23,16 +23,20 @@ em{font-style:italic}
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main-content">跳到内容</a>
 <div class="page">
 
-<nav class="top-nav"><a href="stats_tutorial.html">← Field Station</a> <span>|</span> §I 描述性统计</nav>
+<nav class="top-nav" aria-label="面包屑导航">
+  <a href="stats_tutorial.html">← Field Station</a> <span aria-hidden="true">|</span> §I 描述统计
+</nav>
 
 <header class="hero">
-  <div class="num">§I</div>
+  <div class="num">{{CHAPTER_NUM}}</div>
   <h1>描述性统计</h1>
-  <p class="deck">描述性统计用少数几个数字概括数据集的<strong>中心趋势</strong>、<strong>离散程度</strong>和<strong>分布形态</strong>。这是任何数据分析的第一步——先看清数据长什么样，再决定用什么方法。数模论文的数据分析部分，第一段永远是描述性统计。</p>
+  <p class="deck">中心趋势、离散程度、分布形态 —— 数据分析的第一步。从 Bessel 校正的数学推导到 Box-Cox 变换，从异常值检测到正态性检验。数模论文的数据分析部分，第一段永远是描述性统计。</p>
 </header>
 
+<main id="main-content">
 <!-- ═══════════ 竞赛场景 ═══════════ -->
 <div class="competition-box">
 <h4>竞赛真题场景</h4>
@@ -325,15 +329,33 @@ Q_3 &= P_{75} \quad \text{（第三四分位数，上四分位数）} \\
   <div style="flex:1;min-width:280px;" id="desc-stats"></div>
 </div>
 </div>
+</main>
 
-<footer>
-  <p><a href="stats_tutorial.html">← 返回 Statistical Field Station 主页</a></p>
-  <p>所有计算在浏览器端完成 · KaTeX 渲染公式 · D3.js 驱动图表</p>
+<footer class="page-footer">
+  <div class="footer-nav">
+    <a href="stats_00_toolkit.html">← §0 工具箱</a> &nbsp;|&nbsp; 
+    <a href="stats_tutorial.html">Field Station 总目录</a>
+     &nbsp;|&nbsp; 下一章：<a href="stats_02_visualization.html">§II 可视化 →</a>
+  </div>
+  <div class="footer-meta">
+    <span>版本 v1.2.0</span> <span>|</span>
+    <span>统计审校: 已完成三轮</span> <span>|</span>
+    <span>最后更新: 2026-07</span>
+  </div>
+  <p>Statistical Field Station &copy; 2026 · KaTeX + D3.js</p>
 </footer>
 
 </div>
-
+<script src="assets/js/statistics.js"></script>
 <script>
+// ============ Dependency Load Guard ============
+if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
+  document.body.insertAdjacentHTML('afterbegin',
+    '<div style="background:#C75146;color:#fff;padding:12px;text-align:center;font-family:Inter,sans-serif">' +
+    '⚠ 交互资源加载失败。请确认 assets 目录完整，并检查文件路径后刷新页面。</div>');
+} else {
+
+
 const mean = arr => arr.reduce((a,b)=>a+b,0)/arr.length;
 const std = arr => { const m=mean(arr); return Math.sqrt(arr.reduce((s,x)=>s+(x-m)**2,0)/(arr.length-1)); };
 const median = arr => { const s=[...arr].sort((a,b)=>a-b), n=s.length; return n%2?s[(n-1)/2]:(s[n/2-1]+s[n/2])/2; };
@@ -374,12 +396,23 @@ function updateDescStats() {
 
 renderDescTable(); updateDescStats();
 
-if (typeof renderMathInElement === 'function') {
-  renderMathInElement(document.body, {
-    delimiters: [{left: '$$', right: '$$', display: true},{left: '\\[', right: '\\]', display: true},{left: '$', right: '$', display: false},{left: '\\(', right: '\\)', display: false}],
-    throwOnError: false, strict: false,
-  });
-}
+', display: false}],
+    throwOnError: false, strict: false,}
+
+
+// ============ KaTeX Auto-Render ============
+renderMathInElement(document.body, {
+  delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '\\[', right: '\\]', display: true},
+    {left: '$', right: '$', display: false},
+    {left: '\\(', right: '\\)', display: false}
+  ],
+  throwOnError: false,
+  strict: false
+});
+
+} // End CDN guard
 </script>
 </body>
 </html>

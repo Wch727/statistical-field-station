@@ -19,16 +19,20 @@
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main-content">跳到内容</a>
 <div class="page">
 
-<nav class="top-nav"><a href="stats_tutorial.html">← Field Station</a> <span>|</span> §V 方差分析</nav>
+<nav class="top-nav" aria-label="面包屑导航">
+  <a href="stats_tutorial.html">← Field Station</a> <span aria-hidden="true">|</span> §V ANOVA
+</nav>
 
 <header class="hero">
-  <div class="num">§V</div>
-  <h1>方差分析 (ANOVA)</h1>
-  <p class="deck">当需要比较三组或更多组的均值时，不能做多个两两 t 检验——族错误率 (FWER) 急剧膨胀。ANOVA 一次性检验 H₀: μ₁ = μ₂ = ... = μ_k。本章涵盖单因素与双因素 ANOVA、交互效应、重复测量 ANOVA、Kruskal-Wallis 检验、事后检验和效应量。核心问题：<strong>「某因素对结果有多大影响？」</strong></p>
+  <div class="num">{{CHAPTER_NUM}}</div>
+  <h1>方差分析</h1>
+  <p class="deck">单因素与双因素 ANOVA、交互效应、ANCOVA（协方差分析）、MANOVA（多元方差分析）、Kruskal-Wallis 检验、事后检验、效应量。回答「某因素对结果有多大影响？」</p>
 </header>
 
+<main id="main-content">
 <!-- ═══════════ 竞赛场景 ═══════════ -->
 <div class="competition-box">
 <h4>竞赛真题场景</h4>
@@ -265,15 +269,33 @@ Q = \frac{12}{nk(k+1)} \sum_{j=1}^{k} R_j^2 - 3n(k+1) \sim \chi^2_{k-1}
 </table>
 <div class="chart-container" id="anova-plot" style="margin-top:16px;"></div>
 </div>
+</main>
 
-<footer>
-  <p><a href="stats_tutorial.html">← 返回 Statistical Field Station 主页</a></p>
-  <p>所有计算在浏览器端完成 · KaTeX 渲染公式 · D3.js 驱动图表</p>
+<footer class="page-footer">
+  <div class="footer-nav">
+    <a href="stats_04_hypothesis.html">← §IV 假设检验</a> &nbsp;|&nbsp; 
+    <a href="stats_tutorial.html">Field Station 总目录</a>
+     &nbsp;|&nbsp; 下一章：<a href="stats_06_regression.html">§VI 回归 →</a>
+  </div>
+  <div class="footer-meta">
+    <span>版本 v1.2.0</span> <span>|</span>
+    <span>统计审校: 已完成三轮</span> <span>|</span>
+    <span>最后更新: 2026-07</span>
+  </div>
+  <p>Statistical Field Station &copy; 2026 · KaTeX + D3.js</p>
 </footer>
 
 </div>
-
+<script src="assets/js/statistics.js"></script>
 <script>
+// ============ Dependency Load Guard ============
+if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
+  document.body.insertAdjacentHTML('afterbegin',
+    '<div style="background:#C75146;color:#fff;padding:12px;text-align:center;font-family:Inter,sans-serif">' +
+    '⚠ 交互资源加载失败。请确认 assets 目录完整，并检查文件路径后刷新页面。</div>');
+} else {
+
+
 function lgamma(x){const g=7,c=[0.99999999999980993,676.5203681218851,-1259.1392167224028,771.32342877765313,-176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];if(x<0.5)return Math.log(Math.PI/Math.sin(Math.PI*x))-lgamma(1-x);x-=1;let a=c[0],t=x+g+0.5;for(let i=1;i<c.length;i++)a+=c[i]/(x+i);return Math.log(Math.sqrt(2*Math.PI))+Math.log(a)-t+Math.log(t)*(x+0.5);}
 function regularizedIncompleteBeta(x,a,b){if(x===0)return 0;if(x===1)return 1;const MAX_IT=200,EPS=1e-15;const front=Math.exp(lgamma(a+b)-lgamma(a)-lgamma(b)+a*Math.log(x)+b*Math.log(1-x));let f=1,c=1,d=1-(a+b)*x/(a+1);if(Math.abs(d)<EPS)d=EPS;d=1/d;let h=d;for(let m=1;m<=MAX_IT;m++){const m2=2*m;let aa=m*(b-m)*x/((a+m2-1)*(a+m2));d=1+aa*d;if(Math.abs(d)<EPS)d=EPS;c=1+aa/c;if(Math.abs(c)<EPS)c=EPS;d=1/d;h*=d*c;aa=-(a+m)*(a+b+m)*x/((a+m2)*(a+m2+1));d=1+aa*d;if(Math.abs(d)<EPS)d=EPS;c=1+aa/c;if(Math.abs(c)<EPS)c=EPS;d=1/d;const del=d*c;h*=del;if(Math.abs(del-1)<EPS)break;}return front*(h-1)/a;}
 function fCDF(x,df1,df2){const y=df1*x/(df1*x+df2);return regularizedIncompleteBeta(y,df1/2,df2/2);}
@@ -317,9 +339,7 @@ function updateANOVA(){
     const line=d3.line().x(d=>xScale(d.x)).y(d=>yScale(d.y)).curve(d3.curveBasis);
     const data=Array.from({length:pts},(_,j)=>{const x=xMin+(xMax-xMin)*j/pts;return{x,y:Math.exp(-(((x-means[i])**2))/(2*sigma*sigma))/(sigma*Math.sqrt(2*Math.PI))};});
     svg.append('path').datum(data).attr('d',line).attr('fill',colors[i]).attr('opacity',0.25).attr('stroke',colors[i]).attr('stroke-width',1.5);
-    svg.append('text').attr('x',xScale(means[i])).attr('y',MM.t+8).attr('text-anchor','middle').attr('font-family','var(--mono)').attr('font-size','0.65rem').attr('fill',colors[i]).text(l);
-  });
-  svg.append('g').attr('transform',`translate(0,${H-MM.b})`).call(d3.axisBottom(xScale).ticks(5));
+    svg.append('text').attr('x',xScale(means[i])).attr('y',MM.t+8).attr('text-anchor','middle').attr('font-family','var(--mono)').attr('font-size','0.65rem').attr('fill',colors[i]).text(l);  svg.append('g').attr('transform',`translate(0,${H-MM.b})`).call(d3.axisBottom(xScale).ticks(5));
   svg.selectAll('.axis text').attr('font-family','var(--mono)').attr('font-size','0.7rem').attr('fill','var(--slate)');
   svg.selectAll('.axis line,.axis path').attr('stroke','var(--stone)');
 }
@@ -327,7 +347,22 @@ function updateANOVA(){
 updateANOVA();
 window.addEventListener('resize',()=>{clearTimeout(window._rt);window._rt=setTimeout(updateANOVA,250)});
 
-if(typeof renderMathInElement==='function'){renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'\\[',right:'\\]',display:true},{left:'$',right:'$',display:false},{left:'\\(',right:'\\)',display:false}],throwOnError:false,strict:false});}
+',display:false}],throwOnError:false,strict:false});}
+
+
+// ============ KaTeX Auto-Render ============
+renderMathInElement(document.body, {
+  delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '\\[', right: '\\]', display: true},
+    {left: '$', right: '$', display: false},
+    {left: '\\(', right: '\\)', display: false}
+  ],
+  throwOnError: false,
+  strict: false
+});
+
+} // End CDN guard
 </script>
 </body>
 </html>

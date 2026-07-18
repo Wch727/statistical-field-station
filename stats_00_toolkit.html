@@ -37,16 +37,20 @@ h4{font-family:var(--display);font-weight:500;font-size:1.05rem;color:var(--fore
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main-content">跳到内容</a>
 <div class="page">
 
-<nav class="top-nav"><a href="stats_tutorial.html">← Field Station</a> <span>|</span> §0 数模实战工具箱</nav>
+<nav class="top-nav" aria-label="面包屑导航">
+  <a href="stats_tutorial.html">← Field Station</a> <span aria-hidden="true">|</span> §0 工具箱
+</nav>
 
 <header class="hero">
-  <div class="num">§0 · PREREQUISITE</div>
+  <div class="num">{{CHAPTER_NUM}}</div>
   <h1>数模实战工具箱</h1>
-  <p class="deck">在开始任何建模之前，有三件事值得熟练掌握：<strong>数据操作</strong>（Pandas 是你的手）、<strong>数值计算</strong>（NumPy 是你的脑）、<strong>可视化</strong>（Matplotlib 是你的眼）。本章是纯实操速查——不推导公式，只给代码。</p>
+  <p class="deck">Pandas 数据处理速查、NumPy 数值计算、Matplotlib 六图绘制、模型验证完整流程（交叉验证 / 残差分析 / 敏感性 / 鲁棒性）、论文表达六问框架。建模之前建议熟练的基础技能。</p>
 </header>
 
+<main id="main-content">
 <div class="competition-box">
 <h4>📋 第一层能力清单</h4>
 <p>以下技能在竞赛中<strong>建议达到熟练级别</strong>——频繁查文档会拖慢节奏。每一条都是真实赛题中反复出现的基础操作。</p>
@@ -518,28 +522,32 @@ score_noisy = model.<span class="fn">score</span>(X_noisy, y)
 
 <p style="font-size:0.85rem;color:var(--slate);margin-top:12px">提示：观察测试 MSE 在各折之间的波动——波动大说明模型对数据划分敏感，可能需要更多数据或更简单的模型。</p>
 </div>
+</main>
 
-<footer>
-<p>Statistical Field Station · §0 数模实战工具箱</p>
-<p style="margin-top:8px"><a href="stats_tutorial.html">← 返回目录</a> · <a href="stats_01_descriptive.html">§I 描述统计 →</a></p>
+<footer class="page-footer">
+  <div class="footer-nav">
+    
+    <a href="stats_tutorial.html">Field Station 总目录</a>
+     &nbsp;|&nbsp; 下一章：<a href="stats_01_descriptive.html">§I 描述统计 →</a>
+  </div>
+  <div class="footer-meta">
+    <span>版本 v1.2.0</span> <span>|</span>
+    <span>统计审校: 已完成三轮</span> <span>|</span>
+    <span>最后更新: 2026-07</span>
+  </div>
+  <p>Statistical Field Station &copy; 2026 · KaTeX + D3.js</p>
 </footer>
 
-</div><!-- .page -->
-
+</div>
+<script src="assets/js/statistics.js"></script>
 <script>
-// === KaTeX ===
-document.addEventListener('DOMContentLoaded', () => {
-  if (typeof renderMathInElement !== 'undefined') {
-    renderMathInElement(document.body, {
-      delimiters: [
-        {left: '\\[', right: '\\]', display: true},
-        {left: '\\(', right: '\\)', display: false},
-        {left: '$$', right: '$$', display: true}
-      ],
-      throwOnError: false
-    });
-  }
-});
+// ============ Dependency Load Guard ============
+if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
+  document.body.insertAdjacentHTML('afterbegin',
+    '<div style="background:#C75146;color:#fff;padding:12px;text-align:center;font-family:Inter,sans-serif">' +
+    '⚠ 交互资源加载失败。请确认 assets 目录完整，并检查文件路径后刷新页面。</div>');
+} else {
+
 
 // === Instrument 0A: Cross-Validation Visualizer ===
 (function() {
@@ -699,31 +707,34 @@ document.addEventListener('DOMContentLoaded', () => {
     currentFold = 0;
     folds = getFolds();
     draw();
-    updateFoldDisplay();
-  });
-
-  d3.select('#cv-next').on('click', () => {
+    updateFoldDisplay();  d3.select('#cv-next').on('click', () => {
     currentFold = (currentFold + 1) % K;
     draw();
-    updateFoldDisplay();
-  });
-
-  d3.select('#cv-prev').on('click', () => {
+    updateFoldDisplay();  d3.select('#cv-prev').on('click', () => {
     currentFold = (currentFold - 1 + K) % K;
     draw();
-    updateFoldDisplay();
-  });
-
-  d3.select('#cv-shuffle').on('click', () => {
+    updateFoldDisplay();  d3.select('#cv-shuffle').on('click', () => {
     generateData();
     currentFold = 0;
     folds = getFolds();
     draw();
-    updateFoldDisplay();
-  });
-
-  init();
+    updateFoldDisplay();  init();
 })();
+
+
+// ============ KaTeX Auto-Render ============
+renderMathInElement(document.body, {
+  delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '\\[', right: '\\]', display: true},
+    {left: '$', right: '$', display: false},
+    {left: '\\(', right: '\\)', display: false}
+  ],
+  throwOnError: false,
+  strict: false
+});
+
+} // End CDN guard
 </script>
 </body>
 </html>

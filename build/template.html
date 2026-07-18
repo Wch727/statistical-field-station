@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{TITLE}} — Statistical Field Station</title>
+<link rel="stylesheet" href="assets/vendor/google-fonts.css">
+<link rel="stylesheet" href="assets/vendor/katex.min.css">
+<script src="assets/vendor/katex.min.js"></script>
+<script src="assets/vendor/auto-render.min.js"></script>
+<script src="assets/vendor/d3.v7.min.js"></script>
+<link rel="stylesheet" href="assets/css/site.css">
+{{PAGE_CSS}}
+</head>
+<body>
+<a class="skip-link" href="#main-content">跳到内容</a>
+<div class="page">
+
+<nav class="top-nav" aria-label="面包屑导航">
+  <a href="stats_tutorial.html">← Field Station</a> <span aria-hidden="true">|</span> {{CHAPTER_NUM}} {{CHAPTER_SHORT}}
+</nav>
+
+<header class="hero">
+  <div class="num">{{CHAPTER_NUM}}</div>
+  <h1>{{CHAPTER_TITLE}}</h1>
+  <p class="deck">{{DECK}}</p>
+</header>
+
+<main id="main-content">
+{{CONTENT}}
+</main>
+
+<footer class="page-footer">
+  <div class="footer-nav">
+    {{PREV_LINK}}
+    <a href="stats_tutorial.html">Field Station 总目录</a>
+    {{NEXT_LINK}}
+  </div>
+  <div class="footer-meta">
+    <span>版本 v1.2.0</span> <span>|</span>
+    <span>统计审校: 已完成三轮</span> <span>|</span>
+    <span>最后更新: 2026-07</span>
+  </div>
+  <p>Statistical Field Station &copy; 2026 · KaTeX + D3.js</p>
+</footer>
+
+</div>
+<script src="assets/js/statistics.js"></script>
+<script>
+// ============ Dependency Load Guard ============
+if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
+  document.body.insertAdjacentHTML('afterbegin',
+    '<div style="background:#C75146;color:#fff;padding:12px;text-align:center;font-family:Inter,sans-serif">' +
+    '⚠ 交互资源加载失败。请确认 assets 目录完整，并检查文件路径后刷新页面。</div>');
+} else {
+
+{{PAGE_JS}}
+
+// ============ KaTeX Auto-Render ============
+renderMathInElement(document.body, {
+  delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '\\[', right: '\\]', display: true},
+    {left: '$', right: '$', display: false},
+    {left: '\\(', right: '\\)', display: false}
+  ],
+  throwOnError: false,
+  strict: false
+});
+
+} // End CDN guard
+</script>
+</body>
+</html>

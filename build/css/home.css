@@ -1,0 +1,240 @@
+:root {
+  --parchment: #FDFBF5; --forest: #2D4A3E; --terracotta: #C75146;
+  --gold: #8B6914; --stone: #E8E0D5; --slate: #5B6E65; --surface: #FFFAF0;
+  --display: 'Noto Serif SC', 'Cormorant Garamond', 'STSong', serif;
+  --body: 'Noto Sans SC', 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Consolas', monospace;
+  --radius: 4px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--parchment); color: var(--forest);
+  font-family: var(--body); font-size: 1.08rem; line-height: 1.72;
+}
+.page { max-width: 980px; margin: 0 auto; padding: 48px 32px; }
+
+.hero { text-align: center; padding: 60px 0 32px; }
+.hero h1 {
+  font-family: var(--display); font-weight: 700;
+  font-size: clamp(2rem, 5vw, 3.2rem); line-height: 1.1;
+  color: var(--forest); margin-bottom: 8px;
+}
+.hero .subtitle {
+  font-family: var(--mono); font-size: 0.8rem; color: var(--slate);
+  letter-spacing: 0.1em; margin-bottom: 32px;
+}
+.hero p { max-width: 64ch; margin: 0 auto 24px; color: var(--slate); }
+
+/* 竞赛路线图 */
+.roadmap {
+  background: var(--surface);
+  border: 1px solid var(--stone);
+  border-radius: 8px;
+  padding: 28px 32px;
+  margin: 32px 0 40px;
+}
+.roadmap h2 {
+  font-family: var(--display); font-size: 1.4rem; font-weight: 600;
+  color: var(--forest); margin-bottom: 8px;
+}
+.roadmap .sub {
+  font-family: var(--mono); font-size: 0.72rem; color: var(--slate);
+  letter-spacing: 0.08em; margin-bottom: 20px;
+}
+.roadmap-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.roadmap-item {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 12px 16px;
+  border: 1px solid var(--stone);
+  border-radius: var(--radius);
+  background: var(--parchment);
+}
+.roadmap-item .q-icon {
+  font-family: var(--mono); font-size: 1.1rem; font-weight: 700;
+  color: var(--terracotta); min-width: 28px; text-align: center;
+  line-height: 1.4;
+}
+.roadmap-item .q-content strong {
+  display: block; font-size: 0.95rem; color: var(--forest);
+  margin-bottom: 2px;
+}
+.roadmap-item .q-content span {
+  font-size: 0.82rem; color: var(--slate);
+}
+
+/* 章节卡片 */
+.toc { margin: 32px 0; }
+.toc-item {
+  display: block; padding: 20px 24px; margin-bottom: 10px;
+  border: 1px solid var(--stone); border-radius: 6px;
+  background: var(--surface); text-decoration: none;
+  transition: all 0.2s; position: relative;
+}
+.toc-item:hover {
+  border-color: var(--terracotta);
+  box-shadow: 0 2px 16px rgba(199,81,70,0.1);
+  transform: translateX(4px);
+}
+.toc-item .num {
+  font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.15em;
+  color: var(--gold); margin-bottom: 2px;
+}
+.toc-item .title {
+  font-family: var(--display); font-size: 1.4rem; font-weight: 600;
+  color: var(--forest); margin-bottom: 4px;
+}
+.toc-item .desc {
+  font-size: 0.92rem; color: var(--slate);
+}
+.toc-item .tags {
+  margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px;
+}
+.toc-item .tag {
+  font-family: var(--mono); font-size: 0.68rem;
+  padding: 2px 8px; border-radius: 12px;
+  background: var(--stone); color: var(--slate);
+}
+/* 优先级徽章 */
+.priority {
+  position: absolute; top: 20px; right: 24px;
+  font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.1em;
+  padding: 3px 10px; border-radius: 3px;
+  text-transform: uppercase;
+}
+.priority.core {
+  background: var(--terracotta); color: #fff;
+}
+.priority.advanced {
+  background: var(--stone); color: var(--slate);
+}
+
+/* 快速决策框架 */
+.quick-framework {
+  margin: 40px 0 32px;
+  padding: 24px 28px;
+  background: #F5F8F6;
+  border: 1px solid var(--stone);
+  border-left: 3px solid var(--forest);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+.quick-framework h2 {
+  font-family: var(--display); font-size: 1.2rem; font-weight: 600;
+  color: var(--forest); margin-bottom: 16px;
+}
+.flow-row {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  align-items: center; margin-bottom: 10px;
+}
+.flow-box {
+  font-family: var(--mono); font-size: 0.78rem;
+  padding: 6px 14px; border-radius: var(--radius);
+  border: 1px solid var(--stone);
+  background: var(--surface); color: var(--forest);
+  white-space: nowrap;
+}
+.flow-box.go { background: var(--forest); color: #fff; border-color: var(--forest); }
+.flow-arrow { color: var(--gold); font-size: 1.1rem; font-weight: 600; }
+
+footer {
+  text-align: center; padding: 40px 0 20px;
+  font-size: 0.82rem; color: var(--slate);
+  border-top: 1px solid var(--stone); margin-top: 40px;
+}
+
+/* 新手入口卡片 */
+.entry-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin: 32px 0;
+}
+.entry-card {
+  background: var(--surface);
+  border: 1px solid var(--stone);
+  border-radius: 8px;
+  padding: 24px;
+  transition: all 0.2s;
+  text-decoration: none;
+  color: var(--forest);
+}
+.entry-card:hover {
+  border-color: var(--terracotta);
+  box-shadow: 0 4px 20px rgba(199,81,70,0.1);
+  transform: translateY(-2px);
+}
+.entry-card .entry-icon {
+  font-size: 1.8rem;
+  margin-bottom: 10px;
+}
+.entry-card h3 {
+  font-family: var(--display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--forest);
+  margin-bottom: 6px;
+  border: none;
+  padding: 0;
+}
+.entry-card .entry-path {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--terracotta);
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+.entry-card .entry-desc {
+  font-size: 0.85rem;
+  color: var(--slate);
+  line-height: 1.5;
+}
+.entry-label {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.15em;
+  color: var(--gold);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+/* 关键词查找 */
+.keyword-search {
+  margin: 32px 0;
+  padding: 24px 28px;
+  background: #FFF8F0;
+  border: 1px solid var(--stone);
+  border-left: 3px solid var(--gold);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+.keyword-search h2 {
+  font-family: var(--display);
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--forest);
+  margin-bottom: 12px;
+  border: none;
+  padding: 0;
+}
+.keyword-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 24px;
+  font-size: 0.9rem;
+}
+.keyword-grid .kw {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--terracotta);
+}
+.keyword-grid .kw-dest {
+  color: var(--slate);
+}
+
+@media (max-width: 700px) {
+  .entry-grid { grid-template-columns: 1fr; }
+  .keyword-grid { grid-template-columns: 1fr; }
+  .roadmap-grid { grid-template-columns: 1fr; }
+}

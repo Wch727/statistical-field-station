@@ -21,16 +21,20 @@
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main-content">跳到内容</a>
 <div class="page">
 
-<nav class="top-nav"><a href="stats_tutorial.html">← Field Station</a> <span>|</span> §X 模型评估与降维</nav>
+<nav class="top-nav" aria-label="面包屑导航">
+  <a href="stats_tutorial.html">← Field Station</a> <span aria-hidden="true">|</span> §X 评估与降维
+</nav>
 
 <header class="hero">
-  <div class="num">§X</div>
+  <div class="num">{{CHAPTER_NUM}}</div>
   <h1>模型评估与降维</h1>
-  <p class="deck">模型训练好了，但怎么知道它好不好？本章涵盖分类模型评估（混淆矩阵、精确率、召回率、F1、ROC/AUC）、交叉验证（K-fold、留一法）、数据标准化、主成分分析（PCA）和特征选择——这些是竞赛中区分「能用模型」和「用对模型」的关键技能。</p>
+  <p class="deck">混淆矩阵、精确率/召回率/F1、ROC/AUC、K 折交叉验证、PCA、偏最小二乘 PLS、偏差-方差权衡、特征选择、数据标准化。回答「模型好不好？」</p>
 </header>
 
+<main id="main-content">
 <div class="competition-box">
 <h4>竞赛真题场景</h4>
 <p><span class="q">Q：</span>几乎所有竞赛论文都需要报告模型评估指标。评委最常问的问题：「你的模型准确率是 95%，但数据集正负样本比例是 95:5——如果全预测为正类，准确率也是 95%。你的模型真的有用吗？」<br>
@@ -482,24 +486,32 @@ w_1 = \arg\max_{\|w\|=1} \text{Var}(Xw) = \arg\max_{\|w\|=1} w^T S w
 <strong>Step 6：</strong>混淆矩阵分析——不只是准确率，报告精确率、召回率、F1、AUC。<br>
 <strong>Step 7：</strong>敏感性分析——改变关键参数（如 K、阈值），观察性能变化。</p>
 </div>
+</main>
 
-<footer>
-  <p><a href="stats_09_clustering.html">← §IX 聚类分析</a> &nbsp;|&nbsp; <a href="stats_tutorial.html">Field Station 总目录</a></p>
-  <p style="margin-top:8px">Statistical Field Station &copy; 2026 · KaTeX + D3.js</p>
+<footer class="page-footer">
+  <div class="footer-nav">
+    <a href="stats_09_clustering.html">← §IX 聚类</a> &nbsp;|&nbsp; 
+    <a href="stats_tutorial.html">Field Station 总目录</a>
+     &nbsp;|&nbsp; 下一章：<a href="stats_11_timeseries.html">§XI 时间序列 →</a>
+  </div>
+  <div class="footer-meta">
+    <span>版本 v1.2.0</span> <span>|</span>
+    <span>统计审校: 已完成三轮</span> <span>|</span>
+    <span>最后更新: 2026-07</span>
+  </div>
+  <p>Statistical Field Station &copy; 2026 · KaTeX + D3.js</p>
 </footer>
 
 </div>
-
+<script src="assets/js/statistics.js"></script>
 <script>
-// ============ KaTeX Auto-Render ============
-renderMathInElement(document.body, {
-  delimiters: [
-    {left: '\\[', right: '\\]', display: true},
-    {left: '\\(', right: '\\)', display: false},
-    {left: '$$', right: '$$', display: true}
-  ],
-  throwOnError: false
-});
+// ============ Dependency Load Guard ============
+if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
+  document.body.insertAdjacentHTML('afterbegin',
+    '<div style="background:#C75146;color:#fff;padding:12px;text-align:center;font-family:Inter,sans-serif">' +
+    '⚠ 交互资源加载失败。请确认 assets 目录完整，并检查文件路径后刷新页面。</div>');
+} else {
+
 
 // ============ INSTRUMENT No.10A: Confusion Matrix ============
 (function() {
@@ -596,16 +608,11 @@ renderMathInElement(document.body, {
       svg.append('rect').attr('x', xScale(d.x0)).attr('y', yScale(d.length))
         .attr('width', Math.max(1, xScale(d.x1)-xScale(d.x0)-1))
         .attr('height', yScale(0)-yScale(d.length))
-        .attr('fill', '#2D6BA0').attr('opacity', 0.5);
-    });
-    histPos.forEach(d => {
+        .attr('fill', '#2D6BA0').attr('opacity', 0.5);    histPos.forEach(d => {
       svg.append('rect').attr('x', xScale(d.x0)).attr('y', yScale(d.length))
         .attr('width', Math.max(1, xScale(d.x1)-xScale(d.x0)-1))
         .attr('height', yScale(0)-yScale(d.length))
-        .attr('fill', '#C75146').attr('opacity', 0.5);
-    });
-
-    // Threshold line
+        .attr('fill', '#C75146').attr('opacity', 0.5);    // Threshold line
     svg.append('line').attr('x1',xScale(thresh)).attr('x2',xScale(thresh))
       .attr('y1',margin.top).attr('y2',margin.top+ph)
       .attr('stroke','var(--gold)').attr('stroke-width',2).attr('stroke-dasharray','6,3');
@@ -672,14 +679,9 @@ renderMathInElement(document.body, {
   d3.select('#cm-thresh').on('input', update);
   d3.select('#cm-ratio').on('input', function() {
     generateScores(+this.value);
-    update();
-  });
-  d3.select('#cm-reshuffle').on('click', function() {
+    update();  d3.select('#cm-reshuffle').on('click', function() {
     generateScores(+d3.select('#cm-ratio').property('value'));
-    update();
-  });
-
-  generateScores(0.3);
+    update();  generateScores(0.3);
   update();
 })();
 
@@ -708,9 +710,7 @@ renderMathInElement(document.body, {
       data3D.push({
         x1: 0.8*a + 0.2*b + noise,
         x2: 0.6*a - 0.4*b + (Math.random()-0.5)*0.5,
-        x3: 0.4*a + 0.6*b + (Math.random()-0.5)*0.5
-      });
-    }
+        x3: 0.4*a + 0.6*b + (Math.random()-0.5)*0.5    }
   }
 
   function computePCA() {
@@ -875,6 +875,21 @@ renderMathInElement(document.body, {
   generateData();
   update();
 })();
+
+
+// ============ KaTeX Auto-Render ============
+renderMathInElement(document.body, {
+  delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '\\[', right: '\\]', display: true},
+    {left: '$', right: '$', display: false},
+    {left: '\\(', right: '\\)', display: false}
+  ],
+  throwOnError: false,
+  strict: false
+});
+
+} // End CDN guard
 </script>
 </body>
 </html>

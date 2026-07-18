@@ -16,16 +16,20 @@ em{font-style:italic}
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main-content">跳到内容</a>
 <div class="page">
 
-<nav class="top-nav"><a href="stats_tutorial.html">← Field Station</a> <span>|</span> §III 相关分析</nav>
+<nav class="top-nav" aria-label="面包屑导航">
+  <a href="stats_tutorial.html">← Field Station</a> <span aria-hidden="true">|</span> §III 相关分析
+</nav>
 
 <header class="hero">
-  <div class="num">§III</div>
+  <div class="num">{{CHAPTER_NUM}}</div>
   <h1>相关分析</h1>
-  <p class="deck">相关度量两个变量之间<strong>线性关联</strong>的强度和方向。核心警告：<em>相关 ≠ 因果</em>。本章涵盖 Pearson r、Spearman ρ、Kendall τ、偏相关、距离相关、Cramér's V（分类变量），以及 Fisher z-变换和置信区间。核心问题：<strong>「哪些因素与目标变量有关？」</strong></p>
+  <p class="deck">Pearson r、Spearman ρ、Kendall τ、偏相关、距离相关、Cramér's V、典型相关分析 CCA。Fisher z-变换、置信区间、相关矩阵。回答「哪些因素与目标变量有关？」—— 相关 ≠ 因果。</p>
 </header>
 
+<main id="main-content">
 <!-- ═══════════ 竞赛场景 ═══════════ -->
 <div class="competition-box">
 <h4>竞赛真题场景</h4>
@@ -291,15 +295,33 @@ r = \frac{e^{2z} - 1}{e^{2z} + 1} = \tanh(z)
   <button class="btn" onclick="addCorrPoint()">+ 添加点</button>
 </div>
 </div>
+</main>
 
-<footer>
-  <p><a href="stats_tutorial.html">← 返回 Statistical Field Station 主页</a></p>
-  <p>所有计算在浏览器端完成 · KaTeX 渲染公式 · D3.js 驱动图表</p>
+<footer class="page-footer">
+  <div class="footer-nav">
+    <a href="stats_02_visualization.html">← §II 可视化</a> &nbsp;|&nbsp; 
+    <a href="stats_tutorial.html">Field Station 总目录</a>
+     &nbsp;|&nbsp; 下一章：<a href="stats_04_hypothesis.html">§IV 假设检验 →</a>
+  </div>
+  <div class="footer-meta">
+    <span>版本 v1.2.0</span> <span>|</span>
+    <span>统计审校: 已完成三轮</span> <span>|</span>
+    <span>最后更新: 2026-07</span>
+  </div>
+  <p>Statistical Field Station &copy; 2026 · KaTeX + D3.js</p>
 </footer>
 
 </div>
-
+<script src="assets/js/statistics.js"></script>
 <script>
+// ============ Dependency Load Guard ============
+if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
+  document.body.insertAdjacentHTML('afterbegin',
+    '<div style="background:#C75146;color:#fff;padding:12px;text-align:center;font-family:Inter,sans-serif">' +
+    '⚠ 交互资源加载失败。请确认 assets 目录完整，并检查文件路径后刷新页面。</div>');
+} else {
+
+
 const mean=arr=>arr.reduce((a,b)=>a+b,0)/arr.length;
 const sum=arr=>arr.reduce((a,b)=>a+b,0);
 
@@ -353,7 +375,22 @@ function addCorrPoint(){corrData.push({x:20+Math.random()*60,y:20+Math.random()*
 updateCorrelation();
 window.addEventListener('resize',()=>{clearTimeout(window._rt);window._rt=setTimeout(updateCorrelation,250)});
 
-if(typeof renderMathInElement==='function'){renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'\\[',right:'\\]',display:true},{left:'$',right:'$',display:false},{left:'\\(',right:'\\)',display:false}],throwOnError:false,strict:false});}
+',display:false}],throwOnError:false,strict:false});}
+
+
+// ============ KaTeX Auto-Render ============
+renderMathInElement(document.body, {
+  delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '\\[', right: '\\]', display: true},
+    {left: '$', right: '$', display: false},
+    {left: '\\(', right: '\\)', display: false}
+  ],
+  throwOnError: false,
+  strict: false
+});
+
+} // End CDN guard
 </script>
 </body>
 </html>

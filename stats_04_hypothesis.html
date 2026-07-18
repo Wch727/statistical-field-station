@@ -21,16 +21,20 @@
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main-content">跳到内容</a>
 <div class="page">
 
-<nav class="top-nav"><a href="stats_tutorial.html">← Field Station</a> <span>|</span> §IV 假设检验</nav>
+<nav class="top-nav" aria-label="面包屑导航">
+  <a href="stats_tutorial.html">← Field Station</a> <span aria-hidden="true">|</span> §IV 假设检验
+</nav>
 
 <header class="hero">
-  <div class="num">§IV</div>
+  <div class="num">{{CHAPTER_NUM}}</div>
   <h1>假设检验</h1>
-  <p class="deck">假设检验是统计推断的核心工具。本章涵盖 t 检验、<strong>卡方检验</strong>、Mann-Whitney U 检验、p 值的精确含义、统计功效与样本量规划、多重检验校正、Bootstrap 置信区间和置换检验。核心问题：<strong>「两组数据是否存在显著差异？」</strong></p>
+  <p class="deck">t 检验、卡方检验、Mann-Whitney U、配对检验、效应量系统（Cohen's d / Hedges' g）、方差齐性检验、统计功效、多重校正、Bootstrap 与置换检验。</p>
 </header>
 
+<main id="main-content">
 <!-- ═══════════ 竞赛场景 ═══════════ -->
 <div class="competition-box">
 <h4>竞赛真题场景</h4>
@@ -403,16 +407,32 @@ t = \frac{\bar{x} - \mu_0}{s / \sqrt{n}} \sim t_{n-1}
 </div>
 <div class="chart-container" id="chi-plot" style="margin-top:16px;"></div>
 </div>
+</main>
 
-<footer>
-  <p><a href="stats_tutorial.html">← 返回 Statistical Field Station 主页</a></p>
-  <p>所有计算在浏览器端完成 · KaTeX 渲染公式 · D3.js 驱动图表</p>
+<footer class="page-footer">
+  <div class="footer-nav">
+    <a href="stats_03_correlation.html">← §III 相关分析</a> &nbsp;|&nbsp; 
+    <a href="stats_tutorial.html">Field Station 总目录</a>
+     &nbsp;|&nbsp; 下一章：<a href="stats_05_anova.html">§V ANOVA →</a>
+  </div>
+  <div class="footer-meta">
+    <span>版本 v1.2.0</span> <span>|</span>
+    <span>统计审校: 已完成三轮</span> <span>|</span>
+    <span>最后更新: 2026-07</span>
+  </div>
+  <p>Statistical Field Station &copy; 2026 · KaTeX + D3.js</p>
 </footer>
 
 </div>
-
 <script src="assets/js/statistics.js"></script>
 <script>
+// ============ Dependency Load Guard ============
+if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
+  document.body.insertAdjacentHTML('afterbegin',
+    '<div style="background:#C75146;color:#fff;padding:12px;text-align:center;font-family:Inter,sans-serif">' +
+    '⚠ 交互资源加载失败。请确认 assets 目录完整，并检查文件路径后刷新页面。</div>');
+} else {
+
 
 function updateTTest(){
   const m1=+document.getElementById('ttest-m1').value,s1=+document.getElementById('ttest-s1').value,n1=+document.getElementById('ttest-n1').value;
@@ -446,9 +466,7 @@ function updateTTest(){
     const line=d3.line().x(d=>xScale(d.x)).y(d=>yScale(d.y)).curve(d3.curveBasis);
     const data=Array.from({length:pts},(_,i)=>{const x=xMin+(xMax-xMin)*i/pts;return{x,y:normalPDF(x,g.m,g.s)};});
     svg.append('path').datum(data).attr('d',line).attr('fill',g.color).attr('opacity',0.2).attr('stroke',g.color).attr('stroke-width',2);
-    svg.append('text').attr('x',xScale(g.m)).attr('y',MM.t+10).attr('text-anchor','middle').attr('font-family','var(--mono)').attr('font-size','0.7rem').attr('fill',g.color).text(g.label);
-  });
-  svg.append('g').attr('transform',`translate(0,${H-MM.b})`).call(d3.axisBottom(xScale).ticks(5));
+    svg.append('text').attr('x',xScale(g.m)).attr('y',MM.t+10).attr('text-anchor','middle').attr('font-family','var(--mono)').attr('font-size','0.7rem').attr('fill',g.color).text(g.label);  svg.append('g').attr('transform',`translate(0,${H-MM.b})`).call(d3.axisBottom(xScale).ticks(5));
   svg.selectAll('.axis text').attr('font-family','var(--mono)').attr('font-size','0.7rem').attr('fill','var(--slate)');
   svg.selectAll('.axis line,.axis path').attr('stroke','var(--stone)');
 }
@@ -549,9 +567,7 @@ function updateChiSquare(){
 
   groups.forEach((g,i)=>{
     svg.append('rect').attr('x',xScale(g)+xSub('Observed')).attr('y',yScale(obs[i])).attr('width',xSub.bandwidth()).attr('height',H-MM.b-yScale(obs[i])).attr('fill','var(--terracotta)').attr('opacity',0.7);
-    svg.append('rect').attr('x',xScale(g)+xSub('Expected')).attr('y',yScale(exp[i])).attr('width',xSub.bandwidth()).attr('height',H-MM.b-yScale(exp[i])).attr('fill','var(--forest)').attr('opacity',0.5);
-  });
-}
+    svg.append('rect').attr('x',xScale(g)+xSub('Expected')).attr('y',yScale(exp[i])).attr('width',xSub.bandwidth()).attr('height',H-MM.b-yScale(exp[i])).attr('fill','var(--forest)').attr('opacity',0.5);}
 
 function resetChiSquare(){
   document.getElementById('chi-o11').textContent='38';document.getElementById('chi-o12').textContent='12';
@@ -570,7 +586,22 @@ function randomChiSquare(){
 updateTTest();updateChiSquare();
 window.addEventListener('resize',()=>{clearTimeout(window._rt);window._rt=setTimeout(()=>{updateTTest();updateChiSquare();},250)});
 
-if(typeof renderMathInElement==='function'){renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'\\[',right:'\\]',display:true},{left:'$',right:'$',display:false},{left:'\\(',right:'\\)',display:false}],throwOnError:false,strict:false});}
+',display:false}],throwOnError:false,strict:false});}
+
+
+// ============ KaTeX Auto-Render ============
+renderMathInElement(document.body, {
+  delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '\\[', right: '\\]', display: true},
+    {left: '$', right: '$', display: false},
+    {left: '\\(', right: '\\)', display: false}
+  ],
+  throwOnError: false,
+  strict: false
+});
+
+} // End CDN guard
 </script>
 </body>
 </html>

@@ -1,0 +1,5 @@
+.panel-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.anova-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:0.9rem;margin:16px 0}
+.anova-table th,.anova-table td{padding:8px 14px;text-align:center;border-bottom:1px solid var(--stone)}
+.anova-table th{font-family:var(--body);font-size:0.7rem;letter-spacing:0.08em;color:var(--slate);border-bottom:2px solid var(--stone)}
+.anova-table .sig{color:var(--terracotta);font-weight:600}

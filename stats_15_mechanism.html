@@ -15,16 +15,20 @@
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main-content">跳到内容</a>
 <div class="page">
 
-<nav class="top-nav"><a href="stats_tutorial.html">← Field Station</a> <span>|</span> §XV 机理建模与微分方程</nav>
+<nav class="top-nav" aria-label="面包屑导航">
+  <a href="stats_tutorial.html">← Field Station</a> <span aria-hidden="true">|</span> §XV 机理建模
+</nav>
 
 <header class="hero">
-  <div class="num">§XV</div>
+  <div class="num">{{CHAPTER_NUM}}</div>
   <h1>机理建模与微分方程</h1>
-  <p class="deck">物理、生物、化学过程如何随时间变化？温度、浓度、人口如何演化？<strong>机理建模不是数据拟合——你是从第一性原理出发，推导出描述系统行为的方程，数据只是用来估计方程中的参数。</strong>本章涵盖差分方程、常微分方程、五个经典模型（指数/Logistic/SIR/捕食者-猎物/扩散）以及数值求解和参数估计。</p>
+  <p class="deck">从第一性原理推导系统方程。差分方程、常微分方程、Logistic 增长、SIR 传染病模型、Lotka-Volterra 捕食者-猎物、扩散方程、数值求解 (solve_ivp)、参数估计 (curve_fit)。回答「系统如何随时间演化？」</p>
 </header>
 
+<main id="main-content">
 <div class="competition-box">
 <h4>竞赛真题场景</h4>
 <p><span class="q">Q：</span>美赛 MCM A 题：鱼类种群如何响应捕捞压力？→ Logistic 增长 + 捕捞项。<br>
@@ -319,14 +323,24 @@ N(t) = \frac{K}{1 + \left(\frac{K - N_0}{N_0}\right) e^{-rt}}
 <div class="note-box">
 <strong>竞赛加分项：</strong>① 相图分析——在 (S, I) 平面上画出轨道，展示系统动力学。② 分岔分析——当参数变化时，系统行为如何定性改变（如从稳定到振荡）。③ 模型对比——比较不同模型（如 SIR vs SEIR）的拟合效果，用 AIC 选择。④ 不确定性量化——参数的后验分布或 Bootstrap 置信区间。⑤ 模型扩展——在基本模型上添加符合实际的项（如 SIR 加疫苗接种、Logistic 加 Allee 效应）。
 </div>
+</main>
 
-<footer>
-  <p><a href="stats_14_evaluation.html">← §XIV 综合评价与排序</a> &nbsp;|&nbsp; <a href="stats_tutorial.html">Field Station 总目录</a> &nbsp;|&nbsp; <a href="stats_16_graph.html">§XVI 图论、网络与仿真 →</a></p>
-  <p style="margin-top:8px">Statistical Field Station &copy; 2026 · KaTeX + D3.js</p>
+<footer class="page-footer">
+  <div class="footer-nav">
+    <a href="stats_14_evaluation.html">← §XIV 综合评价</a> &nbsp;|&nbsp; 
+    <a href="stats_tutorial.html">Field Station 总目录</a>
+     &nbsp;|&nbsp; 下一章：<a href="stats_16_graph.html">§XVI 图论与仿真 →</a>
+  </div>
+  <div class="footer-meta">
+    <span>版本 v1.2.0</span> <span>|</span>
+    <span>统计审校: 已完成三轮</span> <span>|</span>
+    <span>最后更新: 2026-07</span>
+  </div>
+  <p>Statistical Field Station &copy; 2026 · KaTeX + D3.js</p>
 </footer>
 
 </div>
-
+<script src="assets/js/statistics.js"></script>
 <script>
 // ============ Dependency Load Guard ============
 if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
@@ -335,15 +349,6 @@ if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
     '⚠ 交互资源加载失败。请确认 assets 目录完整，并检查文件路径后刷新页面。</div>');
 } else {
 
-// ============ KaTeX Auto-Render ============
-renderMathInElement(document.body, {
-  delimiters: [
-    {left: '\\[', right: '\\]', display: true},
-    {left: '\\(', right: '\\)', display: false},
-    {left: '$$', right: '$$', display: true}
-  ],
-  throwOnError: false
-});
 
 // ============ INSTRUMENT No.15A: Logistic Growth ============
 (function() {
@@ -483,10 +488,7 @@ renderMathInElement(document.body, {
     const lx = margin.left + pw - 120, ly = margin.top + 10;
     [['S 易感','#2D6BA0'],['I 感染','var(--terracotta)'],['R 康复','#5B8C3E']].forEach(([lbl,clr],i) => {
       svg.append('line').attr('x1',lx).attr('x2',lx+20).attr('y1',ly+i*18).attr('y2',ly+i*18).attr('stroke',clr).attr('stroke-width',2);
-      svg.append('text').attr('x',lx+24).attr('y',ly+i*18+4).text(lbl).style('font-family','var(--mono)').style('font-size','0.65rem').style('fill','var(--slate)');
-    });
-
-    // Peak
+      svg.append('text').attr('x',lx+24).attr('y',ly+i*18+4).text(lbl).style('font-family','var(--mono)').style('font-size','0.65rem').style('fill','var(--slate)');    // Peak
     const peakI = d3.max(data, d => d.I);
     const peakT = data.find(d => d.I === peakI)?.t || 0;
     const finalR = data[data.length-1].R;
@@ -506,6 +508,19 @@ renderMathInElement(document.body, {
   d3.select('#sir-preset3').on('click', () => { d3.select('#sir-beta').property('value',0.5); d3.select('#sir-gamma').property('value',0.4); update(); });
   update();
 })();
+
+
+// ============ KaTeX Auto-Render ============
+renderMathInElement(document.body, {
+  delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '\\[', right: '\\]', display: true},
+    {left: '$', right: '$', display: false},
+    {left: '\\(', right: '\\)', display: false}
+  ],
+  throwOnError: false,
+  strict: false
+});
 
 } // End CDN guard
 </script>

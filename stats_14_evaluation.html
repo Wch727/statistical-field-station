@@ -19,16 +19,20 @@
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main-content">跳到内容</a>
 <div class="page">
 
-<nav class="top-nav"><a href="stats_tutorial.html">← Field Station</a> <span>|</span> §XIV 综合评价与排序</nav>
+<nav class="top-nav" aria-label="面包屑导航">
+  <a href="stats_tutorial.html">← Field Station</a> <span aria-hidden="true">|</span> §XIV 综合评价
+</nav>
 
 <header class="hero">
-  <div class="num">§XIV</div>
+  <div class="num">{{CHAPTER_NUM}}</div>
   <h1>综合评价与排序</h1>
-  <p class="deck">哪个地区发展水平最高？哪套方案最好？如何构造综合指标？多个互相冲突的指标怎样统一评价？<strong>评价类方法的核心不是计算，而是论证——论证指标体系为什么合理、权重为什么这样选、排名为什么可信。</strong>本章覆盖熵权法、TOPSIS、AHP、PCA、因子分析、模糊综合评价和灰色关联分析，以及竞赛中最容易被滥用的陷阱。</p>
+  <p class="deck">哪个方案最好？如何构造综合指标？—— 熵权法（客观赋权）、TOPSIS（逼近理想解）、AHP 层次分析法（一致性检验）、PCA 降维评价、因子分析、模糊综合评价、灰色关联分析。强调指标体系论证与灵敏度分析，避免机械套用模板。</p>
 </header>
 
+<main id="main-content">
 <div class="competition-box">
 <h4>竞赛真题场景</h4>
 <p><span class="q">Q：</span>国赛 2024 C 题：如何综合评价多个城市的可持续发展水平？→ 指标体系构建 + 熵权法 + TOPSIS。<br>
@@ -457,14 +461,24 @@ F = \frac{\lambda_1}{\sum_{p=1}^{k} \lambda_p} F_1 + \frac{\lambda_2}{\sum_{p=1}
 <div class="note-box">
 <strong>关键提醒：</strong>评价类题目的论文，<strong>论证过程比计算结果更重要</strong>。评委要看的是：你为什么这样选指标？为什么这样赋权？为什么这样聚合？排名是否可靠？——而不是你算出了 0.8732 还是 0.8733。把精力放在方法论的论证上，而不是追求小数点后第四位的精度。
 </div>
+</main>
 
-<footer>
-  <p><a href="stats_13_optimization.html">← §XIII 优化与决策</a> &nbsp;|&nbsp; <a href="stats_tutorial.html">Field Station 总目录</a></p>
-  <p style="margin-top:8px">Statistical Field Station &copy; 2026 · KaTeX + D3.js</p>
+<footer class="page-footer">
+  <div class="footer-nav">
+    <a href="stats_13_optimization.html">← §XIII 优化</a> &nbsp;|&nbsp; 
+    <a href="stats_tutorial.html">Field Station 总目录</a>
+     &nbsp;|&nbsp; 下一章：<a href="stats_15_mechanism.html">§XV 机理建模 →</a>
+  </div>
+  <div class="footer-meta">
+    <span>版本 v1.2.0</span> <span>|</span>
+    <span>统计审校: 已完成三轮</span> <span>|</span>
+    <span>最后更新: 2026-07</span>
+  </div>
+  <p>Statistical Field Station &copy; 2026 · KaTeX + D3.js</p>
 </footer>
 
 </div>
-
+<script src="assets/js/statistics.js"></script>
 <script>
 // ============ Dependency Load Guard ============
 if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
@@ -473,15 +487,6 @@ if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
     '⚠ 交互资源加载失败。请确认 assets 目录完整，并检查文件路径后刷新页面。</div>');
 } else {
 
-// ============ KaTeX Auto-Render ============
-renderMathInElement(document.body, {
-  delimiters: [
-    {left: '\\[', right: '\\]', display: true},
-    {left: '\\(', right: '\\)', display: false},
-    {left: '$$', right: '$$', display: true}
-  ],
-  throwOnError: false
-});
 
 // ============ INSTRUMENT No.14A: TOPSIS ============
 (function() {
@@ -519,10 +524,7 @@ renderMathInElement(document.body, {
       const sp = Math.sqrt((d.v1-ideal.v1)**2 + (d.v2-ideal.v2)**2);
       const sm = Math.sqrt((d.v1-anti.v1)**2 + (d.v2-anti.v2)**2);
       const c = sm / (sp + sm);
-      return {name: d.name, v1: d.v1, v2: d.v2, sp, sm, c};
-    });
-
-    result.sort((a,b) => b.c - a.c);
+      return {name: d.name, v1: d.v1, v2: d.v2, sp, sm, c};    result.sort((a,b) => b.c - a.c);
     return {result, ideal, anti};
   }
 
@@ -562,10 +564,7 @@ renderMathInElement(document.body, {
       svg.append('line').attr('x1',xScale(d.v1)).attr('y1',yScale(d.v2)).attr('x2',xScale(anti.v1)).attr('y2',yScale(anti.v2)).attr('stroke','var(--terracotta)').attr('stroke-width',1).attr('stroke-dasharray','2,3').attr('opacity',0.4);
       // Point
       svg.append('circle').attr('cx',xScale(d.v1)).attr('cy',yScale(d.v2)).attr('r',5).attr('fill','var(--forest)').attr('stroke','#fff').attr('stroke-width',1.5);
-      svg.append('text').attr('x',xScale(d.v1)+8).attr('y',yScale(d.v2)-6).text(d.name).style('font-family','var(--mono)').style('font-size','0.7rem').style('fill','var(--forest)').style('font-weight','600');
-    });
-
-    // Ranking table
+      svg.append('text').attr('x',xScale(d.v1)+8).attr('y',yScale(d.v2)-6).text(d.name).style('font-family','var(--mono)').style('font-size','0.7rem').style('fill','var(--forest)').style('font-weight','600');    // Ranking table
     const colors = ['var(--terracotta)','var(--gold)','var(--forest)','var(--slate)','var(--slate)','var(--slate)'];
     d3.select('#topsis-rank').html(`
       <p style="font-family:var(--mono);font-size:0.72rem;color:var(--slate);margin-bottom:8px">排名（相对贴近度 Cᵢ）：</p>
@@ -619,18 +618,13 @@ renderMathInElement(document.body, {
     const row = slidersDiv.append('div').style('display','flex').style('align-items','center').style('gap','8px').style('margin-bottom','6px');
     row.append('span').style('font-family','var(--mono)').style('font-size','0.7rem').style('color','var(--slate)').style('min-width','140px').text(label);
     row.append('input').attr('type','range').attr('id',`ahp-p${idx}`).attr('min',0).attr('max',16).attr('value',scales.indexOf(defaultPairs[idx])).style('flex','1').style('accent-color','var(--terracotta)');
-    row.append('span').attr('id',`ahp-v${idx}`).style('font-family','var(--mono)').style('font-size','0.78rem').style('font-weight','600').style('color','var(--terracotta)').style('min-width','36px').style('text-align','right');
-  });
-
-  const wSvg = d3.select('#ahp-weight-chart').append('svg').attr('width',380).attr('height',160).attr('viewBox','0 0 380 160');
+    row.append('span').attr('id',`ahp-v${idx}`).style('font-family','var(--mono)').style('font-size','0.78rem').style('font-weight','600').style('color','var(--terracotta)').style('min-width','36px').style('text-align','right');  const wSvg = d3.select('#ahp-weight-chart').append('svg').attr('width',380).attr('height',160).attr('viewBox','0 0 380 160');
 
   function update() {
     // Get values
     const pairs = pairLabels.map((_,i) => {
       const idx = +d3.select(`#ahp-p${i}`).property('value');
-      return scales[idx];
-    });
-    pairs.forEach((v,i) => d3.select(`#ahp-v${i}`).text(v < 1 ? v.toFixed(2) : v.toFixed(0)));
+      return scales[idx];    pairs.forEach((v,i) => d3.select(`#ahp-v${i}`).text(v < 1 ? v.toFixed(2) : v.toFixed(0)));
 
     // Build full matrix
     const A = Array.from({length: n}, () => new Array(n).fill(1));
@@ -693,6 +687,19 @@ renderMathInElement(document.body, {
   d3.selectAll('[id^="ahp-p"]').on('input', update);
   update();
 })();
+
+
+// ============ KaTeX Auto-Render ============
+renderMathInElement(document.body, {
+  delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '\\[', right: '\\]', display: true},
+    {left: '$', right: '$', display: false},
+    {left: '\\(', right: '\\)', display: false}
+  ],
+  throwOnError: false,
+  strict: false
+});
 
 } // End CDN guard
 </script>

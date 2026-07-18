@@ -13,16 +13,20 @@
 
 </head>
 <body>
+<a class="skip-link" href="#main-content">跳到内容</a>
 <div class="page">
 
-<nav class="top-nav"><a href="stats_tutorial.html">← Field Station</a> <span>|</span> §VII 逻辑回归</nav>
+<nav class="top-nav" aria-label="面包屑导航">
+  <a href="stats_tutorial.html">← Field Station</a> <span aria-hidden="true">|</span> §VII 逻辑回归
+</nav>
 
 <header class="hero">
-  <div class="num">§VII</div>
+  <div class="num">{{CHAPTER_NUM}}</div>
   <h1>逻辑回归</h1>
-  <p class="deck">当因变量 Y 是二分类（0/1、是/否、患病/健康）时，线性回归不合适——预测值可能超出 [0,1] 范围。逻辑回归对线性预测做 Sigmoid 变换，将结果压缩到概率区间。本章涵盖 Logit-Odds-概率三层解读、MLE 数值求解、ROC/AUC、混淆矩阵、多分类逻辑回归和 GLM 统一框架。</p>
+  <p class="deck">Logit-Odds-概率三层解读、MLE 数值求解、ROC 与 AUC、校准曲线、Hosmer-Lemeshow 检验、类别不平衡、多分类与有序逻辑回归、GLM 统一框架。</p>
 </header>
 
+<main id="main-content">
 <div class="competition-box">
 <h4>竞赛真题场景</h4>
 <p><span class="q">Q：</span>某年全国大学生数学建模竞赛 C 题：根据 402 个样本的理化指标，判断样品属于哪一类（二分类问题）。一等奖论文使用逻辑回归作为基线模型，报告了 AUC、混淆矩阵和变量重要性（Odds Ratio）。<br>
@@ -228,15 +232,33 @@ P(y=1 \mid x) = \frac{1}{1 + \exp(A \cdot f(x) + B)}
 </div>
 <div class="chart-container" id="logistic-plot"></div>
 </div>
+</main>
 
-<footer>
-  <p><a href="stats_tutorial.html">← 返回 Statistical Field Station 主页</a></p>
-  <p>所有计算在浏览器端完成 · KaTeX 渲染公式 · D3.js 驱动图表</p>
+<footer class="page-footer">
+  <div class="footer-nav">
+    <a href="stats_06_regression.html">← §VI 回归</a> &nbsp;|&nbsp; 
+    <a href="stats_tutorial.html">Field Station 总目录</a>
+     &nbsp;|&nbsp; 下一章：<a href="stats_08_classification.html">§VIII 分类 →</a>
+  </div>
+  <div class="footer-meta">
+    <span>版本 v1.2.0</span> <span>|</span>
+    <span>统计审校: 已完成三轮</span> <span>|</span>
+    <span>最后更新: 2026-07</span>
+  </div>
+  <p>Statistical Field Station &copy; 2026 · KaTeX + D3.js</p>
 </footer>
 
 </div>
-
+<script src="assets/js/statistics.js"></script>
 <script>
+// ============ Dependency Load Guard ============
+if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
+  document.body.insertAdjacentHTML('afterbegin',
+    '<div style="background:#C75146;color:#fff;padding:12px;text-align:center;font-family:Inter,sans-serif">' +
+    '⚠ 交互资源加载失败。请确认 assets 目录完整，并检查文件路径后刷新页面。</div>');
+} else {
+
+
 let logisticSeed=42;
 function updateLogistic(){
   const b0=+document.getElementById('log-b0').value,b1=+document.getElementById('log-b1').value;
@@ -279,7 +301,22 @@ function updateLogistic(){
 updateLogistic();
 window.addEventListener('resize',()=>{clearTimeout(window._rt);window._rt=setTimeout(updateLogistic,250)});
 
-if(typeof renderMathInElement==='function'){renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'\\[',right:'\\]',display:true},{left:'$',right:'$',display:false},{left:'\\(',right:'\\)',display:false}],throwOnError:false,strict:false});}
+',display:false}],throwOnError:false,strict:false});}
+
+
+// ============ KaTeX Auto-Render ============
+renderMathInElement(document.body, {
+  delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '\\[', right: '\\]', display: true},
+    {left: '$', right: '$', display: false},
+    {left: '\\(', right: '\\)', display: false}
+  ],
+  throwOnError: false,
+  strict: false
+});
+
+} // End CDN guard
 </script>
 </body>
 </html>

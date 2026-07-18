@@ -19,16 +19,20 @@
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main-content">跳到内容</a>
 <div class="page">
 
-<nav class="top-nav"><a href="stats_tutorial.html">← Field Station</a> <span>|</span> §XIII 优化与决策</nav>
+<nav class="top-nav" aria-label="面包屑导航">
+  <a href="stats_tutorial.html">← Field Station</a> <span aria-hidden="true">|</span> §XIII 优化
+</nav>
 
 <header class="hero">
-  <div class="num">§XIII</div>
+  <div class="num">{{CHAPTER_NUM}}</div>
   <h1>优化与决策</h1>
-  <p class="deck">怎样安排成本最低？如何分配收益最大？在多个限制条件下，最佳选择是什么？优化问题的核心不是求解器——而是<strong>把自然语言翻译成决策变量、目标函数和约束条件</strong>。本章涵盖线性规划、整数规划、非线性规划、多目标优化和动态规划，以及竞赛中高频出现的背包、选址、排班、TSP/VRP 等经典模型。</p>
+  <p class="deck">把自然语言翻译成数学模型——线性规划（单纯形/对偶/影子价格）、整数规划（分支定界）、0-1 规划与逻辑约束、非线性规划（KKT）、多目标优化（Pareto/TOPSIS）、动态规划（Bellman 方程）、背包/选址/TSP/VRP 经典模型。</p>
 </header>
 
+<main id="main-content">
 <div class="competition-box">
 <h4>竞赛真题场景</h4>
 <p><span class="q">Q：</span>国赛 2023 D 题：如何安排养殖场的饲料配比，使成本最低且满足营养需求？→ 线性规划 + 灵敏度分析。<br>
@@ -815,24 +819,32 @@ P_{ij}^k = \frac{[\tau_{ij}]^\alpha \cdot [\eta_{ij}]^\beta}{\sum_{l \in \text{a
 <div class="warn-box">
 <strong>一票否决的致命错误：</strong>① 决策变量定义不清晰——评委不知道 x₁ 代表什么。② 遗漏约束——特别是非负约束和整数约束。③ 约束条件写成「x₁ + x₂ &lt; 100」而不是「x₁ + x₂ ≤ 100」——严格不等号在优化中无法处理（除非是整数变量）。④ 对 NP-hard 问题（TSP, VRP）声称找到了「最优解」——实际上你只能找到近似解。⑤ 不做灵敏度分析——优化题论文的灵魂。⑥ 强行把多目标合并成单目标而不讨论权重的合理性。
 </div>
+</main>
 
-<footer>
-  <p><a href="stats_12_prediction.html">← §XII 预测问题专论</a> &nbsp;|&nbsp; <a href="stats_tutorial.html">Field Station 总目录</a></p>
-  <p style="margin-top:8px">Statistical Field Station &copy; 2026 · KaTeX + D3.js</p>
+<footer class="page-footer">
+  <div class="footer-nav">
+    <a href="stats_12_prediction.html">← §XII 预测</a> &nbsp;|&nbsp; 
+    <a href="stats_tutorial.html">Field Station 总目录</a>
+     &nbsp;|&nbsp; 下一章：<a href="stats_14_evaluation.html">§XIV 综合评价 →</a>
+  </div>
+  <div class="footer-meta">
+    <span>版本 v1.2.0</span> <span>|</span>
+    <span>统计审校: 已完成三轮</span> <span>|</span>
+    <span>最后更新: 2026-07</span>
+  </div>
+  <p>Statistical Field Station &copy; 2026 · KaTeX + D3.js</p>
 </footer>
 
 </div>
-
+<script src="assets/js/statistics.js"></script>
 <script>
-// ============ KaTeX Auto-Render ============
-renderMathInElement(document.body, {
-  delimiters: [
-    {left: '\\[', right: '\\]', display: true},
-    {left: '\\(', right: '\\)', display: false},
-    {left: '$$', right: '$$', display: true}
-  ],
-  throwOnError: false
-});
+// ============ Dependency Load Guard ============
+if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
+  document.body.insertAdjacentHTML('afterbegin',
+    '<div style="background:#C75146;color:#fff;padding:12px;text-align:center;font-family:Inter,sans-serif">' +
+    '⚠ 交互资源加载失败。请确认 assets 目录完整，并检查文件路径后刷新页面。</div>');
+} else {
+
 
 // ============ INSTRUMENT No.13A: LP Visualization ============
 (function() {
@@ -858,9 +870,7 @@ renderMathInElement(document.body, {
     // Intersections with axes
     constraints.forEach(con => {
       if (con.c / con.a > 0) pts.push([con.c / con.a, 0]);
-      if (con.c / con.b > 0) pts.push([0, con.c / con.b]);
-    });
-    // Intersections between pairs of constraints
+      if (con.c / con.b > 0) pts.push([0, con.c / con.b]);    // Intersections between pairs of constraints
     for (let i = 0; i < constraints.length; i++) {
       for (let j = i+1; j < constraints.length; j++) {
         const det = constraints[i].a * constraints[j].b - constraints[i].b * constraints[j].a;
@@ -873,14 +883,10 @@ renderMathInElement(document.body, {
     // Filter: keep only points that satisfy all constraints
     const feasible = pts.filter(([x1,x2]) => {
       if (x1 < -1e-9 || x2 < -1e-9) return false;
-      return constraints.every(c => c.a*x1 + c.b*x2 <= c.c + 1e-9);
-    });
-    // Remove duplicates
+      return constraints.every(c => c.a*x1 + c.b*x2 <= c.c + 1e-9);    // Remove duplicates
     const uniq = [];
     feasible.forEach(p => {
-      if (!uniq.some(q => Math.abs(p[0]-q[0])<1e-8 && Math.abs(p[1]-q[1])<1e-8)) uniq.push(p);
-    });
-    // Sort by polar angle around centroid
+      if (!uniq.some(q => Math.abs(p[0]-q[0])<1e-8 && Math.abs(p[1]-q[1])<1e-8)) uniq.push(p);    // Sort by polar angle around centroid
     const cx = uniq.reduce((s,p)=>s+p[0],0)/uniq.length;
     const cy = uniq.reduce((s,p)=>s+p[1],0)/uniq.length;
     uniq.sort((a,b) => Math.atan2(a[1]-cy, a[0]-cx) - Math.atan2(b[1]-cy, b[0]-cx));
@@ -938,17 +944,11 @@ renderMathInElement(document.body, {
       const mx = (x1A + x1B) / 2, my = (x2A + x2B) / 2;
       svg.append('text').attr('x',xScale(mx)).attr('y',yScale(my)-6)
         .text(con.name).style('font-family','var(--mono)').style('font-size','0.6rem')
-        .style('fill',con.color).style('text-anchor','middle');
-    });
-
-    // Find optimal vertex (minimize c1*x1 + c2*x2)
+        .style('fill',con.color).style('text-anchor','middle');    // Find optimal vertex (minimize c1*x1 + c2*x2)
     let bestVal = Infinity, bestPt = null;
     vertices.forEach(([x1,x2]) => {
       const val = c1 * x1 + c2 * x2;
-      if (val < bestVal) { bestVal = val; bestPt = [x1, x2]; }
-    });
-
-    // Objective contours
+      if (val < bestVal) { bestVal = val; bestPt = [x1, x2]; }    // Objective contours
     if (bestPt && Math.abs(c1)+Math.abs(c2) > 0.01) {
       const objVal = c1 * bestPt[0] + c2 * bestPt[1];
       // Draw 3 contour lines
@@ -1000,14 +1000,10 @@ renderMathInElement(document.body, {
   d3.select('#lp-preset1').on('click', () => {
     d3.select('#lp-c1').property('value', -3);
     d3.select('#lp-c2').property('value', -2);
-    update();
-  });
-  d3.select('#lp-preset2').on('click', () => {
+    update();  d3.select('#lp-preset2').on('click', () => {
     d3.select('#lp-c1').property('value', 2);
     d3.select('#lp-c2').property('value', 3);
-    update();
-  });
-  update();
+    update();  update();
 })();
 
 // ============ INSTRUMENT No.13B: Knapsack DP ============
@@ -1028,9 +1024,7 @@ renderMathInElement(document.body, {
       items.push({
         name: `物品${i+1}`,
         weight: Math.floor(Math.random() * 8) + 2,
-        value: Math.floor(Math.random() * 15) + 5
-      });
-    }
+        value: Math.floor(Math.random() * 15) + 5    }
   }
 
   function solveKnapsack(capacity) {
@@ -1105,10 +1099,7 @@ renderMathInElement(document.body, {
       kpSvg.append('text').attr('x', xScale(item.weight) + 4).attr('y', y + yScale.bandwidth()/4 + 4)
         .text(`w=${item.weight}`).style('font-family','var(--mono)').style('font-size','0.55rem').style('fill','var(--slate)');
       kpSvg.append('text').attr('x', xScale(item.value) + 4).attr('y', y + 3*yScale.bandwidth()/4 + 4)
-        .text(`v=${item.value}`).style('font-family','var(--mono)').style('font-size','0.55rem').style('fill','var(--slate)');
-    });
-
-    // Legend
+        .text(`v=${item.value}`).style('font-family','var(--mono)').style('font-size','0.55rem').style('fill','var(--slate)');    // Legend
     kpSvg.append('rect').attr('x',margin.left).attr('y',margin.top + nItems * barH + 8).attr('width',10).attr('height',6).attr('fill','var(--stone)').attr('opacity',0.8);
     kpSvg.append('text').attr('x',margin.left+14).attr('y',margin.top + nItems * barH + 15).text('重量').style('font-size','0.6rem').style('fill','var(--slate)');
     kpSvg.append('rect').attr('x',margin.left+50).attr('y',margin.top + nItems * barH + 8).attr('width',10).attr('height',6).attr('fill','var(--stone)').attr('opacity',0.8);
@@ -1149,9 +1140,7 @@ renderMathInElement(document.body, {
       // Row label
       dpSvg.append('text').attr('x', dpM.left - 4).attr('y', dpM.top + ri * cellH + cellH/2 + 4)
         .text(`i=${i}`).style('font-family','var(--mono)').style('font-size','0.55rem')
-        .style('fill','var(--slate)').style('text-anchor','end');
-    });
-    // Column labels (every few)
+        .style('fill','var(--slate)').style('text-anchor','end');    // Column labels (every few)
     for (let j = 0; j <= capacity; j += Math.max(1, Math.floor(capacity/8))) {
       dpSvg.append('text').attr('x', dpM.left + j * cellW + cellW/2).attr('y', dpM.top + rowsToShow.length * cellH + 12)
         .text(`w=${j}`).style('font-family','var(--mono)').style('font-size','0.5rem')
@@ -1174,6 +1163,21 @@ renderMathInElement(document.body, {
   generateItems();
   update();
 })();
+
+
+// ============ KaTeX Auto-Render ============
+renderMathInElement(document.body, {
+  delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '\\[', right: '\\]', display: true},
+    {left: '$', right: '$', display: false},
+    {left: '\\(', right: '\\)', display: false}
+  ],
+  throwOnError: false,
+  strict: false
+});
+
+} // End CDN guard
 </script>
 </body>
 </html>

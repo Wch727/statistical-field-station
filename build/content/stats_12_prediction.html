@@ -1,0 +1,434 @@
+<div class="competition-box">
+<h4>竞赛真题场景</h4>
+<p><span class="q">Q：</span>国赛 2023 B 题：根据历史数据预测未来 7 天的蔬菜销量——要求报告预测精度（RMSE、MAPE），并给出预测区间。<br>
+<span class="q">Q：</span>美赛 MCM C 题：预测黄金价格走势，要求比较至少 3 种模型的预测效果——ARIMA、随机森林、灰色预测 GM(1,1)。<br>
+<span class="q">Q：</span>华中赛/电工杯：小样本（n=10~20）电力负荷预测——数据较少，复杂时序模型难以稳定估计，灰色预测 GM(1,1) 可作为候选基线。<br>
+<strong>→ 预测问题的核心不只是「预测准不准」，而是「预测的可信度有多高」——预测区间和模型比较是论文的必答题。</strong></p>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>12.1 回归预测评估指标</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>从「预测值 vs 真实值」到评估指标</h4>
+<p>设 \(y_i\) 为第 \(i\) 个观测的真实值，\(\hat{y}_i\) 为预测值，\(n\) 为样本量。所有的回归预测评估指标都基于预测误差 \(e_i = y_i - \hat{y}_i\)：</p>
+</div>
+
+<h3>12.1.1 MSE 与 RMSE</h3>
+
+<div class="math-block">
+\[
+\text{MSE} = \frac{1}{n}\sum_{i=1}^{n} (y_i - \hat{y}_i)^2 \qquad
+\text{RMSE} = \sqrt{\text{MSE}} = \sqrt{\frac{1}{n}\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}
+\]
+</div>
+
+<p><strong>RMSE 是竞赛中最常用的回归评估指标。</strong>它的单位与 y 相同，表示误差平方平均后再开根号所得的典型误差尺度。RMSE 对大误差施加平方惩罚——一个偏差很大的预测会比多个偏差小的预测更严重地拉高 RMSE。若需要直观解释为「平均绝对误差」，应使用 MAE。</p>
+
+<h3>12.1.2 MAE</h3>
+
+<div class="math-block">
+\[
+\text{MAE} = \frac{1}{n}\sum_{i=1}^{n} |y_i - \hat{y}_i|
+\]
+</div>
+
+<p>MAE 相比 MSE/RMSE 对极端误差不那么敏感（线性惩罚而非平方惩罚），但异常值仍会增加 MAE。如果数据中有异常值但你不希望它们主导评估，MAE 是更好的选择。RMSE ≥ MAE，且 RMSE 和 MAE 之间的差距越大，说明预测误差的方差越大。</p>
+
+<h3>12.1.3 MAPE 与 sMAPE</h3>
+
+<div class="math-block">
+\[
+\text{MAPE} = \frac{100\%}{n}\sum_{i=1}^{n} \left|\frac{y_i - \hat{y}_i}{y_i}\right|
+\qquad
+\text{sMAPE} = \frac{100\%}{n}\sum_{i=1}^{n} \frac{|y_i - \hat{y}_i|}{(|y_i| + |\hat{y}_i|)/2}
+\]
+</div>
+
+<p><strong>MAPE（平均绝对百分比误差）</strong>是最直观的指标——「预测误差平均为 X%」。但 MAPE 有两个致命缺陷：① 当 \(y_i = 0\) 时无定义；② 对低估的惩罚比高估轻（\(y_i=100, \hat{y}_i=50\) → APE=50%；\(y_i=100, \hat{y}_i=150\) → APE=50%——看似对称，但当 \(y_i=50, \hat{y}_i=100\) 时 APE=100%）。<strong>sMAPE（对称 MAPE）</strong>在交换真实值和预测值时形式对称，缓解了部分 MAPE 的不对称问题，取值在 0%~200% 之间。但 sMAPE 在数值接近零时仍可能不稳定，解释也不如名称看起来那么直观——跨序列比较时常推荐同时报告 MASE。</p>
+
+<div class="derive-box">
+<h4>推导：MSE 的偏差-方差分解</h4>
+<p>MSE 可以分解为三个部分——这对理解模型误差至关重要：</p>
+<div class="math-block">
+\[
+\begin{aligned}
+\mathbb{E}[(Y - \hat{f}(X))^2] &= \mathbb{E}[(Y - f(X) + f(X) - \mathbb{E}[\hat{f}(X)] + \mathbb{E}[\hat{f}(X)] - \hat{f}(X))^2] \\
+&= \underbrace{(\mathbb{E}[\hat{f}(X)] - f(X))^2}_{\text{Bias}^2} + \underbrace{\text{Var}(\hat{f}(X))}_{\text{Variance}} + \underbrace{\sigma^2_{\varepsilon}}_{\text{Irreducible Noise}}
+\end{aligned}
+\]
+</div>
+<p>竞赛启示：<strong>训练误差通常对泛化误差过于乐观</strong>（因为模型已经「见过」训练数据），尤其当模型复杂度较高或参与过模型选择时。应通过测试集、交叉验证或时间序列滚动验证评估预测性能。</p>
+</div>
+
+<h3>12.1.4 指标选择决策表</h3>
+
+<table class="compact-table">
+<thead><tr><th>场景</th><th>推荐指标</th><th>原因</th></tr></thead>
+<tbody>
+<tr><td>竞赛通用（回归）</td><td>RMSE + MAE</td><td>RMSE 是标准，MAE 作为补充</td></tr>
+<tr><td>评委易理解</td><td>MAPE</td><td>百分比直观，但需注意 y≈0</td></tr>
+<tr><td>有异常值</td><td>MAE + MedAE</td><td>对异常值稳健</td></tr>
+<tr><td>大误差代价高</td><td>RMSE</td><td>平方惩罚放大误差</td></tr>
+<tr><td>多尺度比较</td><td>MAPE / sMAPE</td><td>消除量纲影响</td></tr>
+<tr><td>模型选择</td><td>AIC / BIC / AICc</td><td>惩罚模型复杂度</td></tr>
+</tbody>
+</table>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>论文中不要只报告一个指标。常见组合 = <strong>RMSE + MAE + MAPE + R²</strong>。如果评委看到你只报告了 R²=0.95 就宣称模型好，他们会立刻质疑——R² 高可能只是因为数据有趋势，而不是模型预测能力强。对于时间序列预测，额外报告 <strong>sMAPE</strong> 和 <strong>MASE</strong>（Mean Absolute Scaled Error）会更全面。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>12.2 预测区间 vs 置信区间</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>两个不同的「区间」</h4>
+<p><strong>置信区间（Confidence Interval）：</strong>对 \(\mathbb{E}[Y \mid X=x_0]\) 的区间估计——即「给定 \(x_0\)，所有可能的预测值的<strong>均值</strong>落在什么范围？」<br>
+<strong>预测区间（Prediction Interval）：</strong>对单个新观测 \(Y \mid X=x_0\) 的区间估计——即「给定 \(x_0\)，下一个<strong>具体观测</strong>落在什么范围？」<br>
+<strong>预测区间总是比置信区间宽</strong>——因为它多了一个「个体随机波动」的不确定性。</p>
+</div>
+
+<div class="derive-box">
+<h4>推导：OLS 框架下的两种区间</h4>
+<p>对于一个新的观测点 \(x_0\)，预测值 \(\hat{y}_0 = x_0^T\hat{\beta}\)。</p>
+<p><strong>置信区间（均值）：</strong></p>
+<div class="math-block">
+\[
+\text{Var}(\hat{y}_0) = \sigma^2 \cdot x_0^T (X^T X)^{-1} x_0
+\]
+</div>
+<p><strong>预测区间（个体）：</strong>单个观测 \(y_0 = x_0^T\beta + \varepsilon_0\)，预测误差为 \(y_0 - \hat{y}_0 = x_0^T(\beta - \hat{\beta}) + \varepsilon_0\)。由于 \(\hat{\beta}\) 和 \(\varepsilon_0\) 独立：</p>
+<div class="math-block">
+\[
+\text{Var}(y_0 - \hat{y}_0) = \sigma^2 + \sigma^2 \cdot x_0^T (X^T X)^{-1} x_0 = \sigma^2\left(1 + x_0^T (X^T X)^{-1} x_0\right)
+\]
+</div>
+<p>因此，\(1-\alpha\) 的预测区间为：</p>
+<div class="math-block">
+\[
+\hat{y}_0 \pm t_{n-p, 1-\alpha/2} \cdot \hat{\sigma} \sqrt{1 + x_0^T (X^T X)^{-1} x_0}
+\]
+</div>
+<p>与置信区间相比，根号内多了「+1」——这就是个体随机波动的贡献。而且当 \(x_0\) 远离 \(\bar{x}\) 时，\(x_0^T(X^T X)^{-1}x_0\) 增大，预测区间变得更宽。<strong>外推预测的区间远宽于内插预测。</strong></p>
+</div>
+
+<h3>12.2.1 时间序列预测区间</h3>
+
+<p>ARIMA 模型的预测区间随预测步数增加而扩大。对于 ARIMA(0,1,0)（随机游走）：</p>
+<div class="math-block">
+\[
+\text{Var}(y_{t+h} \mid y_1,\ldots,y_t) = h\sigma^2
+\]
+</div>
+<p>预测区间宽度与 \(\sqrt{h}\) 成正比——预测越远，不确定性越大。这是竞赛论文中建议展示的：<strong>预测曲线 + 95% 预测区间（蝴蝶形）</strong>。</p>
+
+<div class="warn-box">
+<strong>竞赛常见错误：</strong>① 只报告点预测，不报告预测区间——评委无法判断预测的可靠性。② 混淆置信区间和预测区间——论文中写「95% 置信区间」但画的是预测区间（或反之）。③ 预测区间没有随预测步数增加而变宽——说明你在用错误的公式。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>12.3 灰色预测 GM(1,1)</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>灰色系统理论的核心思想</h4>
+<p>灰色系统理论由邓聚龙教授于 1982 年提出。在控制论中，「白」表示信息完全已知，「黑」表示信息完全未知，「灰」表示部分已知、部分未知。GM(1,1) 是灰色预测的核心模型：<strong>G</strong>rey <strong>M</strong>odel，<strong>1</strong> 阶微分方程，<strong>1</strong> 个变量。</p>
+<p><strong>为什么竞赛中需要 GM(1,1)？</strong>传统统计方法（ARIMA、回归）需要较大样本量（n ≥ 30）才能可靠估计参数。而竞赛中经常遇到 n = 8~15 的小样本预测问题——GM(1,1) 在 n ≥ 4 时就能工作，可作为小样本预测的候选基线。但是否适用仍需检查数据的单调趋势、级比条件及滚动预测表现，并与朴素预测、指数平滑等方法比较。</p>
+</div>
+
+<h3>12.3.1 GM(1,1) 完整推导</h3>
+
+<div class="derive-box">
+<h4>Step 1：原始序列与级比检验</h4>
+<p>设原始非负序列 \(X^{(0)} = \{x^{(0)}(1), x^{(0)}(2), \ldots, x^{(0)}(n)\}\)，\(n \geq 4\)。</p>
+<p>首先计算级比 \(\lambda(k) = \frac{x^{(0)}(k-1)}{x^{(0)}(k)}\)，\(k=2,3,\ldots,n\)。如果所有 \(\lambda(k) \in (e^{-2/(n+1)}, e^{2/(n+1)})\)，则序列适合 GM(1,1) 建模。否则需要对原始数据做平移变换（加常数 c）使级比落入可容覆盖区间。</p>
+
+<h4>Step 2：一次累加生成 (1-AGO)</h4>
+<p>对 \(X^{(0)}\) 做一次累加生成，得到 \(X^{(1)}\)：</p>
+<div class="math-block">
+\[
+x^{(1)}(k) = \sum_{i=1}^{k} x^{(0)}(i), \quad k = 1, 2, \ldots, n
+\]
+</div>
+<p>累加生成的目的是<strong>将无规律的原始数据转化为有规律（近似指数增长）的序列</strong>——这是灰色预测的核心思想。原始序列可能是杂乱无章的，但累加后往往呈现平滑的上升趋势。</p>
+
+<h4>Step 3：紧邻均值生成</h4>
+<p>定义背景值（紧邻均值生成序列）\(Z^{(1)}\)：</p>
+<div class="math-block">
+\[
+z^{(1)}(k) = 0.5\left[x^{(1)}(k) + x^{(1)}(k-1)\right], \quad k = 2, 3, \ldots, n
+\]
+</div>
+
+<h4>Step 4：白化微分方程</h4>
+<p>GM(1,1) 的基本形式是灰微分方程：</p>
+<div class="math-block">
+\[
+x^{(0)}(k) + a z^{(1)}(k) = b, \quad k = 2, 3, \ldots, n
+\]
+</div>
+<p>对应的白化微分方程（看作连续时间 t 的微分方程）：</p>
+<div class="math-block">
+\[
+\frac{dx^{(1)}}{dt} + a x^{(1)}(t) = b
+\]
+</div>
+<p>其中 \(a\) 是<strong>发展系数</strong>（反映趋势的强弱），\(b\) 是<strong>灰色作用量</strong>（反映数据变化的幅度）。</p>
+
+<h4>Step 5：最小二乘参数估计</h4>
+<p>将灰微分方程写成矩阵形式 \(Y = B \cdot [a, b]^T\)：</p>
+<div class="math-block">
+\[
+Y = \begin{bmatrix} x^{(0)}(2) \\ x^{(0)}(3) \\ \vdots \\ x^{(0)}(n) \end{bmatrix}, \quad
+B = \begin{bmatrix} -z^{(1)}(2) & 1 \\ -z^{(1)}(3) & 1 \\ \vdots & \vdots \\ -z^{(1)}(n) & 1 \end{bmatrix}
+\]
+</div>
+<p>由最小二乘法：</p>
+<div class="math-block">
+\[
+\begin{bmatrix} \hat{a} \\ \hat{b} \end{bmatrix} = (B^T B)^{-1} B^T Y
+\]
+</div>
+
+<h4>Step 6：时间响应函数</h4>
+<p>解白化微分方程，得到 \(X^{(1)}\) 的时间响应函数：</p>
+<div class="math-block">
+\[
+\hat{x}^{(1)}(k+1) = \left(x^{(0)}(1) - \frac{\hat{b}}{\hat{a}}\right) e^{-\hat{a}k} + \frac{\hat{b}}{\hat{a}}, \quad k = 0, 1, 2, \ldots
+\]
+</div>
+
+<h4>Step 7：累减还原 (IAGO)</h4>
+<p>对预测的 \(\hat{X}^{(1)}\) 做一次累减（逆 AGO），还原为原始尺度的预测值：</p>
+<div class="math-block">
+\[
+\hat{x}^{(0)}(k+1) = \hat{x}^{(1)}(k+1) - \hat{x}^{(1)}(k) = (1 - e^{\hat{a}})\left(x^{(0)}(1) - \frac{\hat{b}}{\hat{a}}\right) e^{-\hat{a}k}
+\]
+</div>
+<p>特别地，\(\hat{x}^{(0)}(1) = x^{(0)}(1)\)（第一个点保持原值）。</p>
+</div>
+
+<h3>12.3.2 精度检验</h3>
+
+<p>灰色预测有四级精度检验标准：</p>
+
+<table class="compact-table">
+<thead><tr><th>精度等级</th><th>相对误差</th><th>后验差比值 C</th><th>小误差概率 P</th></tr></thead>
+<tbody>
+<tr><td><strong>一级（好）</strong></td><td>&lt; 1%</td><td>&lt; 0.35</td><td>&gt; 0.95</td></tr>
+<tr><td><strong>二级（合格）</strong></td><td>&lt; 5%</td><td>&lt; 0.50</td><td>&gt; 0.80</td></tr>
+<tr><td><strong>三级（勉强）</strong></td><td>&lt; 10%</td><td>&lt; 0.65</td><td>&gt; 0.70</td></tr>
+<tr><td><strong>四级（不合格）</strong></td><td>≥ 10%</td><td>≥ 0.65</td><td>≤ 0.70</td></tr>
+</tbody>
+</table>
+
+<div class="math-block">
+\[
+\text{后验差比值 } C = \frac{S_2}{S_1}, \quad
+\text{小误差概率 } P = P\left\{|\varepsilon(k) - \bar{\varepsilon}| < 0.6745 S_1\right\}
+\]
+</div>
+<p>其中 \(S_1\) 是原始序列的标准差，\(S_2\) 是残差序列的标准差，\(\varepsilon(k)\) 是残差。</p>
+
+<h3>12.3.3 GM(1,N) 扩展</h3>
+
+<p>当有多个影响因素时，GM(1,N) 模型同时建模 N 个变量：</p>
+<div class="math-block">
+\[
+x_1^{(0)}(k) + a z_1^{(1)}(k) = \sum_{j=2}^{N} b_j x_j^{(1)}(k)
+\]
+</div>
+<p>其中 \(x_1\) 是目标变量，\(x_2, \ldots, x_N\) 是影响因素。GM(1,N) 既可以预测，也可以分析各因素对目标变量的影响程度。</p>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>GM(1,1) 适用于<strong>短期预测</strong>（通常预测 1-5 步）。预测步数越多，误差越大——因为指数模型假设趋势无限延续。在论文中，① 先做级比检验确认数据适合 GM(1,1)；② 报告精度等级（最好达到一级或二级）；③ 不要只用一个模型——GM(1,1) 通常作为小样本预测的基线，与线性回归、ARIMA（如果数据够）比较。④ 如果原始数据不满足级比检验，做平移变换：\(x'(k) = x(k) + c\)，选择适当的 c 使级比落入可容区间。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>12.4 多模型比较与集成</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>为什么竞赛必须比较多模型？</h4>
+<p>单一模型的结果没有说服力——评委无法判断这个模型是「最好的选择」还是「唯一的选择」。多模型比较是竞赛论文的<strong>标准要求</strong>，展示了建模手对工具的理解深度和批判性思维。</p>
+</div>
+
+<h3>12.4.1 比较框架</h3>
+
+<table class="compact-table">
+<thead><tr><th>比较维度</th><th>具体内容</th><th>论文呈现</th></tr></thead>
+<tbody>
+<tr><td>预测精度</td><td>RMSE / MAE / MAPE / sMAPE</td><td>对比表格 + 柱状图</td></tr>
+<tr><td>预测稳定性</td><td>交叉验证分数（均值 ± 标准差）</td><td>箱线图</td></tr>
+<tr><td>计算复杂度</td><td>训练时间 / 参数数量</td><td>表格</td></tr>
+<tr><td>可解释性</td><td>能否给出预测的理由</td><td>文字说明</td></tr>
+<tr><td>不确定性</td><td>预测区间宽度</td><td>预测区间图</td></tr>
+</tbody>
+</table>
+
+<div class="toolkit-box">
+<h4>竞赛工具箱：预测模型对比模板</h4>
+<p>竞赛中至少比较 3 个模型：</p>
+<p><strong>基线模型（简单）：</strong>均值预测（naive）或线性回归——如果复杂模型不比基线好很多，说明复杂度不必要。<br>
+<strong>标准模型（常规）：</strong>ARIMA / 随机森林 / XGBoost —— 根据数据特征选择。<br>
+<strong>特色模型（加分）：</strong>灰色预测 GM(1,1)（小样本）/ LSTM（大量时序数据）/ 贝叶斯方法（需要不确定性量化）。</p>
+<p><strong>论文中建议呈现：</strong>① 一张对比表（所有模型在所有指标上的表现）。② 一张预测曲线图（最佳模型 vs 真实值 vs 基线）。③ 为什么最佳模型最适合这个具体问题——不是泛泛地说「因为 RMSE 最低」，而是结合数据特征解释（如「GM(1,1) 在 n=10 时优于 ARIMA」或「ARIMA 捕捉了自相关结构」）。</p>
+</div>
+
+<h3>12.4.2 简单集成方法</h3>
+
+<p>当多个模型各有优劣时，简单集成（ensemble）往往能降低预测方差：</p>
+
+<div class="math-block">
+\[
+\hat{y}_{\text{ensemble}} = \frac{1}{M}\sum_{m=1}^{M} \hat{y}_m \quad \text{（简单平均）}
+\qquad
+\hat{y}_{\text{weighted}} = \sum_{m=1}^{M} w_m \hat{y}_m, \quad \sum w_m = 1
+\]
+</div>
+
+<p>权重的选择：① 基于交叉验证性能的倒数：\(w_m \propto 1/\text{RMSE}_m\)。② 基于 AIC 的指数权重：\(w_m \propto \exp(-\text{AIC}_m/2)\)。③ 通过一个外层模型（如线性回归）学习最优权重——这就是 Stacking。</p>
+
+<div class="warn-box">
+<strong>竞赛陷阱：</strong>① 集成不等于万能的——如果所有模型都犯了同样的系统性偏差（如都低估了峰值），集成也无法修正。② 不要为了「比较」而强行加入不合适的模型——如果数据是纯时间序列，不要加入随机森林（它不处理时间依赖）。③ 比较模型时，<strong>必须使用相同的训练/测试划分</strong>——否则比较不公平。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>12.5 数据泄漏防御</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>数据泄漏：竞赛中最隐蔽的错误</h4>
+<p><strong>数据泄漏（Data Leakage）</strong>是指在模型训练过程中，使用了在真实预测场景下<strong>不可获得的信息</strong>。泄漏导致交叉验证分数虚高，但模型在真正的新数据上表现糟糕。在竞赛中，数据泄漏是最常见的「模型看起来很好但评委打低分」的原因。</p>
+</div>
+
+<h3>12.5.1 泄漏的四种类型</h3>
+
+<table class="compact-table">
+<thead><tr><th>类型</th><th>典型错误</th><th>正确做法</th></tr></thead>
+<tbody>
+<tr><td><strong>时间泄漏</strong></td><td>用未来数据预测过去（如用 12 月的数据预测 11 月）</td><td>严格按时间顺序划分：训练集全部在测试集之前</td></tr>
+<tr><td><strong>预处理泄漏</strong></td><td>在全数据集上做标准化/填充缺失值/PCA，再划分训练/测试</td><td>在交叉验证<strong>每一折内部</strong>独立计算标准化参数</td></tr>
+<tr><td><strong>特征泄漏</strong></td><td>特征中包含目标变量的未来信息（如「距期末还有 X 天」→ 已知期末日期）</td><td>检查每个特征：预测时这个信息是否可获得？</td></tr>
+<tr><td><strong>目标泄漏</strong></td><td>用目标变量构造特征（如用「总销量」除以「天数」得到「日均销量」作为特征预测「总销量」）</td><td>任何与目标变量有确定性关系的变量都不能作为特征</td></tr>
+</tbody>
+</table>
+
+<h3>12.5.2 时间序列防泄漏检查清单</h3>
+
+<div class="toolkit-box">
+<h4>竞赛时序数据防泄漏清单</h4>
+<p>□ 训练集最早的日期 < 验证集最早的日期 < 测试集最早的日期<br>
+□ 没有使用任何未来日期的数据作为特征（如「本月总销量」不能用于预测「本月第 15 天的销量」）<br>
+□ 标准化参数（均值、标准差）只在训练集上计算<br>
+□ 缺失值填补只用训练集的信息（如训练集的均值，而非全数据集的均值）<br>
+□ 特征选择在整个流程中只在训练集上进行<br>
+□ 如果用滑动窗口，确保窗口不跨越训练/测试边界<br>
+□ 交叉验证使用 TimeSeriesSplit（按时间顺序），而非随机 K-Fold</p>
+</div>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>在论文中主动展示你考虑了数据泄漏问题——这会增加评委的信任。例如：「为保证模型评估的可靠性，我们使用 TimeSeriesSplit 进行交叉验证，所有预处理参数均从训练集计算后再应用于验证集，确保不存在数据泄漏。」这样的表述是竞赛论文的加分项。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- INSTRUMENT No.12A: 回归预测仪表盘 -->
+<!-- ══════════════════════════════════════════════ -->
+<h2>仪器 No.12A — 回归预测仪表盘</h2>
+<div class="panel">
+<div class="panel-label">INSTRUMENT No.12A · Regression Prediction Dashboard</div>
+<p style="font-size:0.9rem;color:var(--slate);margin-bottom:12px">生成带噪声的线性数据，拟合 OLS 回归，观察预测区间（阴影带）随 x 远离 x̄ 而变宽。拖动噪声滑块改变数据离散度，查看 RMSE/MAE/MAPE 的实时变化。右侧虚线 = 95% 预测区间。</p>
+<div class="slider-row">
+  <label>噪声水平 σ = <span class="slider-val" id="pred-noise-val">8.0</span></label>
+  <input type="range" id="pred-noise" min="1" max="20" value="8" step="0.5">
+</div>
+<div class="slider-row">
+  <label>样本量 n = <span class="slider-val" id="pred-n-val">30</span></label>
+  <input type="range" id="pred-n" min="10" max="80" value="30" step="5">
+</div>
+<div class="btn-group">
+  <button class="btn" id="pred-reshuffle">重新生成数据</button>
+</div>
+<div class="chart-container" id="pred-main-chart"></div>
+<div class="stat-cards" id="pred-metrics"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- INSTRUMENT No.12B: GM(1,1) 灰色预测 -->
+<!-- ══════════════════════════════════════════════ -->
+<h2>仪器 No.12B — 灰色预测 GM(1,1)</h2>
+<div class="panel">
+<div class="panel-label">INSTRUMENT No.12B · Grey Model GM(1,1) Predictor</div>
+<p style="font-size:0.9rem;color:var(--slate);margin-bottom:12px">上排：原始序列（点）与 GM(1,1) 拟合/预测（线），虚线后为预测期。下排：1-AGO 累加序列（原始杂乱 → 累加后平滑近似指数）。观察灰色预测如何从小样本（n=8~12）中提取趋势。</p>
+<div class="slider-row">
+  <label>预测步数 = <span class="slider-val" id="gm-steps-val">3</span></label>
+  <input type="range" id="gm-steps" min="1" max="6" value="3" step="1">
+</div>
+<div class="btn-group">
+  <button class="btn" id="gm-reshuffle">重新生成数据</button>
+  <button class="btn" id="gm-add-noise">增加噪声</button>
+</div>
+<div class="panel-grid">
+  <div class="chart-container" id="gm-original-chart"></div>
+  <div class="chart-container" id="gm-ago-chart"></div>
+</div>
+<div class="stat-cards" id="gm-stats"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>12.5A 预测精度比较的统计检验：Diebold-Mariano</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>模型 A 的 RMSE 比模型 B 低 0.3——这个差异是显著的吗？</h4>
+<p>当两个模型的预测误差差异很小时，仅仅比较 RMSE/MAE 的数值是不够的——你需要一个<strong>统计检验</strong>来判断差异是否显著。Diebold-Mariano (DM) 检验是预测精度比较的标准方法。</p>
+</div>
+
+<div class="derive-box">
+<h4>DM 检验的推导</h4>
+<p>设 \(e_{A,t}\) 和 \(e_{B,t}\) 分别是模型 A 和 B 在第 t 期的预测误差。定义损失差异：</p>
+<div class="math-block">
+\[
+d_t = g(e_{A,t}) - g(e_{B,t})
+\]
+</div>
+<p>其中 \(g(\cdot)\) 是损失函数——平方误差 \(g(e)=e^2\)（对应 MSE）或绝对误差 \(g(e)=|e|\)（对应 MAE）。</p>
+<p>\(H_0: \mathbb{E}[d_t] = 0\)（两个模型的预测精度无显著差异）。DM 统计量：</p>
+<div class="math-block">
+\[
+\text{DM} = \frac{\bar{d}}{\sqrt{\text{Var}(\bar{d})}} \sim N(0,1)
+\]
+</div>
+<p>其中 \(\bar{d} = \frac{1}{T}\sum_{t=1}^{T} d_t\)，\(\text{Var}(\bar{d})\) 需要使用异方差和自相关一致 (HAC) 的标准误估计（因为预测误差通常有自相关）。如果 |DM| > 1.96 → 在 5% 水平下显著 → 两个模型的预测精度确实不同。</p>
+</div>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>论文中：「DM 检验表明，ARIMA 模型的预测精度显著优于朴素预测 (DM = 2.34, p = 0.019)，但与 GM(1,1) 的差异不显著 (DM = 0.87, p = 0.384)。考虑到 GM(1,1) 的数据需求更少，我们选择 GM(1,1) 作为最终预测模型。」——这种统计检验支持的模型选择在竞赛中非常有说服力。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>12.6 竞赛实战流程</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="toolkit-box">
+<h4>预测问题竞赛标准流程</h4>
+<p><strong>Step 1：数据探索</strong>——画时序图，判断趋势、季节性、异常值。计算基本统计量。<br>
+<strong>Step 2：数据预处理</strong>——缺失值填补（用训练集信息）、标准化、级比检验（如用 GM(1,1)）。<br>
+<strong>Step 3：模型选择</strong>——根据数据特征选择 3+ 个候选模型：<br>
+&nbsp;&nbsp;· n ≥ 30，有明显趋势/季节 → ARIMA / SARIMA<br>
+&nbsp;&nbsp;· n ≥ 30，无明显时序结构 → 随机森林回归 / XGBoost<br>
+&nbsp;&nbsp;· n < 20 → 灰色预测 GM(1,1)（候选，需验证级比条件）<br>
+&nbsp;&nbsp;· 任何情况 → 线性回归（基线）<br>
+<strong>Step 4：训练与验证</strong>——时间序列用 TimeSeriesSplit，其他用 5 折交叉验证。确保无数据泄漏。<br>
+<strong>Step 5：模型比较</strong>——对比表（RMSE + MAE + MAPE + 训练时间）。选出最佳模型。<br>
+<strong>Step 6：预测 + 区间</strong>——用最佳模型预测，给出 95% 预测区间。<br>
+<strong>Step 7：残差诊断</strong>——残差应为白噪声（Ljung-Box 检验），无趋势，无自相关。<br>
+<strong>Step 8：敏感性分析</strong>——改变关键参数（如 ARIMA 的 p/d/q），观察预测变化。</p>
+</div>
+
+<div class="warn-box">
+<strong>一票否决的致命错误：</strong>① 用随机 K-Fold 做时间序列的交叉验证。② 标准化用了全数据的均值和方差。③ 预测期包含训练期的时间点。④ 只报告训练集上的指标。⑤ 不报告预测区间。⑥ 小样本（n=10）跑去用 ARIMA(3,1,2)——参数比数据还多。
+</div>

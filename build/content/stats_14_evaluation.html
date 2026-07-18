@@ -1,0 +1,428 @@
+<div class="competition-box">
+<h4>竞赛真题场景</h4>
+<p><span class="q">Q：</span>国赛 2024 C 题：如何综合评价多个城市的可持续发展水平？→ 指标体系构建 + 熵权法 + TOPSIS。<br>
+<span class="q">Q：</span>美赛 MCM C 题：如何对多个国家的环境政策进行综合排序？→ AHP 确定权重 + 加权综合评分。<br>
+<span class="q">Q：</span>华中赛/电工杯：如何评价多个供应商的综合表现？→ 灰色关联分析 + TOPSIS。<br>
+<span class="q">Q：</span>几乎所有评价题都会问：排名是否稳定？换一种权重会怎样？→ 灵敏度分析。<br>
+<strong>→ 评价类题目最容易踩的坑：机械套用「熵权法 + TOPSIS」模板，不解释指标体系、不验证权重合理性、不做灵敏度分析。评委一眼就能看出模板痕迹。</strong></p>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>14.1 核心概念：评价问题的三要素</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>评价 = 指标体系 + 赋权方法 + 聚合模型</h4>
+<p>任何综合评价问题都由三个要素构成。建模时依次回答：</p>
+</div>
+
+<p><strong>① 评价对象（Alternatives）：</strong>你要评价什么？—— 城市、方案、供应商、年份、国家……评价对象之间必须可比。</p>
+<p><strong>② 评价指标体系（Criteria / Indicators）：</strong>从哪些维度评价？—— 这是评价建模的<strong>核心</strong>。指标体系必须：全面（覆盖主要维度）、独立（指标间不高度重叠）、可操作（数据可获取）。<strong>竞赛中必须解释为什么选这些指标</strong>——引用文献、行业标准、政策文件都是好的论证方式。</p>
+<p><strong>③ 评价方法（Method）：</strong>如何把多个指标聚合成一个综合得分？—— 熵权法、TOPSIS、AHP、PCA、灰色关联……每种方法有不同假设和适用场景，不能随意套用。</p>
+
+<div class="derive-box">
+<h4>评价问题的数学框架</h4>
+<p>设 \(m\) 个评价对象，\(n\) 个评价指标，原始数据矩阵为：</p>
+<div class="math-block">
+\[
+\mathbf{X} = \begin{bmatrix}
+x_{11} & x_{12} & \cdots & x_{1n} \\
+x_{21} & x_{22} & \cdots & x_{2n} \\
+\vdots & \vdots & \ddots & \vdots \\
+x_{m1} & x_{m2} & \cdots & x_{mn}
+\end{bmatrix}
+\]
+</div>
+<p>所有评价方法本质上都是同一个流程：</p>
+<div class="math-block">
+\[
+\text{原始数据 } \mathbf{X} \xrightarrow{\text{标准化}} \text{规范矩阵 } \mathbf{R} \xrightarrow{\text{赋权}} \text{加权矩阵 } \mathbf{V} \xrightarrow{\text{聚合}} \text{综合得分 } S_i \xrightarrow{\text{排序}} \text{最终排名}
+\]
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>14.2 数据标准化与指标正向化</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>为什么需要标准化？</h4>
+<p>不同指标的量纲不同（如 GDP 是亿元，失业率是百分比），如果直接加权求和，量纲大的指标会主导结果。标准化消除了量纲影响，使所有指标在同一尺度下可比。</p>
+</div>
+
+<table class="compact-table">
+<thead><tr><th>方法</th><th>公式</th><th>结果范围</th><th>适用场景</th></tr></thead>
+<tbody>
+<tr><td><strong>极差标准化 (Min-Max)</strong></td><td>\(r_{ij} = \frac{x_{ij} - \min(x_j)}{\max(x_j) - \min(x_j)}\)</td><td>\([0, 1]\)</td><td>TOPSIS、灰色关联</td></tr>
+<tr><td><strong>Z-score 标准化</strong></td><td>\(r_{ij} = \frac{x_{ij} - \bar{x}_j}{s_j}\)</td><td>\((-\infty, +\infty)\)</td><td>PCA、因子分析</td></tr>
+<tr><td><strong>向量规范化</strong></td><td>\(r_{ij} = \frac{x_{ij}}{\sqrt{\sum_i x_{ij}^2}}\)</td><td>\([0, 1]\)</td><td>TOPSIS（经典版）</td></tr>
+<tr><td><strong>比重法</strong></td><td>\(r_{ij} = \frac{x_{ij}}{\sum_i x_{ij}}\)</td><td>\([0, 1]\)，和为 1</td><td>熵权法</td></tr>
+</tbody>
+</table>
+
+<div class="derive-box">
+<h4>指标正向化：把所有指标统一为「越大越好」</h4>
+<p>评价指标分为三类，需要统一方向：</p>
+<p><strong>正向指标（效益型）：</strong>越大越好 —— GDP、利润、满意度。无需处理。<br>
+<strong>负向指标（成本型）：</strong>越小越好 —— 污染排放、失业率、成本。正向化：\(x_{ij}' = \max(x_j) - x_{ij}\) 或 \(x_{ij}' = 1/x_{ij}\)。<br>
+<strong>适度指标（区间型）：</strong>越接近某个值越好 —— 体温、pH 值。正向化：\(x_{ij}' = 1 - \frac{|x_{ij} - x_j^*|}{\max|x_{ij} - x_j^*|}\)，其中 \(x_j^*\) 是最优值。</p>
+<p><strong>竞赛中必须明确说明：</strong>每个指标是正向、负向还是适度指标，以及使用了什么正向化方法。这是评委检查论文逻辑严密性的第一关。</p>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>14.3 熵权法——客观赋权</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>从数据本身提取权重</h4>
+<p>熵权法（Entropy Weight Method）基于信息熵的概念：<strong>指标的数据变异程度越大，包含的信息量越多，权重越大</strong>。如果一个指标在所有评价对象上的值都一样（如所有人的年龄都是 20 岁），它提供的信息量为零，权重也应为零。</p>
+</div>
+
+<div class="derive-box">
+<h4>熵权法推导</h4>
+<p><strong>Step 1：</strong>计算第 \(j\) 个指标下第 \(i\) 个评价对象的比重：</p>
+<div class="math-block">
+\[
+p_{ij} = \frac{x_{ij}}{\sum_{i=1}^{m} x_{ij}} \quad \text{（假设 } x_{ij} \geq 0\text{）}
+\]
+</div>
+<p><strong>Step 2：</strong>计算第 \(j\) 个指标的<strong>信息熵</strong>：</p>
+<div class="math-block">
+\[
+e_j = -k \sum_{i=1}^{m} p_{ij} \ln(p_{ij}), \quad \text{其中 } k = \frac{1}{\ln m}
+\]
+</div>
+<p>\(k\) 的作用是使 \(e_j \in [0, 1]\)。当所有 \(p_{ij}\) 相等时，\(e_j = 1\)（信息量最小）；当只有一个 \(p_{ij} = 1\) 其余为 0 时，\(e_j = 0\)（信息量最大）。</p>
+<p><strong>Step 3：</strong>计算信息冗余度（差异系数）：\(d_j = 1 - e_j\)。<br>
+<strong>Step 4：</strong>归一化得到权重：</p>
+<div class="math-block">
+\[
+w_j = \frac{d_j}{\sum_{j=1}^{n} d_j} = \frac{1 - e_j}{\sum_{j=1}^{n} (1 - e_j)}
+\]
+</div>
+</div>
+
+<div class="note-box">
+<strong>熵权法的优缺点：</strong>优点——完全客观，不需要专家判断，论文中容易论述。缺点——① 权重完全由数据驱动，可能与实际重要性不符（一个不重要的指标因为数据波动大而获得高权重）；② 对异常值敏感；③ 忽略了指标间的相关性。竞赛中熵权法常与 TOPSIS 或灰色关联分析结合使用。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>14.4 TOPSIS——逼近理想解排序</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>离最好的最近，离最坏的越远</h4>
+<p>TOPSIS（Technique for Order Preference by Similarity to Ideal Solution）的核心思想：最优方案是<strong>离理想解最近、同时离负理想解最远</strong>的方案。这是竞赛中最常用的评价方法——但也是最容易被滥用的。</p>
+</div>
+
+<div class="derive-box">
+<h4>TOPSIS 完整推导</h4>
+<p><strong>Step 1 — 构建标准化决策矩阵：</strong>使用向量规范化：</p>
+<div class="math-block">
+\[
+r_{ij} = \frac{x_{ij}}{\sqrt{\sum_{i=1}^{m} x_{ij}^2}}
+\]
+</div>
+<p><strong>Step 2 — 构建加权标准化矩阵：</strong>\(v_{ij} = w_j \cdot r_{ij}\)。</p>
+<p><strong>Step 3 — 确定理想解 \(A^+\) 和负理想解 \(A^-\)：</strong></p>
+<div class="math-block">
+\[
+\begin{aligned}
+A^+ &= \{\max_i v_{i1}, \max_i v_{i2}, \ldots, \max_i v_{in}\} = \{v_1^+, v_2^+, \ldots, v_n^+\} \\
+A^- &= \{\min_i v_{i1}, \min_i v_{i2}, \ldots, \min_i v_{in}\} = \{v_1^-, v_2^-, \ldots, v_n^-\}
+\end{aligned}
+\]
+</div>
+<p><strong>Step 4 — 计算每个方案到理想解和负理想解的距离：</strong></p>
+<div class="math-block">
+\[
+S_i^+ = \sqrt{\sum_{j=1}^{n} (v_{ij} - v_j^+)^2}, \quad S_i^- = \sqrt{\sum_{j=1}^{n} (v_{ij} - v_j^-)^2}
+\]
+</div>
+<p><strong>Step 5 — 计算相对贴近度：</strong></p>
+<div class="math-block">
+\[
+C_i = \frac{S_i^-}{S_i^+ + S_i^-} \in [0, 1]
+\]
+</div>
+<p>\(C_i\) 越大，方案越接近理想解。按 \(C_i\) 降序排列即为最终排名。</p>
+</div>
+
+<div class="warn-box">
+<strong>TOPSIS 的致命误解：</strong>① TOPSIS 不是「离理想解最近」就可以了——必须同时考虑「离负理想解最远」。一个方案离理想解很近但如果离负理想解也很近，可能不如一个折中方案。② TOPSIS 假设指标之间<strong>独立</strong>——如果两个指标高度相关，它们会重复计入，导致偏误。③ 权重的选择对结果影响极大——必须做权重灵敏度分析。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>14.5 层次分析法 AHP——主观赋权</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>把主观判断转化为数值权重</h4>
+<p>层次分析法（Analytic Hierarchy Process, AHP）由 Saaty 在 1970 年代提出。核心思想：将复杂问题分解为<strong>目标—准则—方案</strong>的层次结构，通过两两比较确定各元素的重要性，最终计算出各方案的综合权重。</p>
+</div>
+
+<div class="derive-box">
+<h4>AHP 的核心：判断矩阵与一致性检验</h4>
+<p><strong>判断矩阵：</strong>对同一层次的所有元素，两两比较其重要性，使用 Saaty 1-9 标度：</p>
+<table class="compact-table">
+<thead><tr><th>标度</th><th>含义</th><th>标度</th><th>含义</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>同等重要</td><td>6</td><td>介于明显和强烈之间</td></tr>
+<tr><td>3</td><td>稍微重要</td><td>7</td><td>强烈重要</td></tr>
+<tr><td>5</td><td>明显重要</td><td>9</td><td>极端重要</td></tr>
+</tbody>
+</table>
+<p>判断矩阵 \(\mathbf{A} = [a_{ij}]\) 满足 \(a_{ij} = 1/a_{ji}\)，\(a_{ii} = 1\)。</p>
+<p><strong>权重计算（特征向量法）：</strong>求解 \(\mathbf{A}\mathbf{w} = \lambda_{\max}\mathbf{w}\)，\(\mathbf{w}\) 即为权重向量。实际计算中常用<strong>几何平均法</strong>近似：</p>
+<div class="math-block">
+\[
+w_i = \frac{\left(\prod_{j=1}^{n} a_{ij}\right)^{1/n}}{\sum_{k=1}^{n} \left(\prod_{j=1}^{n} a_{kj}\right)^{1/n}}
+\]
+</div>
+<p><strong>一致性检验：</strong>人做两两比较时可能自相矛盾（如 A > B, B > C, 但 C > A）。一致性比率 CR 衡量判断的一致性：</p>
+<div class="math-block">
+\[
+\lambda_{\max} = \frac{1}{n} \sum_{i=1}^{n} \frac{(\mathbf{A}\mathbf{w})_i}{w_i}, \quad CI = \frac{\lambda_{\max} - n}{n - 1}, \quad CR = \frac{CI}{RI(n)}
+\]
+</div>
+<p>其中 \(RI(n)\) 是随机一致性指标（查表得）。<strong>如果 \(CR < 0.1\)，判断矩阵通过一致性检验</strong>——这是 AHP 论文的必写内容。如果 \(CR \geq 0.1\)，需要调整判断矩阵。</p>
+</div>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>AHP 的权重是主观的——这既是优点（可以融入专家知识）也是缺点（可能被质疑主观性）。竞赛中 AHP 常用作<strong>准则层权重确定</strong>，然后与客观数据（方案层）结合。论文中必须报告一致性检验结果，并说明判断矩阵的来源（文献、专家咨询、政策文件）。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>14.6 主成分分析 PCA——降维评价</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>当指标太多时——提取主要信息</h4>
+<p>PCA 不仅用于降维（§X），也可以用于综合评价：将多个相关指标转化为少数几个不相关的主成分，以方差贡献率为权重，计算综合得分。</p>
+</div>
+
+<div class="derive-box">
+<h4>PCA 综合评价步骤</h4>
+<p><strong>Step 1：</strong>Z-score 标准化原始数据。<br>
+<strong>Step 2：</strong>计算相关系数矩阵的特征值 \(\lambda_1 \geq \lambda_2 \geq \cdots \geq \lambda_n\) 和特征向量。<br>
+<strong>Step 3：</strong>确定保留的主成分个数 \(k\)（累积方差贡献率 > 85% 为常用参考；\(\lambda_k > 1\) 的 Kaiser 准则主要适用于对标准化变量做相关矩阵 PCA，并非所有 PCA 的普遍规则）。<br>
+<strong>Step 4：</strong>计算各主成分得分：\(F_p = \sum_{j=1}^{n} w_{pj} z_j\)，其中 \(w_{pj}\) 是特征向量第 \(j\) 个分量（得分系数）。<strong>注意：</strong>载荷 \(l_{pj} = w_{pj} \cdot \sqrt{\lambda_p}\) 表示变量与主成分的相关系数，不直接用于计算得分。不同软件（sklearn、SPSS、R）对「loading」的定义可能不同，代入前应先确认。<br>
+<strong>Step 5：</strong>以方差贡献率为权重计算综合得分：</p>
+<div class="math-block">
+\[
+F = \frac{\lambda_1}{\sum_{p=1}^{k} \lambda_p} F_1 + \frac{\lambda_2}{\sum_{p=1}^{k} \lambda_p} F_2 + \cdots + \frac{\lambda_k}{\sum_{p=1}^{k} \lambda_p} F_k
+\]
+</div>
+</div>
+
+<div class="note-box">
+<strong>PCA 评价 vs 熵权 TOPSIS：</strong>PCA 的权重由数据的内在结构（方差-协方差）决定，不需要人为设定，且自动处理了指标间的相关性。但 PCA 的缺点是：① 主成分的解释性可能较差（新变量是原始变量的线性组合，含义模糊）；② 假设线性关系。竞赛中 PCA 适合指标较多且高度相关的情况——先用 PCA 降维，再对主成分得分做 TOPSIS 或直接排序。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>14.7 因子分析</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>发掘指标背后的潜在结构</h4>
+<p>因子分析（Factor Analysis）与 PCA 类似但目的不同：PCA 是<strong>降维</strong>（用少数变量解释最大方差），因子分析是<strong>发现潜在变量</strong>（假设观测变量由少数公共因子 + 特殊因子驱动）。</p>
+</div>
+
+<div class="math-block">
+\[
+\mathbf{x} = \boldsymbol{\Lambda} \mathbf{f} + \boldsymbol{\varepsilon}
+\]
+</div>
+
+<p>其中 \(\boldsymbol{\Lambda}\) 是因子载荷矩阵（\(n \times k\)），\(\mathbf{f}\) 是公共因子（\(k \times 1\)），\(\boldsymbol{\varepsilon}\) 是特殊因子（\(n \times 1\)）。</p>
+
+<table class="compact-table">
+<thead><tr><th>维度</th><th>PCA</th><th>因子分析</th></tr></thead>
+<tbody>
+<tr><td>目标</td><td>最大化方差解释</td><td>解释变量间的协方差结构</td></tr>
+<tr><td>模型</td><td>\(F = \mathbf{L}^T \mathbf{x}\)（线性组合）</td><td>\(\mathbf{x} = \boldsymbol{\Lambda} \mathbf{f} + \boldsymbol{\varepsilon}\)（生成模型）</td></tr>
+<tr><td>旋转</td><td>不旋转</td><td>通常需要旋转（Varimax 等）以增强可解释性</td></tr>
+<tr><td>竞赛使用</td><td>降维 + 综合评价</td><td>探索性分析 + 指标体系验证</td></tr>
+</tbody>
+</table>
+
+<div class="derive-box">
+<h4>因子旋转与因子得分</h4>
+<p><strong>因子旋转（Varimax）：</strong>使每个变量只在少数因子上有高载荷，便于解释因子的实际含义。旋转后的因子载荷矩阵中，每列只有少数几个高载荷，其余接近 0。</p>
+<p><strong>因子得分：</strong>使用回归法或 Bartlett 法估计每个评价对象在各因子上的得分，然后以方差贡献率为权重计算综合得分。这与 PCA 的综合评价步骤类似。</p>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>14.8 模糊综合评价</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>处理「好」「较好」「一般」这类模糊语言</h4>
+<p>当评价涉及<strong>定性指标</strong>（如「服务质量」「社会效益」）时，传统的精确数值方法不适用。模糊综合评价（Fuzzy Comprehensive Evaluation）将模糊数学引入评价——用隶属度函数把定性描述转化为定量结果。</p>
+</div>
+
+<div class="derive-box">
+<h4>模糊综合评价步骤</h4>
+<p><strong>Step 1 — 确定评价集：</strong>例如 \(V = \{\text{优秀, 良好, 一般, 较差, 差}\}\)。<br>
+<strong>Step 2 — 确定权重向量：</strong>\(\mathbf{w} = (w_1, w_2, \ldots, w_n)\)，通常由 AHP 或熵权法确定。<br>
+<strong>Step 3 — 构建模糊评价矩阵：</strong>对每个指标，确定其对各评价等级的隶属度 \(r_{ij}\)（第 \(i\) 个指标属于第 \(j\) 个等级的程度）。<br>
+<strong>Step 4 — 模糊合成：</strong>\(\mathbf{B} = \mathbf{w} \circ \mathbf{R}\)，其中 \(\circ\) 是模糊合成算子（常用 \(M(\cdot, +)\) 加权平均型）。<br>
+<strong>Step 5 — 去模糊化：</strong>将模糊综合评价向量 \(\mathbf{B}\) 转化为具体分数（如加权平均法：给每个等级赋分，加权求和）。</p>
+</div>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>模糊综合评价适合<strong>定性指标多</strong>的评价问题——如政策评价、满意度调查、环境影响评估。如果所有指标都是定量数据，用 TOPSIS 或熵权法更直接。模糊综合评价的论文中必须展示隶属度函数的设计，这是核心创新点。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>14.9 灰色关联分析</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>小样本、贫信息下的评价方法</h4>
+<p>灰色关联分析（Grey Relational Analysis, GRA）是灰色系统理论的一部分，用于<strong>数据量少、信息不完全</strong>的情况。核心思想：通过比较各方案与参考序列（最优方案）的几何形状相似程度来判断优劣——形状越接近，关联度越大。</p>
+</div>
+
+<div class="derive-box">
+<h4>灰色关联度计算</h4>
+<p><strong>Step 1 — 确定参考序列：</strong>\(x_0 = (x_0(1), x_0(2), \ldots, x_0(n))\)，通常取每个指标的最优值。<br>
+<strong>Step 2 — 数据标准化：</strong>同 §14.2。<br>
+<strong>Step 3 — 计算关联系数：</strong></p>
+<div class="math-block">
+\[
+\xi_i(j) = \frac{\min_i \min_j |x_0(j) - x_i(j)| + \rho \cdot \max_i \max_j |x_0(j) - x_i(j)|}{|x_0(j) - x_i(j)| + \rho \cdot \max_i \max_j |x_0(j) - x_i(j)|}
+\]
+</div>
+<p>其中 \(\rho \in [0, 1]\) 是分辨系数，通常取 \(\rho = 0.5\)。<br>
+<strong>Step 4 — 计算关联度：</strong>\(r_i = \frac{1}{n} \sum_{j=1}^{n} \xi_i(j)\)（等权）或 \(r_i = \sum_{j=1}^{n} w_j \cdot \xi_i(j)\)（加权）。</p>
+</div>
+
+<table class="compact-table">
+<thead><tr><th>维度</th><th>TOPSIS</th><th>灰色关联分析</th></tr></thead>
+<tbody>
+<tr><td>核心思想</td><td>距离：离理想解越近越好</td><td>形状：与参考序列越相似越好</td></tr>
+<tr><td>数据要求</td><td>需要足够样本量</td><td>小样本（≥4 个对象即可）</td></tr>
+<tr><td>对异常值</td><td>敏感</td><td>较稳健</td></tr>
+<tr><td>适用场景</td><td>多方案、多指标评价</td><td>小样本、贫信息评价</td></tr>
+</tbody>
+</table>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>14.10 方法对比与选择框架</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<table class="compact-table">
+<thead><tr><th>方法</th><th>赋权方式</th><th>核心假设</th><th>最适合</th><th>数据要求</th></tr></thead>
+<tbody>
+<tr><td><strong>熵权法</strong></td><td>客观</td><td>信息量 = 变异程度</td><td>数据驱动、指标差异大</td><td>≥5 个对象</td></tr>
+<tr><td><strong>TOPSIS</strong></td><td>需外部权重</td><td>指标独立</td><td>多方案定量评价</td><td>≥5 个对象</td></tr>
+<tr><td><strong>AHP</strong></td><td>主观</td><td>两两比较可量化</td><td>有专家知识、定性指标多</td><td>任何规模</td></tr>
+<tr><td><strong>PCA 评价</strong></td><td>客观</td><td>线性关系、方差最大化</td><td>指标多且高度相关</td><td>≥20 个对象</td></tr>
+<tr><td><strong>因子分析</strong></td><td>客观</td><td>存在潜在因子</td><td>探索性分析、指标体系验证</td><td>≥50 个对象</td></tr>
+<tr><td><strong>模糊综合评价</strong></td><td>需外部权重</td><td>模糊性可量化</td><td>定性指标多、评价等级明确</td><td>任何规模</td></tr>
+<tr><td><strong>灰色关联分析</strong></td><td>需外部权重</td><td>形状相似 = 优劣相似</td><td>小样本、贫信息</td><td>≥4 个对象</td></tr>
+</tbody>
+</table>
+
+<div class="toolkit-box">
+<h4>竞赛选择决策树</h4>
+<p><strong>Q1：</strong>指标是定量的还是定性的？ → 定性为主 → 模糊综合评价。<br>
+<strong>Q2：</strong>数据量多少？ → 很少（< 10 个对象） → 灰色关联分析。<br>
+<strong>Q3：</strong>指标之间是否高度相关？ → 是 → 先用 PCA 降维，再用 TOPSIS。<br>
+<strong>Q4：</strong>有没有专家判断或先验知识？ → 有 → AHP 确定权重 + TOPSIS 聚合。<br>
+<strong>Q5：</strong>默认方案 → 熵权法确定权重 + TOPSIS 聚合（但必须论证为什么选择这个组合！）。</p>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>14.11 竞赛陷阱与论文写作</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="warn-box">
+<strong>陷阱一：机械套用模板。</strong>「熵权法 + TOPSIS」是竞赛中最常见的模板组合。评委已经看过几百篇这样的论文。如果你想脱颖而出，必须解释：<strong>为什么这个指标体系是合理的？为什么选择熵权法而不是 AHP？为什么指标间可以认为是独立的？</strong>——模板本身没错，错的是不加论证地使用模板。
+</div>
+
+<div class="warn-box">
+<strong>陷阱二：权重不解释。</strong>权重是评价的灵魂——它决定了排名的方向。论文中必须说明：权重的含义是什么？为什么 C1 的权重是 0.35 而 C2 是 0.15？这个权重分配反映了什么价值判断？——如果用了熵权法，要解释为什么数据变异程度反映了重要性；如果用了 AHP，要展示判断矩阵和一致性检验。
+</div>
+
+<div class="warn-box">
+<strong>陷阱三：不做灵敏度分析。</strong>评价结果对权重和标准化方法的敏感性是评委最关心的问题之一。论文中必须包含：① 权重灵敏度分析——改变某个指标的权重 ±20%，排名是否稳定？② 方法灵敏度分析——换一种评价方法（如把 TOPSIS 换成灰色关联），排名是否一致？③ 如果排名不稳定，说明什么？——说明某些方案在特定指标上存在优势，需要结合实际情况决策。
+</div>
+
+<div class="warn-box">
+<strong>陷阱四：指标体系没有论证。</strong>「我们选取了以下 10 个指标」——为什么是这 10 个？有没有遗漏重要维度？有没有重复（两个指标高度相关）？论文中必须：① 引用文献或标准说明指标选择的依据。② 做相关性分析，检查指标间是否存在严重共线性。③ 最好附上指标体系框架图。
+</div>
+
+<div class="competition-box">
+<h4>评价类论文标准结构</h4>
+<p><strong>1. 指标体系构建：</strong>说明指标选取的原则（科学性、系统性、可操作性、可比性），列出指标体系表（指标名称、含义、单位、正负向），附指标体系框架图。<br>
+<strong>2. 数据预处理：</strong>正向化处理（说明每个指标的方向）、标准化方法选择及理由、缺失值处理（如有）。<br>
+<strong>3. 权重确定：</strong>方法选择理由、权重计算过程、权重结果展示（柱状图或表格）、权重合理性分析。<br>
+<strong>4. 综合评价：</strong>方法选择理由、计算过程、综合得分与排名。<br>
+<strong>5. 灵敏度分析：</strong>权重灵敏度（±20% 扰动）、方法灵敏度（换一种方法对比）、结果稳定性讨论。<br>
+<strong>6. 结果讨论：</strong>排名解读、改进建议、局限性。</p>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- INSTRUMENT No.14A: TOPSIS 可视化 -->
+<!-- ══════════════════════════════════════════════ -->
+<h2>仪器 No.14A — TOPSIS 交互演示</h2>
+<div class="panel">
+<div class="panel-label">INSTRUMENT No.14A · TOPSIS Interactive Demo</div>
+<p style="font-size:0.9rem;color:var(--slate);margin-bottom:12px">6 个方案在 2 个指标上的评价。绿色星标 = 理想解 A⁺，红色星标 = 负理想解 A⁻。实线 = 到 A⁺ 的距离，虚线 = 到 A⁻ 的距离。拖动权重滑块观察排名如何变化。</p>
+<div class="slider-row">
+  <label>指标 1 权重 w₁ = <span class="slider-val" id="ts-w1-val">0.50</span></label>
+  <input type="range" id="ts-w1" min="0.05" max="0.95" value="0.5" step="0.01">
+</div>
+<div class="slider-row">
+  <label>指标 2 权重 w₂ = <span class="slider-val" id="ts-w2-val">0.50</span></label>
+  <input type="range" id="ts-w2" min="0.05" max="0.95" value="0.5" step="0.01">
+</div>
+<div class="btn-group">
+  <button class="btn" id="ts-preset1">预设: 等权重</button>
+  <button class="btn" id="ts-preset2">预设: w₁ 主导</button>
+  <button class="btn" id="ts-preset3">预设: w₂ 主导</button>
+</div>
+<div class="panel-grid">
+  <div class="chart-container" id="topsis-chart"></div>
+  <div id="topsis-rank"></div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- INSTRUMENT No.14B: AHP 权重计算器 -->
+<!-- ══════════════════════════════════════════════ -->
+<h2>仪器 No.14B — AHP 权重计算器</h2>
+<div class="panel">
+<div class="panel-label">INSTRUMENT No.14B · AHP Pairwise Comparison & Consistency Check</div>
+<p style="font-size:0.9rem;color:var(--slate);margin-bottom:12px">对 4 个准则进行两两比较。拖动滑块调整重要性判断（1=同等重要，9=极端重要）。右侧自动计算权重和一致性比率。如果 CR < 0.1，判断矩阵通过一致性检验。</p>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+  <div>
+    <p style="font-family:var(--mono);font-size:0.78rem;color:var(--slate);margin-bottom:8px">两两比较（上三角）：</p>
+    <div id="ahp-sliders"></div>
+  </div>
+  <div>
+    <div class="stat-cards" id="ahp-stats"></div>
+    <div class="chart-container" id="ahp-weight-chart"></div>
+    <div id="ahp-verdict" style="font-family:var(--mono);font-size:0.82rem;margin-top:8px"></div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>14.12 竞赛实战流程</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="toolkit-box">
+<h4>评价题竞赛标准流程</h4>
+<p><strong>Step 1：构建指标体系。</strong>查阅文献 → 列出候选指标 → 筛选（相关性分析、专家判断）→ 最终指标体系表。<br>
+<strong>Step 2：数据收集与预处理。</strong>获取数据 → 缺失值处理 → 正向化 → 标准化。<br>
+<strong>Step 3：确定权重。</strong>根据数据特点选择：客观赋权（熵权法）或主观赋权（AHP）或组合赋权（两者加权平均）。<br>
+<strong>Step 4：综合评价。</strong>选择聚合方法（TOPSIS / 灰色关联 / 加权求和）→ 计算得分 → 排名。<br>
+<strong>Step 5：灵敏度分析。</strong>权重扰动 → 方法替换 → 排名稳定性检验。<br>
+<strong>Step 6：结果解读。</strong>排名分析 → 各维度优劣势分析 → 改进建议。</p>
+</div>
+
+<div class="note-box">
+<strong>关键提醒：</strong>评价类题目的论文，<strong>论证过程比计算结果更重要</strong>。评委要看的是：你为什么这样选指标？为什么这样赋权？为什么这样聚合？排名是否可靠？——而不是你算出了 0.8732 还是 0.8733。把精力放在方法论的论证上，而不是追求小数点后第四位的精度。
+</div>

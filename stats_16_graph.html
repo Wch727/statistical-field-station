@@ -15,16 +15,20 @@
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main-content">跳到内容</a>
 <div class="page">
 
-<nav class="top-nav"><a href="stats_tutorial.html">← Field Station</a> <span>|</span> §XVI 图论、网络与仿真</nav>
+<nav class="top-nav" aria-label="面包屑导航">
+  <a href="stats_tutorial.html">← Field Station</a> <span aria-hidden="true">|</span> §XVI 图论与仿真
+</nav>
 
 <header class="hero">
-  <div class="num">§XVI</div>
+  <div class="num">{{CHAPTER_NUM}}</div>
   <h1>图论、网络与仿真</h1>
-  <p class="deck">最短路线是什么？网络中哪些节点最重要？如何模拟随机事件？<strong>图论解决的是关系结构问题，仿真解决的是随机动态问题。两者结合可以处理很多「复杂系统」类题目。</strong>本章涵盖最短路径、最小生成树、网络中心性、蒙特卡洛模拟、排队模型和元胞自动机。</p>
+  <p class="deck">图论 + 随机仿真的组合工具箱。最短路径 (Dijkstra/Floyd)、最小生成树 (Prim/Kruskal)、网络中心性、蒙特卡洛模拟、排队论 (M/M/1)、元胞自动机 (交通流 NASCH)。回答「最短路线？关键节点？如何模拟随机系统？」</p>
 </header>
 
+<main id="main-content">
 <div class="competition-box">
 <h4>竞赛真题场景</h4>
 <p><span class="q">Q：</span>美赛 MCM：如何规划城市交通网络？→ 最短路径 + 最大流。<br>
@@ -264,14 +268,24 @@ d_{ij}^{(k)} = \min\left(d_{ij}^{(k-1)},\; d_{ik}^{(k-1)} + d_{kj}^{(k-1)}\right
 <div class="warn-box">
 <strong>竞赛陷阱：</strong>① 蒙特卡洛仿真只跑一次就报告结果——仿真结果有随机性，必须报告均值和置信区间。② 图论模型过于简化——忽略了实际约束（如道路不是直线、节点之间不是无限容量）。③ 元胞自动机不解释规则设计——评委需要知道你为什么选择这些规则、有什么依据。④ 排队模型用 M/M/1 硬套现实——大多数真实排队系统不是 Poisson 到达 + 指数服务。
 </div>
+</main>
 
-<footer>
-  <p><a href="stats_15_mechanism.html">← §XV 机理建模与微分方程</a> &nbsp;|&nbsp; <a href="stats_tutorial.html">Field Station 总目录</a></p>
-  <p style="margin-top:8px">Statistical Field Station &copy; 2026 · KaTeX + D3.js</p>
+<footer class="page-footer">
+  <div class="footer-nav">
+    <a href="stats_15_mechanism.html">← §XV 机理建模</a> &nbsp;|&nbsp; 
+    <a href="stats_tutorial.html">Field Station 总目录</a>
+    
+  </div>
+  <div class="footer-meta">
+    <span>版本 v1.2.0</span> <span>|</span>
+    <span>统计审校: 已完成三轮</span> <span>|</span>
+    <span>最后更新: 2026-07</span>
+  </div>
+  <p>Statistical Field Station &copy; 2026 · KaTeX + D3.js</p>
 </footer>
 
 </div>
-
+<script src="assets/js/statistics.js"></script>
 <script>
 // ============ Dependency Load Guard ============
 if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
@@ -280,15 +294,6 @@ if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
     '⚠ 交互资源加载失败。请确认 assets 目录完整，并检查文件路径后刷新页面。</div>');
 } else {
 
-// ============ KaTeX Auto-Render ============
-renderMathInElement(document.body, {
-  delimiters: [
-    {left: '\\[', right: '\\]', display: true},
-    {left: '\\(', right: '\\)', display: false},
-    {left: '$$', right: '$$', display: true}
-  ],
-  throwOnError: false
-});
 
 // ============ INSTRUMENT No.16A: Dijkstra ============
 (function() {
@@ -307,10 +312,7 @@ renderMathInElement(document.body, {
   nodes.forEach(n => adj[n.id] = []);
   edges.forEach(e => {
     adj[e.from].push({to:e.to, w:e.w});
-    adj[e.to].push({to:e.from, w:e.w});
-  });
-
-  let selectedStart = null, selectedEnd = null;
+    adj[e.to].push({to:e.from, w:e.w});  let selectedStart = null, selectedEnd = null;
 
   const svg = d3.select('#sp-chart').append('svg').attr('width',W).attr('height',H).attr('viewBox',`0 0 ${W} ${H}`);
 
@@ -330,9 +332,7 @@ renderMathInElement(document.body, {
           dist[to] = dist[u] + w;
           prev[to] = u;
           pq.push([to, dist[to]]);
-        }
-      });
-    }
+        }    }
     // Reconstruct path
     const path = [];
     let cur = end;
@@ -364,10 +364,7 @@ renderMathInElement(document.body, {
       svg.append('text').attr('x',mx).attr('y',my-8)
         .text(e.w).style('font-family','var(--mono)').style('font-size','0.7rem')
         .style('fill', inPath ? 'var(--terracotta)' : 'var(--slate)').style('text-anchor','middle')
-        .style('font-weight', inPath ? '700' : '400');
-    });
-
-    // Nodes
+        .style('font-weight', inPath ? '700' : '400');    // Nodes
     nodes.forEach(n => {
       const isStart = n.id === selectedStart;
       const isEnd = n.id === selectedEnd;
@@ -384,9 +381,7 @@ renderMathInElement(document.body, {
           if (selectedStart === null) { selectedStart = n.id; selectedEnd = null; }
           else if (selectedEnd === null && n.id !== selectedStart) { selectedEnd = n.id; }
           else { selectedStart = n.id; selectedEnd = null; }
-          draw();
-        });
-      svg.append('text').attr('x',n.x).attr('y',n.y+5)
+          draw();      svg.append('text').attr('x',n.x).attr('y',n.y+5)
         .text(n.id).style('font-family','var(--mono)').style('font-size','0.75rem')
         .style('fill', (isStart || isEnd) ? '#fff' : 'var(--forest)')
         .style('text-anchor','middle').style('font-weight','700')
@@ -394,11 +389,7 @@ renderMathInElement(document.body, {
           if (selectedStart === null) { selectedStart = n.id; selectedEnd = null; }
           else if (selectedEnd === null && n.id !== selectedStart) { selectedEnd = n.id; }
           else { selectedStart = n.id; selectedEnd = null; }
-          draw();
-        });
-    });
-
-    // Stats
+          draw();    // Stats
     if (result && result.path.length > 0) {
       d3.select('#sp-stats').html(`
         <div class="stat-card"><div class="lbl">最短距离</div><div class="val" style="color:var(--terracotta)">${result.dist}</div></div>
@@ -484,11 +475,21 @@ renderMathInElement(document.body, {
   d3.select('#mc-reset').on('click', () => {
     total = 0; inside = 0;
     svg.selectAll('circle').remove();
-    updateStats();
-  });
-
-  addPoints(200);
+    updateStats();  addPoints(200);
 })();
+
+
+// ============ KaTeX Auto-Render ============
+renderMathInElement(document.body, {
+  delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '\\[', right: '\\]', display: true},
+    {left: '$', right: '$', display: false},
+    {left: '\\(', right: '\\)', display: false}
+  ],
+  throwOnError: false,
+  strict: false
+});
 
 } // End CDN guard
 </script>

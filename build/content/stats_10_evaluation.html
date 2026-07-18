@@ -1,0 +1,451 @@
+<div class="competition-box">
+<h4>竞赛真题场景</h4>
+<p><span class="q">Q：</span>几乎所有竞赛论文都需要报告模型评估指标。评委最常问的问题：「你的模型准确率是 95%，但数据集正负样本比例是 95:5——如果全预测为正类，准确率也是 95%。你的模型真的有用吗？」<br>
+<span class="q">Q：</span>国赛常考：200 个样本，30 个特征，如何筛选最重要的特征？需要用 PCA 降维 + 特征选择。<br>
+<span class="q">Q：</span>美赛评审标准明确要求「Sensitivity Analysis」——模型对参数变化的敏感度分析。交叉验证用于评估模型的泛化稳定性；敏感性分析用于研究输入、参数或假设变化对结果的影响。二者都属于模型验证，但解决的问题不同。<br>
+<strong>→ 模型评估不是跑完代码后补的几行数字，而是整个建模过程中持续进行的质量保证。</strong></p>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>10.1 混淆矩阵与分类评估指标</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>混淆矩阵 (Confusion Matrix)</h4>
+<p>对于二分类问题，将预测结果与真实标签交叉制表，得到四个基本计数：</p>
+</div>
+
+<div class="cm-table">
+  <div class="cm-header"></div>
+  <div class="cm-header">预测正</div>
+  <div class="cm-header">预测负</div>
+  <div class="cm-header">真实正</div>
+  <div class="cm-cell tp">TP</div>
+  <div class="cm-cell fn">FN</div>
+  <div class="cm-header">真实负</div>
+  <div class="cm-cell fp">FP</div>
+  <div class="cm-cell tn">TN</div>
+</div>
+
+<p style="margin-top:12px;">从这四个数出发，可以定义所有关键的评估指标：</p>
+
+<div class="math-block">
+\[
+\begin{aligned}
+\text{准确率 (Accuracy)} &= \frac{TP + TN}{TP + TN + FP + FN} \\
+\text{精确率 (Precision)} &= \frac{TP}{TP + FP} \quad\text{——预测为正的有多少是真的？}\\
+\text{召回率 (Recall)} &= \frac{TP}{TP + FN} \quad\text{——真正的正类被找出了多少？}\\
+\text{F1 分数} &= \frac{2 \cdot \text{Precision} \cdot \text{Recall}}{\text{Precision} + \text{Recall}} = \frac{2TP}{2TP + FP + FN}
+\end{aligned}
+\]
+</div>
+
+<div class="derive-box">
+<h4>推导：F1 为什么是调和平均？</h4>
+<p>F1 是精确率和召回率的<strong>调和平均数</strong>（而非算术平均）：</p>
+<div class="math-block">
+\[
+\frac{1}{F_1} = \frac{1}{2}\left(\frac{1}{P} + \frac{1}{R}\right)
+\]
+</div>
+<p>调和平均比算术平均更「严厉」——如果 Precision 或 Recall 中有一个很低，F1 也会很低。例如 Precision=1.0，Recall=0.1，算术平均=0.55，但 F1=0.18。这迫使模型在两个指标上都表现良好。</p>
+<p>更一般地，\(F_\beta\) 分数允许调整权重：</p>
+<div class="math-block">
+\[
+F_\beta = (1+\beta^2)\frac{P \cdot R}{\beta^2 P + R}
+\]
+</div>
+<p>\(\beta < 1\)：更重视 Precision（如垃圾邮件检测——宁可漏掉，不能误判）。\(\beta > 1\)：更重视 Recall（如疾病筛查——宁可误诊，不能漏诊）。</p>
+</div>
+
+<h3>10.1.2 ROC 曲线与 AUC</h3>
+
+<p>ROC (Receiver Operating Characteristic) 曲线以 FPR（假阳性率）为横轴，TPR（召回率）为纵轴，通过变化分类阈值画出。AUC（Area Under Curve）是 ROC 曲线下的面积：</p>
+
+<div class="math-block">
+\[
+\text{AUC} \in [0, 1]
+\]
+</div>
+
+<p>AUC = 1：完美分类器；AUC = 0.5：随机猜测；AUC &lt; 0.5：排序方向系统性反向（将分数取负后新 AUC = 1 − 原 AUC）；AUC 的统计解释：<strong>随机选一个正样本和一个负样本，分类器给正样本更高分数的概率</strong>。</p>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>在类别不平衡的情况下，<strong>不要报告准确率</strong>——报告精确率、召回率、F1 和 AUC。如果正类只占 5%，模型把所有样本都预测为负类，准确率仍有 95%，但正类召回率为 0，正类 F1 也为 0。ROC-AUC 对类别比例的直接变化相对不敏感，但在严重类别不平衡问题中可能显得过于乐观，此时应同时报告 PR-AUC、Precision、Recall 和 F1。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>10.2 交叉验证</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>核心思想</h4>
+<p>单次训练/测试划分的评估结果可能受随机性影响很大。交叉验证通过多次划分、多次训练和评估，得到更稳定、更可靠的性能估计。</p>
+</div>
+
+<h3>10.2.1 K 折交叉验证</h3>
+
+<p>将数据集随机分为 \(K\) 个等大的折（fold）。每次用 \(K-1\) 折训练，1 折验证，重复 \(K\) 次：</p>
+
+<div class="math-block">
+\[
+\text{CV Error} = \frac{1}{K} \sum_{k=1}^{K} \text{Error}_k
+\]
+</div>
+
+<table class="compact-table">
+<thead><tr><th>K 值</th><th>偏差</th><th>方差</th><th>计算量</th><th>适用场景</th></tr></thead>
+<tbody>
+<tr><td>K = 5</td><td>低</td><td>中</td><td>中</td><td>通用，竞赛首选</td></tr>
+<tr><td>K = 10</td><td>较低</td><td>较低</td><td>较高</td><td>样本量适中时</td></tr>
+<tr><td>K = n (LOOCV)</td><td>最低</td><td>最高</td><td>极高</td><td>极小样本时</td></tr>
+</tbody>
+</table>
+
+<div class="derive-box">
+<h4>偏差-方差视角下的 K 选择</h4>
+<p>交叉验证的误差估计是一个<strong>有偏估计</strong>——训练集比全数据集小，模型性能被低估。K 越小，训练集越小，偏差越大。但 K 越大，训练集之间的重叠越多，模型之间的相关性越高，方差越大。</p>
+<p>5 折和 10 折是经验上偏差-方差平衡最好的选择。留一法（LOOCV）偏差最小但方差最大，且计算量为 \(O(n)\) 倍——在大数据上不实用。</p>
+</div>
+
+<h3>10.2.2 分层抽样与重复 CV</h3>
+
+<p><strong>分层 K 折 (Stratified K-Fold)：</strong>保持每折中各类别的比例与原始数据一致。对于分类问题，分层几乎是必须的——否则某些折可能完全没有某一类。</p>
+
+<p><strong>重复 K 折 (Repeated K-Fold)：</strong>将 K 折交叉验证重复多次（每次重新随机划分），取所有结果的平均。这进一步降低了方差，代价是计算量增加。竞赛中常用 5×2 或 10×5 的重复 CV。</p>
+
+<div class="warn-box">
+<strong>竞赛常见错误：</strong>① 交叉验证后再做特征选择——这会导致数据泄露（data leakage）。所有预处理（标准化、特征选择、PCA）必须在交叉验证的<strong>每一折内部</strong>独立进行。② 用交叉验证的结果选择模型，然后在测试集上报告同样的交叉验证结果——这是双重使用验证数据，会高估性能。③ 时间序列数据用随机 K 折——时间结构被破坏，应该用时间序列交叉验证（TimeSeriesSplit）。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>10.3 主成分分析 (PCA)</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>核心思想</h4>
+<p>PCA 寻找数据中<strong>方差最大的方向</strong>（主成分），将高维数据投影到低维空间，同时保留尽可能多的信息。PCA 是一种线性变换，等价于对协方差矩阵做特征值分解。</p>
+</div>
+
+<h3>10.3.1 数学推导</h3>
+
+<p>设数据中心化后为 \(X \in \mathbb{R}^{n \times p}\)（每列均值为 0）。协方差矩阵为 \(S = \frac{1}{n-1}X^T X\)。</p>
+
+<p>第一主成分方向 \(w_1\) 是最大化投影方差的单位向量：</p>
+
+<div class="math-block">
+\[
+w_1 = \arg\max_{\|w\|=1} \text{Var}(Xw) = \arg\max_{\|w\|=1} w^T S w
+\]
+</div>
+
+<div class="derive-box">
+<h4>推导：PCA 等价于特征值分解</h4>
+<p>这是一个带约束的优化问题，用拉格朗日乘子法：</p>
+<div class="math-block">
+\[
+\mathcal{L}(w, \lambda) = w^T S w - \lambda(w^T w - 1)
+\]
+\[
+\frac{\partial \mathcal{L}}{\partial w} = 2Sw - 2\lambda w = 0 \quad \Rightarrow \quad Sw = \lambda w
+\]
+</div>
+<p>所以 \(w_1\) 是 \(S\) 的<strong>特征向量</strong>！代入目标函数：\(w_1^T S w_1 = \lambda_1 w_1^T w_1 = \lambda_1\)。因此，第一主成分对应最大特征值 \(\lambda_1\) 的特征向量；第 \(k\) 主成分对应第 \(k\) 大特征值的特征向量。</p>
+<p><strong>关键性质：</strong>各主成分之间<strong>正交</strong>（不相关），总方差等于所有特征值之和：\(\sum_{j=1}^{p} \lambda_j = \text{tr}(S)\)。</p>
+</div>
+
+<h3>10.3.2 方差解释率与维度选择</h3>
+
+<div class="math-block">
+\[
+\text{第 }k\text{ 主成分的方差解释率} = \frac{\lambda_k}{\sum_{j=1}^{p} \lambda_j}
+\]
+\[
+\text{前 }m\text{ 个主成分的累积方差解释率} = \frac{\sum_{k=1}^{m} \lambda_k}{\sum_{j=1}^{p} \lambda_j}
+\]
+</div>
+
+<p>经验法则：选择累积方差解释率达到 80%-95% 的最小 \(m\)。或者看碎石图（scree plot）——特征值曲线的「肘部」。</p>
+
+<div class="toolkit-box">
+<h4>竞赛工具箱：PCA 使用指南</h4>
+<p><strong>必须标准化：</strong>PCA 对方差敏感——如果某个特征天然方差大（如收入范围是 0-100000），它会在 PCA 中主导所有主成分。先 Z-score 标准化。<br>
+<strong>可解释性：</strong>每个主成分是原始特征的线性组合，可以看载荷（loading）来解释每个主成分的含义。例如「PC1 ≈ 0.8×身高 + 0.6×体重」→ PC1 代表「体型」。<br>
+<strong>非线性：</strong>PCA 只能捕捉线性结构。对于非线性流形，考虑 t-SNE 或 UMAP（但这些都是可视化工具，不适合作为特征工程步骤）。<br>
+<strong>竞赛中 PCA 的三大用途：</strong>① 降维后可视化（2D/3D 散点图）。② 去除多重共线性（PCA 后的主成分互相正交）。③ 作为其他模型的特征输入（如 PCA → K-Means 聚类）。</p>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>10.3A 偏最小二乘 (PLS)</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>PCA 的竞赛替代方案</h4>
+<p>PCA 寻找的是<strong>X 空间中方差最大的方向</strong>——完全不考虑 Y。但竞赛中，我们真正关心的是与 Y 相关的方向。PLS（Partial Least Squares）同时分解 X 和 Y，寻找<strong>最能解释 Y 的 X 的线性组合</strong>。当 \(p \gg n\)（特征数远超样本数）时，PLS 通常优于 PCA。</p>
+</div>
+
+<h3>PLS 的数学原理</h3>
+
+<div class="derive-box">
+<h4>PLS 的优化目标</h4>
+<p>PCA 最大化 \(\text{Var}(Xw)\)。PLS 最大化 \(\text{Cov}(Xw, Yc)^2\)——即 X 的线性组合与 Y 的线性组合的协方差：</p>
+<div class="math-block">
+\[
+\max_{w,c} \text{Cov}(Xw, Yc)^2 \quad \text{s.t.} \quad \|w\| = \|c\| = 1
+\]
+</div>
+<p>这等价于对交叉协方差矩阵 \(X^T Y\) 做 SVD 分解。第一个 PLS 方向就是 \(X^T Y\) 的第一个左奇异向量。数学上，PLS 的得分向量是 X 的列空间与 Y 的列空间之间的「桥梁」。</p>
+</div>
+
+<h3>PCA vs PLS 选择指南</h3>
+
+<table class="compact-table">
+<thead><tr><th>条件</th><th>推荐</th><th>理由</th></tr></thead>
+<tbody>
+<tr><td>无监督（只有 X）</td><td>PCA</td><td>PLS 需要 Y</td></tr>
+<tr><td>有 Y，特征数远大于样本数</td><td>PLS</td><td>PLS 利用 Y 的信息，降维更有效</td></tr>
+<tr><td>有 Y，X 的噪声维度多</td><td>PLS</td><td>PLS 忽略与 Y 无关的方差方向</td></tr>
+<tr><td>需要可视化、无特定 Y</td><td>PCA</td><td>PCA 是探索性数据分析的标准工具</td></tr>
+</tbody>
+</table>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>PLS 是竞赛中处理高维小样本问题的利器。特别是在化学计量学（近红外光谱）、基因组学（基因表达数据）等竞赛中，PLS 几乎是标准配置。在论文中，PLS 的得分图（score plot）和载荷图（loading plot）是必做的可视化。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>10.3B 偏差-方差权衡</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>理解模型误差的根本来源</h4>
+<p>任何模型的预测误差都可以分解为三个不可约的部分——偏差（Bias）、方差（Variance）和噪声。理解这个分解是选择模型复杂度的理论基础。</p>
+</div>
+
+<div class="derive-box">
+<h4>推导：偏差-方差分解</h4>
+<p>对于平方损失，期望预测误差可以分解为：</p>
+<div class="math-block">
+\[
+\begin{aligned}
+\mathbb{E}[(Y - \hat{f}(x))^2] &= \underbrace{(\mathbb{E}[\hat{f}(x)] - f(x))^2}_{\text{Bias}^2} + \underbrace{\mathbb{E}[(\hat{f}(x) - \mathbb{E}[\hat{f}(x)])^2]}_{\text{Variance}} + \underbrace{\sigma^2_{\varepsilon}}_{\text{Irreducible Noise}}
+\end{aligned}
+\]
+</div>
+<p><strong>偏差：</strong>模型预测的期望与真实值之间的差距——模型类本身的限制。高偏差 = 欠拟合。<br>
+<strong>方差：</strong>模型预测在不同训练集上的波动——模型对数据敏感度。高方差 = 过拟合。<br>
+<strong>噪声：</strong>数据本身的随机性——任何模型都无法消除的下界。</p>
+</div>
+
+<p>这解释了为什么模型选择不是越复杂越好：简单模型（如线性回归）偏差高但方差低；复杂模型（如深度神经网络）偏差低但方差高。最优模型在偏差和方差之间取得平衡。</p>
+
+<div class="note-box">
+<strong>竞赛启示：</strong>偏差-方差权衡解释了为什么集成方法（随机森林、XGBoost）效果好——它们在不增加偏差的情况下降低了方差。也解释了为什么交叉验证是模型选择的必要工具——它估计的是泛化误差，而非训练误差。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>10.3C 嵌套交叉验证</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>模型选择 ≠ 模型评估——不能混用同一份数据</h4>
+<p>标准 K 折交叉验证用于<strong>评估</strong>已知模型的性能。但如果你用交叉验证来<strong>选择</strong>模型（如比较 KNN 的 K=3 vs K=5 vs K=7），然后<strong>报告</strong>选择过程中的最优 CV 分数——这就是<strong>乐观偏差</strong>。嵌套交叉验证将选择和评估分离，得到无偏的性能估计。</p>
+</div>
+
+<div class="derive-box">
+<h4>嵌套 CV 的结构</h4>
+<p><strong>外层循环（K_outer 折）：</strong>评估最终模型的泛化性能。<br>
+<strong>内层循环（K_inner 折）：</strong>在训练折上做超参数选择。</p>
+<p>例如 5×2 嵌套 CV：外层 5 折，每折的训练数据再做内层 2 折来选超参数。最终报告的是<strong>外层 5 折的平均性能</strong>——这些数据从未参与超参数选择，因此性能估计是无偏的。</p>
+<div class="math-block">
+\[
+\text{CV Error}_{\text{nested}} = \frac{1}{K_{\text{outer}}} \sum_{k=1}^{K_{\text{outer}}} \text{Error}(\text{model selected by inner CV on fold } k)
+\]
+</div>
+</div>
+
+<div class="warn-box">
+<strong>竞赛陷阱：</strong>最常见的错误——用全部数据做 5 折 CV 选 K=7，然后报告 K=7 的 CV 分数 0.92。实际上这个 0.92 是乐观的——因为 K=7 就是选了让 CV 分数最高的 K。嵌套 CV 可能给出 0.87——这才是真实的泛化性能。如果数据量足够（n > 500），用简单的 train/validation/test 划分替代嵌套 CV 更简单。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>10.3D 超参数优化</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>从手动试错到自动搜索</h4>
+<p>绝大部分 ML 模型都有超参数——KNN 的 K、随机森林的树数、SVM 的 C 和 γ、XGBoost 的学习率。超参数优化是竞赛中提升模型性能的关键步骤。</p>
+</div>
+
+<table class="compact-table">
+<thead><tr><th>方法</th><th>做法</th><th>优点</th><th>缺点</th></tr></thead>
+<tbody>
+<tr><td><strong>Grid Search</strong></td><td>穷举所有候选值的组合</td><td>简单、可并行</td><td>维度诅咒——3 个参数各 10 个值 = 1000 种组合</td></tr>
+<tr><td><strong>Random Search</strong></td><td>从分布中随机采样 N 组</td><td>同预算下比 Grid 更高效</td><td>可能遗漏最优组合</td></tr>
+<tr><td><strong>Bayesian Opt</strong></td><td>用高斯过程建模超参数→性能</td><td>最少评估找到最优</td><td>实现复杂、序贯执行难并行</td></tr>
+<tr><td><strong>Optuna / Hyperopt</strong></td><td>TPE (Tree-structured Parzen Estimator)</td><td>自动、高效、支持剪枝</td><td>需要额外安装库</td></tr>
+</tbody>
+</table>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>论文中写：「我们使用 5 折网格搜索对随机森林的超参数进行调优，搜索范围：n_estimators ∈ {100, 200, 300, 500}，max_depth ∈ {3, 5, 7, 10, None}，max_features ∈ {sqrt, log2, None}。最优参数组合为 n_estimators=300, max_depth=7, max_features=sqrt，在验证集上达到 F1=0.86。」——这种描述展示了完整的调参流程。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>10.3E 模型解释 (SHAP)</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>从「预测了什么」到「为什么这么预测」</h4>
+<p>竞赛论文中，仅仅报告「模型准确率 95%」是不够的。评委想知道：<strong>哪些特征驱动了预测？每个特征对预测的贡献有多大？</strong>SHAP (SHapley Additive exPlanations) 基于博弈论中的 Shapley 值，为每个特征的每个预测提供可加的贡献分解。</p>
+</div>
+
+<div class="math-block">
+\[
+\phi_j = \sum_{S \subseteq F \setminus \{j\}} \frac{|S|!(|F| - |S| - 1)!}{|F|!} \left[ f(S \cup \{j\}) - f(S) \right]
+\]
+</div>
+
+<p>其中 \(\phi_j\) 是特征 \(j\) 的 Shapley 值——在<strong>所有可能的特征子集</strong>上，特征 \(j\) 加入后的边际贡献的加权平均。</p>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>SHAP 在竞赛论文中的黄金用法：① 特征重要性条形图——哪些特征对预测最重要？② SHAP 摘要图——每个特征的高/低值如何影响预测？③ 单个样本的 SHAP 瀑布图——解释为什么这个特定样本被预测为正类。<br>
+<strong>注意：</strong>SHAP 计算量大（O(2^p)），实际使用 KernelSHAP（模型无关）或 TreeSHAP（树模型专用，O(TL²)）。竞赛中如果不用 SHAP，至少用<strong>排列重要性 (Permutation Importance)</strong>——随机打乱某个特征，看性能下降多少。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>10.3F 多分类评估指标</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>从二分类到多分类——指标如何聚合？</h4>
+<p>当有 3 个或更多类别时，精确率、召回率、F1 需要从「每个类别一个值」聚合为「一个总指标」。聚合方式影响结论。</p>
+</div>
+
+<div class="math-block">
+\[
+\begin{aligned}
+\text{Macro avg：} & \quad \frac{1}{K}\sum_{k=1}^{K} \text{F1}_k \quad \text{（每个类权重相等，小类别与大类别同等重要）} \\
+\text{Micro avg：} & \quad \text{F1}\left(\sum TP_k, \sum FP_k, \sum FN_k\right) \quad \text{（每个样本权重相等，被大类主导）} \\
+\text{Weighted avg：} & \quad \sum_{k=1}^{K} w_k \cdot \text{F1}_k \quad \text{（按类别样本数加权，考虑了类别不平衡）}
+\end{aligned}
+\]
+</div>
+
+<div class="derive-box">
+<h4>选择指南</h4>
+<p><strong>类别平衡时：</strong>Macro ≈ Micro ≈ Weighted，选哪个差别不大。<br>
+<strong>类别不平衡时：</strong>Micro 被大类主导（如果大类准确率 99%，Micro F1 也会接近 99%），可能掩盖小类差的表现。Macro 给每个类同等权重——如果小类很重要，用 Macro。Weighted 是折中方案。<br>
+<strong>竞赛推荐：</strong>同时报告 Macro 和 Weighted F1，说明「我们关注所有类别的均衡表现，因此主要参考 Macro F1」。另附<strong>混淆矩阵</strong>——让评委看到每个类别的具体表现。</p>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>10.4 特征选择</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<p>特征选择有三种范式：</p>
+
+<table class="compact-table">
+<thead><tr><th>范式</th><th>方法</th><th>原理</th><th>优点</th><th>缺点</th></tr></thead>
+<tbody>
+<tr><td><strong>Filter（过滤式）</strong></td><td>方差阈值、相关系数、互信息、卡方检验</td><td>独立于模型，按统计指标筛选</td><td>快速、可扩展</td><td>不考虑特征间交互</td></tr>
+<tr><td><strong>Wrapper（包裹式）</strong></td><td>前向选择、后向消除、递归特征消除 (RFE)</td><td>用模型性能评估特征子集</td><td>考虑特征交互</td><td>计算量大</td></tr>
+<tr><td><strong>Embedded（嵌入式）</strong></td><td>LASSO (L1)、随机森林特征重要性、Elastic Net</td><td>特征选择与模型训练同时进行</td><td>效率与效果兼顾</td><td>模型特定</td></tr>
+</tbody>
+</table>
+
+<div class="derive-box">
+<h4>LASSO 的特征选择原理</h4>
+<p>LASSO 在 OLS 损失函数中加入 L1 惩罚项：</p>
+<div class="math-block">
+\[
+\hat{\beta}_{\text{LASSO}} = \arg\min_{\beta} \left\{ \sum_{i=1}^{n} (y_i - x_i^T\beta)^2 + \lambda \sum_{j=1}^{p} |\beta_j| \right\}
+\]
+</div>
+<p>L1 惩罚的几何特性（菱形约束区域）使得某些 \(\beta_j\) 恰好为 0——实际上就是在做特征选择。\(\lambda\) 越大，被选中的特征越少。通过交叉验证选择最优 \(\lambda\)。</p>
+</div>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>特征选择的黄金组合 = <strong>Filter 初筛（去除方差极低、相关性极高的特征）→ Embedded 精筛（LASSO 或随机森林重要性）→ 交叉验证确认</strong>。在论文中，不要只说「我们选了 8 个特征」，要说明为什么选这 8 个——报告每个特征的重要性得分和选择依据。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>10.5 数据标准化</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<table class="compact-table">
+<thead><tr><th>方法</th><th>公式</th><th>适用场景</th></tr></thead>
+<tbody>
+<tr><td>Z-score 标准化</td><td>\(x' = \frac{x - \mu}{\sigma}\)</td><td><strong>竞赛默认首选</strong>。PCA、SVM、K-Means、逻辑回归</td></tr>
+<tr><td>Min-Max 归一化</td><td>\(x' = \frac{x - x_{\min}}{x_{\max} - x_{\min}}\)</td><td>需要固定范围 [0,1]（如神经网络输入层）</td></tr>
+<tr><td>Robust Scaling</td><td>\(x' = \frac{x - \text{median}}{\text{IQR}}\)</td><td>有异常值时（使用中位数和 IQR 替代均值和标准差）</td></tr>
+<tr><td>Quantile Transform</td><td>映射到均匀或正态分布</td><td>特征分布高度偏斜时</td></tr>
+</tbody>
+</table>
+
+<div class="warn-box">
+<strong>关键提醒：</strong>标准化参数（均值、标准差、最小值、最大值）必须<strong>从训练集计算，然后应用于验证集/测试集</strong>。在交叉验证中，每一折都要用训练折的参数来标准化验证折。用全数据集计算标准化参数再交叉验证 = 数据泄露。
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- INSTRUMENT No.10A: 交互式混淆矩阵 -->
+<!-- ══════════════════════════════════════════════ -->
+<h2>仪器 No.10A — 交互式混淆矩阵与阈值调节</h2>
+<div class="panel">
+<div class="panel-label">INSTRUMENT No.10A · Confusion Matrix & Threshold Tuning</div>
+<p style="font-size:0.9rem;color:var(--slate);margin-bottom:12px">模拟一个二分类器的分数分布。拖动阈值观察 TP/FP/FN/TN 的变化，以及精确率、召回率、F1 的实时更新。理解阈值如何影响精确率-召回率权衡。</p>
+<div class="slider-row">
+  <label>分类阈值 = <span class="slider-val" id="cm-thresh-val">0.50</span></label>
+  <input type="range" id="cm-thresh" min="0.05" max="0.95" value="0.50" step="0.01">
+</div>
+<div class="slider-row">
+  <label>正类比例 = <span class="slider-val" id="cm-ratio-val">0.30</span></label>
+  <input type="range" id="cm-ratio" min="0.05" max="0.50" value="0.30" step="0.01">
+</div>
+<div class="btn-group">
+  <button class="btn" id="cm-reshuffle">重新生成数据</button>
+</div>
+<div class="panel-grid">
+  <div>
+    <div class="chart-container" id="cm-dist-chart"></div>
+    <div class="cm-table" id="cm-matrix"></div>
+  </div>
+  <div>
+    <div class="stat-cards" id="cm-stats"></div>
+    <div class="chart-container" id="cm-roc-chart"></div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- INSTRUMENT No.10B: PCA 可视化 -->
+<!-- ══════════════════════════════════════════════ -->
+<h2>仪器 No.10B — PCA 降维可视化</h2>
+<div class="panel">
+<div class="panel-label">INSTRUMENT No.10B · PCA Projection & Scree Plot</div>
+<p style="font-size:0.9rem;color:var(--slate);margin-bottom:12px">3D 数据（三个相关变量）通过 PCA 投影到 2D。左图：原始 3D 数据的 2D 投影（散点图）。右图：碎石图（特征值 + 累积方差解释率）。观察 PCA 如何找到方差最大的方向。</p>
+<div class="btn-group">
+  <button class="btn" id="pca-reshuffle">重新生成数据</button>
+  <button class="btn" id="pca-rotate">旋转数据</button>
+</div>
+<div class="panel-grid">
+  <div class="chart-container" id="pca-scatter-chart"></div>
+  <div class="chart-container" id="pca-scree-chart"></div>
+</div>
+<div class="stat-cards" id="pca-stats"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>10.6 竞赛实战流程</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="toolkit-box">
+<h4>模型评估与特征工程竞赛流程</h4>
+<p><strong>Step 1：</strong>数据标准化（Z-score），从训练集计算参数，应用于所有数据。<br>
+<strong>Step 2：</strong>特征初筛——去除方差极低（常数特征）、相关性极高（>0.95）的特征。<br>
+<strong>Step 3：</strong>PCA 分析——看前几个主成分的累积方差解释率，判断是否需要降维。<br>
+<strong>Step 4：</strong>特征选择——LASSO 或随机森林特征重要性，选出 top-K 特征。<br>
+<strong>Step 5：</strong>模型训练 + 5 折交叉验证——报告 CV 分数的均值 ± 标准差。<br>
+<strong>Step 6：</strong>混淆矩阵分析——不只是准确率，报告精确率、召回率、F1、AUC。<br>
+<strong>Step 7：</strong>敏感性分析——改变关键参数（如 K、阈值），观察性能变化。</p>
+</div>

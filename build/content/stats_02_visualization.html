@@ -1,0 +1,230 @@
+<!-- ═══════════ 竞赛场景 ═══════════ -->
+<div class="competition-box">
+<h4>竞赛真题场景</h4>
+<p><span class="q">Q：</span>某年全国大学生数学建模竞赛 C 题：某企业提供了 402 个样本的 15 个理化指标，要求建立分类模型。赛题一等奖论文的共同特征：<strong>先用 3-4 张精心设计的图展示数据分布和变量关系</strong>（箱线图对比不同类别、相关热力图筛选变量、散点图矩阵发现聚类趋势），然后才进入建模。<br>
+<span class="q">Q：</span>美赛 MCM 中，评委最看重的是可视化——一张好图胜过一千字。2024 年 MCM B 题（搜寻潜水器）的 O 奖论文，几乎每一页都有图表，数据可视化部分占了论文篇幅的 30% 以上。<br>
+<strong>→ 竞赛中，可视化不是「锦上添花」，而是核心论证手段。本节教你如何制作专业级的统计图表。</strong></p>
+</div>
+
+<!-- ═══════════ 2.1 直方图 ═══════════ -->
+<h2>2.1 直方图：从数据到分布</h2>
+
+<div class="concept-box">
+<h4>Bin 宽度：直方图最关键的参数之一</h4>
+<p>Bin 宽度选择是偏误-方差权衡。太窄 → 欠平滑（undersmoothed），噪声太多，看不清结构。太宽 → 过平滑（oversmoothed），掩盖真实结构。没有「正确」的 bin 数——需要用不同 bin 数反复尝试，找到「稳定」的模式。</p>
+</div>
+
+<div class="derive-box">
+<h4>三种 Bin 选择规则</h4>
+<p><strong>Sturges 规则 (1926)：</strong>\[ k = \lceil \log_2 n + 1 \rceil \]假设数据近似正态，适用于 \(n \leq 200\)。简单但可能过于保守（bin 数太少）。</p>
+<p><strong>Freedman-Diaconis 规则 (1981)：</strong>\[ h = \frac{2 \times \text{IQR}}{\sqrt[3]{n}} \qquad k = \left\lceil \frac{\max(x) - \min(x)}{h} \right\rceil \]基于 IQR 而非标准差，对偏态和离群值更稳健。<strong>推荐首选。</strong></p>
+<p><strong>Scott 规则 (1979)：</strong>\[ h = \frac{3.5 \times s}{\sqrt[3]{n}} \]基于标准差，假设正态分布。最小化积分均方误差 (IMSE)。</p>
+</div>
+
+<div class="math-block">
+\[ k_{\text{Sturges}} = \lceil \log_2 n + 1 \rceil \qquad h_{\text{FD}} = \frac{2 \cdot \text{IQR}}{\sqrt[3]{n}} \qquad h_{\text{Scott}} = \frac{3.5 \cdot s}{\sqrt[3]{n}} \]
+</div>
+
+<div class="concept-box">
+<h4>看什么：直方图诊断清单</h4>
+<p>① <strong>对称性：</strong>对称 / 左偏 / 右偏。② <strong>峰数：</strong>单峰（一个群体）、双峰（两个子群体混合）、多峰（多个子群体）。双峰的出现可能意味着存在未考虑的分组变量。③ <strong>间隙 (Gap)：</strong>数据中可能的分界线。④ <strong>离群值：</strong>远离主体的孤立柱。⑤ <strong>边界效应：</strong>数据被截断（如最低分为 0）导致的堆积。</p>
+</div>
+
+<!-- ═══════════ 2.2 箱线图 ═══════════ -->
+<h2>2.2 箱线图：五数概括的可视化</h2>
+
+<div class="concept-box">
+<h4>箱线图的构造</h4>
+<p><strong>五数概括：</strong>Min → Q₁ → Median → Q₃ → Max。箱体 = IQR 区间（中间 50% 数据），箱内线 = 中位数。<br>
+<strong>须 (Whisker)：</strong>从箱体延伸到 Q₁ − 1.5×IQR 和 Q₃ + 1.5×IQR 范围内的最远数据点。不是固定的——须的末端是数据点，不是公式值。<br>
+<strong>离群值：</strong>须之外的每个点单独画出。1.5×IQR 是 Tukey 的标准，约对应正态分布下 ±2.7σ。</p>
+</div>
+
+<div class="math-block">
+\[ \text{Lower Fence} = Q_1 - 1.5 \times \text{IQR} \qquad \text{Upper Fence} = Q_3 + 1.5 \times \text{IQR} \]
+\[ \text{Whisker}_{\text{lower}} = \min\{x_i \mid x_i \geq \text{Lower Fence}\} \qquad \text{Whisker}_{\text{upper}} = \max\{x_i \mid x_i \leq \text{Upper Fence}\} \]
+</div>
+
+<div class="note-box">
+<strong>多组对比：</strong>并排箱线图是初步判断组间差异的最快方法。中位数不在对方箱体内的两组，很可能有显著差异。但箱线图隐藏了分布形状——双峰分布可能看起来和单峰分布一模一样。
+</div>
+
+<!-- ═══════════ 2.3 小提琴图 ═══════════ -->
+<h2>2.3 小提琴图与 KDE：超越箱线图</h2>
+
+<div class="derive-box">
+<h4>核密度估计 (KDE) 的数学原理</h4>
+<p>直方图对 bin 的起点和宽度敏感——改变 bin 边界可能产生完全不同的形态。KDE 是解决方案：</p>
+\[ \hat{f}_h(x) = \frac{1}{nh}\sum_{i=1}^{n} K\!\left(\frac{x - x_i}{h}\right) \]
+<p>其中 \(K\) 是核函数（通常为标准正态密度），\(h\) 是带宽。带宽的选择比核函数的选择重要得多。</p>
+<p><strong>Silverman 经验带宽：</strong>\[ h = 1.06 \cdot \hat{\sigma} \cdot n^{-1/5} \]更稳健的版本：\[ h = 0.9 \cdot \min\!\left(\hat{\sigma}, \frac{\text{IQR}}{1.34}\right) \cdot n^{-1/5} \]</p>
+</div>
+
+<div class="concept-box">
+<h4>小提琴图 = 箱线图 + KDE</h4>
+<p>箱线图只显示五数概括，丢失了分布的形状信息。小提琴图将 KDE 曲线镜像对称地画在箱线图两侧，同时显示分布的<strong>形状</strong>和<strong>摘要统计量</strong>。能发现双峰分布（两个不同子群体混在一起）、多模态、或任何箱线图中不可见的分布特征。小样本 (< 20) 时 KDE 不可靠，应改用散点条 (strip plot / beeswarm)。</p>
+</div>
+
+<!-- ═══════════ 2.4 Q-Q图 ═══════════ -->
+<h2>2.4 Q-Q 图：正态性诊断</h2>
+
+<div class="derive-box">
+<h4>Q-Q 图的构造</h4>
+<p>将排序后的样本分位数与理论正态分位数配对画散点图：</p>
+\[ \text{样本分位数：} q_{(i)} = x_{(i)} \qquad \text{理论分位数：} z_{(i)} = \Phi^{-1}\!\left(\frac{i - 0.5}{n}\right) \]
+<p>若数据来自正态分布 \(N(\mu, \sigma^2)\)，点应落在直线 \(y = \mu + \sigma z\) 上。偏离直线意味着偏离正态。<br>
+<strong>阅读方法：</strong>① 整体 S 形 → 峰度问题。② 一端翘起 → 偏态（右端上翘 = 右偏）。③ 中间偏离 → 分布中心不对。④ 个别点远离直线 → 潜在离群值。</p>
+</div>
+
+<!-- ═══════════ 2.5 相关热力图 ═══════════ -->
+<h2>2.5 相关热力图：多变量关系的全景视图</h2>
+
+<div class="concept-box">
+<h4>竞赛中最常用的探索性图表之一</h4>
+<p>当数据有 10 个、20 个甚至更多变量时，逐一画散点图太低效。相关热力图将所有变量两两之间的相关系数用颜色编码成矩阵，一眼看出哪些变量之间存在强相关。</p>
+<p><strong>制作要点：</strong>① 相关系数对称（r_ij = r_ji），一般只显示下三角。② 颜色从蓝（负相关）经白（零相关）到红（正相关），或从浅色到深色。③ 必须在每个格子里标注数值。④ 按聚类重排变量顺序，使强相关的变量聚在一起。<br>
+<strong>应用：</strong>① 变量筛选：如果两个自变量相关系数 > 0.9，删除其中一个（避免多重共线性）。② 发现目标变量的相关因素：看最后一行/列，找出与 Y 最相关的 X。③ 发现数据中的隐藏结构：某些变量形成一个「簇」，说明它们在测量同一个潜在维度。</p>
+</div>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>相关热力图 + 显著性标注（p < 0.05 用 * 标记，p < 0.01 用 **）是数模论文中最常见的组合图。如果变量太多（> 30），只显示 |r| > 0.3 的值，其余留空。
+</div>
+
+<!-- ═══════════ 2.6 Anscombe + Datasaurus ═══════════ -->
+<h2>2.6 Anscombe 四重奏与 Datasaurus Dozen</h2>
+
+<div class="warn-box">
+<strong>Anscombe 四重奏 (1973)：</strong>四组数据，每组 \(n=11\)，它们的均值（\(\bar{x}=9.0, \bar{y}=7.5\)）、方差（\(s_x^2=11.0, s_y^2=4.13\)）、相关系数（\(r=0.816\)）和回归线（\(y=3.0+0.5x\)）<strong>完全相同</strong>。但画出来分别是：正常线性、抛物线、完美线性（一个离群值）、垂直堆叠（一个离群值）。<strong>永远先画图，永远。</strong>
+</div>
+
+<div class="warn-box">
+<strong>Datasaurus Dozen (2017)：</strong>13 组数据，每组 \(n=142\)，拥有完全相同的 \(\bar{x}=54.26, \bar{y}=47.83, s_x=16.77, s_y=26.94, r=-0.064\)。但画出散点图后：一个恐龙、一颗星、一个圆、平行线……统计摘要值完全相同的两组数据，图形可以天差地别。
+</div>
+
+<!-- ═══════════ 2.6A 散点图矩阵 ═══════════ -->
+<h2>2.6A 散点图矩阵 (Scatterplot Matrix)</h2>
+
+<div class="concept-box">
+<h4>多变量关系的一站式视图</h4>
+<p>当有 \(p\) 个连续变量时，散点图矩阵（pairs plot / SPLOM）将所有变量两两配对，在一个网格中展示所有二元散点图。对角线通常是直方图或密度图。这是探索性数据分析（EDA）中最强大的工具之一——可以同时发现线性关系、非线性模式、离群值和聚类结构。</p>
+</div>
+
+<p>散点图矩阵的数学基础：对于 \(p\) 个变量，有 \(\binom{p}{2} = p(p-1)/2\) 对变量。一个 \(p \times p\) 的网格中，位置 \((i,j)\) 展示变量 \(i\) 对变量 \(j\) 的散点图。</p>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>散点图矩阵是竞赛论文中 EDA 部分的标配。建议：① 用颜色编码分类变量（如不同组用不同颜色），可以同时发现分组模式。② 如果变量太多（\(p > 10\)），只展示相关性最强的前 6-8 个变量。③ 在散点图矩阵中加入相关系数（如右上角），构成「相关矩阵 + 散点图矩阵」的组合图。④ 使用透明度处理重叠点。
+</div>
+
+<!-- ═══════════ 2.6B 平行坐标图 ═══════════ -->
+<h2>2.6B 平行坐标图 (Parallel Coordinates)</h2>
+
+<div class="concept-box">
+<h4>高维数据的线性视图</h4>
+<p>散点图矩阵在 \(p > 8\) 时变得难以阅读。平行坐标图是另一种选择——将每个变量表示为一条平行的竖轴，每个样本表示为一条折线，穿过各轴时的高度对应该变量的值。类别的差异表现为折线束的分离。</p>
+</div>
+
+<p>平行坐标图的数学基础：将 \(p\) 维空间中的点 \((x_1, x_2, \ldots, x_p)\) 映射为二维平面上的折线，折线的顶点坐标为 \((j, x_j')\)，其中 \(x_j'\) 是第 \(j\) 个变量归一化后的值（通常归一化到 [0,1]）。</p>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>平行坐标图特别适合展示<strong>不同类别在多变量上的特征差异</strong>。例如，将不同聚类结果用不同颜色画在平行坐标图中，可以直观看到「簇 1 在变量 A 和 B 上偏高，簇 2 在变量 C 上偏低」。在论文中，平行坐标图是展示聚类结果特征差异的绝佳可视化。
+</div>
+
+<!-- ═══════════ 2.7 可视化选择 + 颜色 ═══════════ -->
+<h2>2.7 可视化选择指南与竞赛配色</h2>
+
+<div class="toolkit-box">
+<h4>建模工具箱：根据分析目标选择图表</h4>
+<table class="compact-table">
+<thead><tr><th>你想看什么</th><th>推荐图表</th><th>备选</th></tr></thead>
+<tbody>
+<tr><td>单变量分布</td><td>直方图 + KDE 叠加</td><td>小提琴图</td></tr>
+<tr><td>多组对比（中心+离散）</td><td>并排箱线图</td><td>小提琴图 / 散点条</td></tr>
+<tr><td>两变量关系</td><td>散点图</td><td>Hexbin (大数据)</td></tr>
+<tr><td>多变量关系矩阵</td><td>相关热力图</td><td>Scatterplot Matrix</td></tr>
+<tr><td>正态性检验</td><td>Q-Q 图</td><td>直方图 + 正态曲线</td></tr>
+<tr><td>时间序列</td><td>折线图</td><td>面积图</td></tr>
+<tr><td>分类数据</td><td>堆叠条形图</td><td>马赛克图</td></tr>
+<tr><td>三变量关系</td><td>气泡图 / 分面散点图</td><td>3D 散点</td></tr>
+<tr><td>变量重要性</td><td>水平条形图</td><td>——</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="toolkit-box">
+<h4>竞赛配色原则</h4>
+<p>① <strong>不要用默认配色：</strong>Excel 和 matplotlib 的默认配色辨识度低，且过于常见。② <strong>色盲友好：</strong>避免红绿对比（约 8% 的男性无法区分），推荐用蓝橙或蓝红色板。③ <strong>颜色不超过 5 种：</strong>超过 5 种颜色人眼难以区分，改用不同形状或线条类型。④ <strong>变量含义映射：</strong>温度用红蓝、浓度用深浅、类别用不同色相。<br>
+⑤ <strong>竞赛推荐配色：</strong>Viridis（连续变量）、Set2 / Pastel2（分类变量）、RdBu（正负相关热力图）。⑥ <strong>单色论文：</strong>如果论文黑白印刷，所有图必须用灰度可区分的方案——用不同线型（实线、虚线、点线）和标记（圆形、方形、三角形）区分。</p>
+</div>
+
+<div class="note-box">
+<strong>数模论文图表原则：</strong>① 每张图必须有编号和标题。② 坐标轴必须标注单位和含义。③ 不要用 3D 效果（pie chart 3D 是数据可视化的灾难）。④ 颜色不要超过 5 种，色盲友好的配色更专业。⑤ 图例放在图内或图下方，不要放在图外右侧浪费空间。⑥ 所有图表统一风格——同一篇论文中不要混用 ggplot 风格和 Excel 风格。
+</div>
+
+<!-- ═══════════ 2.7A 雷达图 ═══════════ -->
+<h2>2.7A 雷达图 (Radar / Spider Chart)</h2>
+
+<div class="concept-box">
+<h4>多维度对比的利器</h4>
+<p>雷达图将多个变量映射到从中心辐射出的轴上，每个轴代表一个维度，多条轴上的点连接成多边形。适合<strong>比较 2-5 个实体在 5-15 个维度上的表现</strong>——竞赛中常用于展示「不同方案的综合对比」或「不同城市/国家在各指标上的得分」。</p>
+</div>
+
+<p><strong>雷达图的数学基础：</strong>将每个维度的值标准化到 [0,1] 或 [0,100]（因为不同维度量纲不同），然后在极坐标中绘制。第 \(k\) 个变量对应角度 \(\theta_k = 2\pi k / p\)，半径 \(r_k\) = 标准化后的值。</p>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>雷达图特别适合展示<strong>TOPSIS</strong> 或 <strong>AHP</strong> 等多准则决策的结果——每个方案画一条多边形，面积越大或越接近正多边形 → 方案越均衡。但注意：① 变量不宜超过 15 个（否则太密集）。② 轴的顺序会影响形状感知——把相关变量放在相邻轴上。③ 填充透明度设为 0.2-0.3，使重叠区域可见。
+</div>
+
+<!-- ═══════════ 2.7B 气泡图 ═══════════ -->
+<h2>2.7B 气泡图 (Bubble Chart)</h2>
+
+<div class="concept-box">
+<h4>散点图的第三维度</h4>
+<p>气泡图是散点图的扩展——用气泡的<strong>大小</strong>编码第三个变量。x 轴 = 变量 1，y 轴 = 变量 2，气泡面积 = 变量 3。这是展示三个连续变量关系的最直观方式。</p>
+</div>
+
+<p><strong>关键原则：气泡面积（而非半径）应与数值成正比——</strong>\(r \propto \sqrt{z}\)（而非 \(r \propto z\)）。因为人眼感知的是面积，若半径与 z 成正比，面积会放大为 z²，造成视觉误导。</p>
+
+<div class="warn-box">
+<strong>常见错误：</strong>① 气泡太大导致重叠严重 → 降低透明度或使用空心气泡。② 用半径而非面积编码 → 严重误导。③ 气泡太多（>50 个）→ 改用 hexbin 或分面散点图。④ 第三个变量方差太小 → 气泡大小几乎一样，失去意义。
+</div>
+
+<!-- ═══════════ 2.7C 竞赛可视化常见错误 ═══════════ -->
+<h2>2.7C 竞赛可视化常见错误</h2>
+
+<div class="toolkit-box">
+<h4>建模工具箱：评委最反感的 8 种可视化错误</h4>
+<table class="compact-table">
+<thead><tr><th>错误</th><th>为什么错</th><th>正确做法</th></tr></thead>
+<tbody>
+<tr><td><strong>3D 饼图</strong></td><td>透视变形扭曲比例，无法准确比较</td><td>水平条形图或简单饼图</td></tr>
+<tr><td><strong>截断 y 轴</strong></td><td>放大微小差异，制造虚假的「显著变化」</td><td>从 0 开始，或明确标注截断</td></tr>
+<tr><td><strong>双 y 轴</strong></td><td>可人为操纵两条曲线的「交叉点」</td><td>分面图或标准化后叠加</td></tr>
+<tr><td><strong>颜色过多</strong></td><td>超过 5-6 种颜色人眼无法区分</td><td>最多 5 种，用不同形状辅助</td></tr>
+<tr><td><strong>无单位标注</strong></td><td>读者不知道数字的含义</td><td>每个轴标注变量名和单位</td></tr>
+<tr><td><strong>红绿对比</strong></td><td>约 8% 男性色盲无法区分</td><td>蓝橙、蓝红、Viridis</td></tr>
+<tr><td><strong>默认配色</strong></td><td>看起来像随手画的，不专业</td><td>使用自定义配色方案</td></tr>
+<tr><td><strong>图例缺失</strong></td><td>读者不知道颜色/形状代表什么</td><td>每张图必须有图例</td></tr>
+</tbody>
+</table>
+</div>
+
+<!-- ═══════════ INTERACTIVE ═══════════ -->
+<h2>2.8 交互式可视化面板</h2>
+<p>基于随机生成的数据集，D3.js 直方图与箱线图。拖动滑块调整分组数，观察不同 bin 数对分布形态的影响。数据来自混合正态分布（两个峰），你能在直方图中看到双峰结构吗？</p>
+
+<div class="slider-row">
+  <label>直方图 bins</label>
+  <input type="range" id="hist-bins" min="4" max="30" value="12" oninput="updateCharts()">
+  <span class="slider-val" id="hist-bins-val">12</span>
+</div>
+
+<div class="panel-grid">
+  <div class="panel">
+    <div class="panel-label">HISTOGRAM + KDE</div>
+    <div class="chart-container" id="histogram-container"></div>
+  </div>
+  <div class="panel">
+    <div class="panel-label">BOX PLOT</div>
+    <div class="chart-container" id="boxplot-container"></div>
+  </div>
+</div>

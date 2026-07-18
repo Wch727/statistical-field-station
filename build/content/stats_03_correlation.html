@@ -1,0 +1,265 @@
+<!-- ═══════════ 竞赛场景 ═══════════ -->
+<div class="competition-box">
+<h4>竞赛真题场景</h4>
+<p><span class="q">Q：</span>某年全国大学生数学建模竞赛 B 题：提供了 100 个城市的 20 个指标（GDP、人口、教育投入、空气质量等），要求找出影响城市综合发展水平的关键因素。第一步就是用相关矩阵找出与目标变量相关系数最高的前 5 个指标。<br>
+<span class="q">Q：</span>美赛 MCM C 题：提供了网球比赛数据，问哪些因素与比赛结果最相关。选手排名（Spearman ρ=0.72）、一发得分率（Pearson r=0.68）、年龄（几乎不相关）。<br>
+<strong>→ 相关分析是变量筛选的第一步，也是后续回归/分类建模的基础。选对相关系数，比选对模型更重要。</strong></p>
+</div>
+
+<h2>3.1 Pearson 积差相关系数</h2>
+
+<div class="derive-box">
+<h4>Pearson r 的几何解读</h4>
+<p>将数据中心化后，\(r\) 是两个向量的夹角余弦：</p>
+\[ r = \cos\theta = \frac{\mathbf{x} \cdot \mathbf{y}}{\|\mathbf{x}\| \cdot \|\mathbf{y}\|} = \frac{\sum (x_i - \bar{x})(y_i - \bar{y})}{\sqrt{\sum (x_i - \bar{x})^2 \sum (y_i - \bar{y})^2}} \]
+<p>\(r = 1\) → 夹角 \(0^\circ\)（完全共线同向），\(r = -1\) → 夹角 \(180^\circ\)（完全共线反向），\(r = 0\) → 夹角 \(90^\circ\)（正交，无线性相关）。<strong>这个视角的重要推论：</strong>r 度量的是<strong>线性</strong>关系。如果 X 和 Y 有完美的抛物线关系 \(Y = X^2\)，r 可能接近 0——因为在线性空间中，这些向量近乎正交。</p>
+</div>
+
+<div class="math-block">
+\[ r_{xy} = \frac{\sum_{i=1}^{n}(x_i - \bar{x})(y_i - \bar{y})}{\sqrt{\sum (x_i - \bar{x})^2 \sum (y_i - \bar{y})^2}} = \frac{\text{Cov}(x,y)}{s_x s_y} \]
+\[ t_r = r\sqrt{\frac{n-2}{1-r^2}} \sim t_{n-2} \qquad \text{CI}_{95\%}: \tanh\!\left(\operatorname{arctanh}(r) \pm \frac{1.96}{\sqrt{n-3}}\right) \]
+</div>
+
+<div class="derive-box">
+<h4>Fisher z-变换：为什么 r 的置信区间不能直接用 ±1.96·SE</h4>
+<p>r 的抽样分布不是正态的（尤其是 |r| 接近 1 时严重偏态），不能直接用 ±1.96·SE 算置信区间。Fisher 变换解决了这个问题：</p>
+\[ z = \operatorname{arctanh}(r) = \frac{1}{2}\ln\frac{1+r}{1-r} \qquad z \sim N\!\left(\operatorname{arctanh}(\rho), \frac{1}{n-3}\right) \]
+<p>在 z 尺度上算 CI：\(z \pm z_{\alpha/2}/\sqrt{n-3}\)，再逆变换回 r：\(r = \tanh(z) = \frac{e^{2z}-1}{e^{2z}+1}\)。此方法还用于检验两个独立样本的相关系数是否相等。</p>
+</div>
+
+<div class="concept-box">
+<h4>r² 的解释力陷阱</h4>
+<p>\[ r^2 = \frac{\text{解释的方差}}{\text{总方差}} \]r = 0.6 听起来不错，但 r² = 0.36——只解释了 36% 的方差，64% 是未解释的。r = 0.3 → r² = 0.09（仅 9%）。r 看起来大，解释力可能很弱。数模论文中<strong>同时报告 r 和 r²</strong>，避免读者被 r 的数值误导。</p>
+</div>
+
+<h2>3.2 Spearman 秩相关系数</h2>
+
+<div class="concept-box">
+<h4>Spearman ρ：单调关系的度量</h4>
+<p>将原始数据替换为秩次 (1, 2, ..., n)，然后计算 Pearson r。度量<strong>单调关系</strong>（不一定是线性）。优势：① 对离群值稳健 ② 不要求正态分布 ③ 适用于有序变量。</p>
+</div>
+
+<div class="math-block">
+\[ \rho = 1 - \frac{6\sum_{i=1}^{n} d_i^2}{n(n^2-1)} \quad (\text{无结}) \qquad \rho = \frac{\text{Cov}(R_x, R_y)}{s_{R_x} s_{R_y}} \quad (\text{有结，通用}) \]
+</div>
+
+<h2>3.3 Kendall τ 秩相关系数</h2>
+
+<div class="concept-box">
+<h4>Kendall τ：基于 concordant/discordant pairs</h4>
+<p>Kendall τ 统计所有成对比较中「一致对」(concordant) 和「不一致对」(discordant) 的数量之差。τ 对 ties 有显式修正（τ-b, τ-c），且其抽样分布比 Spearman ρ 更快收敛到正态。解读更直观：τ = 0.5 意味着随机选一对观测，它们一致的概率比不一致高 50%。</p>
+</div>
+
+<div class="math-block">
+\[ \tau_a = \frac{C - D}{\binom{n}{2}} \qquad \tau_b = \frac{C - D}{\sqrt{(C+D+T_x)(C+D+T_y)}} \]
+<p style="text-align:center;font-size:0.85rem;color:var(--slate);">C = concordant pairs, D = discordant pairs, T_x = ties in X, T_y = ties in Y</p>
+</div>
+
+<h2>3.4 Cramér's V：分类变量的关联度量</h2>
+
+<div class="derive-box">
+<h4>当数据不是连续变量时</h4>
+<p>Pearson 和 Spearman 都要求变量是连续或有序的。当两个变量都是分类变量时（如「性别 × 是否吸烟」「学历 × 投票意向」），需要用 Cramér's V：</p>
+\[ V = \sqrt{\frac{\chi^2}{N \cdot \min(r-1, c-1)}} \]
+<p>其中 χ² 是卡方独立性检验的统计量，N 是总样本量，r 和 c 是列联表的行数和列数。V ∈ [0, 1]，0 表示完全独立，1 表示完全关联。对于 2×2 表，V = |φ|，而 φ 系数（即 Matthews 相关系数，MCC）可正可负表示关联方向。<br>
+<strong>解读：</strong>df=1（2×2 表）：V ≥ 0.1 / 0.3 / 0.5（小/中/大）。df=2：V ≥ 0.07 / 0.21 / 0.35。df=3：V ≥ 0.06 / 0.17 / 0.29。</p>
+</div>
+
+<h2>3.5 偏相关系数</h2>
+
+<div class="derive-box">
+<h4>控制第三变量后的净相关</h4>
+<p>当存在第三个变量 Z 同时影响 X 和 Y 时，\(r_{xy}\) 可能反映的是 Z 的效应而非 X-Y 的直接关系。偏相关系数度量<strong>控制 Z 后</strong> X 和 Y 的净相关：</p>
+\[ r_{xy\cdot z} = \frac{r_{xy} - r_{xz} \cdot r_{yz}}{\sqrt{(1 - r_{xz}^2)(1 - r_{yz}^2)}} \]
+<p>例如：\(r_{xy} = 0.6\) 但 \(r_{xy\cdot z} = 0.05\)，说明 X-Y 的表面相关完全由 Z 驱动——这是<strong>虚假相关</strong>的数学诊断。多元回归中的偏回归系数本质上就是偏相关。</p>
+<p><strong>竞赛应用：</strong>当发现两个变量显著相关时，先检查是否存在第三个变量（如时间趋势、人口规模等）同时驱动两者。偏相关可以帮你排除这些混淆变量。</p>
+</div>
+
+<h2>3.6 距离相关系数 (dCor)</h2>
+
+<div class="concept-box">
+<h4>dCor：检测任意类型的依赖关系</h4>
+<p>Pearson r 只能检测线性关系，Spearman ρ 只能检测单调关系。dCor (Székely et al., 2007) 能检测<strong>任意类型</strong>的依赖关系。性质：dCor ∈ [0, 1]，dCor = 0 ⇔ X 和 Y 独立（这是 r 和 ρ 都不具备的强性质）。dCor 越大表示距离意义下的依赖越强；dCor = 1 是非常严格的特殊情形，不能简单解释为「存在任意确定函数关系」。计算基于距离矩阵的双中心化，有 R 包 <code>energy</code> 和 Python 包 <code>dcor</code> 可直接调用。</p>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>3.6A 典型相关分析 (CCA)</h2>
+<!-- ══════════════════════════════════════════════ -->
+
+<div class="concept-box">
+<h4>两组变量之间的关系</h4>
+<p>前面所有方法都分析<strong>两个变量</strong>之间的关系。但竞赛中经常遇到「两组变量之间的关系」——例如「环境指标组（温度、湿度、PM2.5）与健康指标组（发病率、住院率、死亡率）」之间的关系。CCA 是这类问题的标准答案。</p>
+</div>
+
+<h3>CCA 的数学原理</h3>
+
+<p>设 \(X \in \mathbb{R}^{n \times p}\) 和 \(Y \in \mathbb{R}^{n \times q}\) 是两组变量。CCA 寻找线性组合 \(a^T X\) 和 \(b^T Y\)，使得它们的<strong>相关系数最大化</strong>：</p>
+
+<div class="math-block">
+\[
+\rho = \max_{a,b} \text{Corr}(a^T X, b^T Y) = \max_{a,b} \frac{a^T \Sigma_{XY} b}{\sqrt{a^T \Sigma_{XX} a \cdot b^T \Sigma_{YY} b}}
+\]
+</div>
+
+<div class="derive-box">
+<h4>推导：CCA 等价于广义特征值问题</h4>
+<p>通过对 \(a\) 和 \(b\) 求偏导并令其为 0，可以得到：</p>
+<div class="math-block">
+\[
+\begin{aligned}
+\Sigma_{XY} \Sigma_{YY}^{-1} \Sigma_{YX} a &= \rho^2 \Sigma_{XX} a \\
+\Sigma_{YX} \Sigma_{XX}^{-1} \Sigma_{XY} b &= \rho^2 \Sigma_{YY} b
+\end{aligned}
+\]
+</div>
+<p>即 \(a\) 是矩阵 \(\Sigma_{XX}^{-1} \Sigma_{XY} \Sigma_{YY}^{-1} \Sigma_{YX}\) 的特征向量，\(\rho^2\) 是特征值。第一对典型变量的相关系数最大，第二对次之（且与第一对正交），以此类推。最多可以得到 \(\min(p,q)\) 对典型变量。</p>
+</div>
+
+<h3>CCA 的解释</h3>
+
+<p>对每一对典型变量，我们可以看：</p>
+<ul style="margin:0 0 14px 24px;max-width:var(--text-w)">
+  <li><strong>典型相关系数 \(\rho\)：</strong>这对变量之间的关联强度</li>
+  <li><strong>典型载荷 (canonical loading)：</strong>原始变量与典型变量的相关系数——解释每个典型变量的含义</li>
+  <li><strong>冗余指数 (redundancy index)：</strong>一组变量被另一组变量的典型变量解释的方差比例</li>
+</ul>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>CCA 是竞赛中「两组变量关联分析」的黄金标准。典型流程：① 先做 CCA，报告典型相关系数和显著性（Wilks' Lambda 检验）。② 取第一对典型变量，画散点图展示两组之间的关系。③ 解释典型载荷——「X 组的第一典型变量主要代表什么？Y 组的第一典型变量主要代表什么？」④ 如果第一典型相关系数很大，说明两组变量之间存在强线性关联。
+</div>
+
+<div class="warn-box">
+<strong>CCA 的陷阱：</strong>① 当 \(p\) 或 \(q\) 很大而样本量 \(n\) 很小时，CCA 容易过拟合（典型相关系数接近 1 但无意义）。建议 \(n \ge 10 \times \max(p,q)\)。② CCA 只能检测线性关系——如果两组变量之间的关系是非线性的，需要使用 Kernel CCA 或 dCor。③ 多重共线性会影响 CCA 的稳定性——先做 PCA 降维再 CCA 是常见做法。
+</div>
+
+<h2>3.7 相关系数选择决策树</h2>
+
+<div class="toolkit-box">
+<h4>建模工具箱：选择正确的相关系数</h4>
+<p><strong>Step 1：</strong>画散点图！看关系的形状。<br>
+<strong>Step 2：</strong>线性 → Pearson r；单调但非线性 → Spearman ρ；非单调 → dCor 或 Kendall τ。<br>
+<strong>Step 3：</strong>有离群值 → 优先 Spearman 或 Kendall。<br>
+<strong>Step 4：</strong>有第三变量 → 算偏相关系数。<br>
+<strong>Step 5：</strong>有序变量 (Likert) → 只能用 Spearman 或 Kendall τ。<br>
+<strong>Step 6：</strong>存在重复值 (ties) → Spearman 的简化公式不准确，用完整公式或 Kendall τ-b。<br>
+<strong>Step 7：</strong>两个都是分类变量 → Cramér's V 或 φ 系数。<br>
+<strong>Step 8：</strong>一个连续一个分类 → 点二列相关 (Point-Biserial) 或 η²。</p>
+</div>
+
+<div class="warn-box">
+<strong>数模陷阱：</strong>① 报告 r=0.6 后说「强相关」——r²=0.36，只解释了 36% 方差。② 相关系数显著 (p&lt;0.05) 但 r 很小 (如 r=0.15)——大样本下几乎任何 r 都显著。③ 用 Pearson r 分析有明显曲线关系的数据。④ 忽视离群值——一个点就能毁掉 r。⑤ 相关 ≠ 因果——论文中必须写「X 与 Y 显著相关 (r=0.6, p&lt;0.001)」，而不能写「X 导致 Y 增加」。⑥ 忽视分类变量，对「性别」和「是否购买」这种 0/1 数据用 Pearson r——应该用 Cramér's V 或 φ 系数。
+</div>
+
+<!-- ═══════════ 3.7A 互信息 ═══════════ -->
+<h2>3.7A 互信息 (Mutual Information)</h2>
+
+<div class="concept-box">
+<h4>当相关系数失效时</h4>
+<p>Pearson、Spearman、Kendall 都只能检测<strong>单调</strong>关系。但如果 X 和 Y 的关系是 U 形、圆形或更复杂的非线性模式，所有相关系数都可能接近 0——尽管变量之间<strong>存在强烈的确定性关系</strong>。互信息 (MI) 从信息论的角度度量变量之间的<strong>任意</strong>依赖关系。</p>
+</div>
+
+<div class="math-block">
+\[
+I(X; Y) = \sum_{x \in \mathcal{X}} \sum_{y \in \mathcal{Y}} p(x,y) \log \frac{p(x,y)}{p(x)p(y)}
+\]
+</div>
+
+<p>互信息的直觉：<strong>知道 X 后，Y 的不确定性减少了多少？</strong>如果 X 和 Y 独立，则 \(p(x,y) = p(x)p(y)\)，MI = 0。如果知道 X 就能完全确定 Y，则 MI = H(Y)（Y 的熵）。</p>
+
+<div class="derive-box">
+<h4>推导：互信息 = 熵的差</h4>
+<div class="math-block">
+\[
+I(X; Y) = H(Y) - H(Y \mid X) = H(X) + H(Y) - H(X, Y)
+\]
+</div>
+<p>其中 \(H(Y) = -\sum p(y) \log p(y)\) 是熵（不确定性），\(H(Y \mid X)\) 是条件熵（已知 X 后 Y 的剩余不确定性）。MI ≥ 0，且 MI = 0 当且仅当 X 和 Y 独立。</p>
+</div>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>互信息特别适合<strong>特征选择</strong>——计算每个特征与目标变量的 MI，选择 MI 最大的特征。sklearn 的 mutual_info_regression 和 mutual_info_classif 可以直接使用。论文中：「与 Pearson 相关系数不同，互信息能够捕捉非线性依赖关系，因此我们使用 MI 作为特征初筛的度量。」<br>
+<strong>注意：</strong>连续变量的 MI 需要估计（k-近邻法或分箱法），估计值受参数影响——报告时注明方法和参数。
+</div>
+
+<!-- ═══════════ 3.7B 伪相关与混淆变量 ═══════════ -->
+<h2>3.7B 伪相关与混淆变量</h2>
+
+<div class="concept-box">
+<h4>相关 ≠ 因果——但为什么？</h4>
+<p>两个变量之间出现显著相关，有五种可能的原因。竞赛论文中识别这些原因，是区分「好论文」和「普通论文」的关键。</p>
+</div>
+
+<table class="compact-table">
+<thead><tr><th>原因</th><th>解释</th><th>经典例子</th></tr></thead>
+<tbody>
+<tr><td><strong>直接因果</strong></td><td>X 确实导致 Y</td><td>吸烟 → 肺癌</td></tr>
+<tr><td><strong>反向因果</strong></td><td>Y 导致 X</td><td>警察多 ↔ 犯罪率高（其实是犯罪率高导致警察多）</td></tr>
+<tr><td><strong>混淆变量</strong></td><td>Z 同时影响 X 和 Y</td><td>冰淇淋销量 ↔ 溺水死亡（共同原因：气温）</td></tr>
+<tr><td><strong>选择偏差</strong></td><td>样本选择导致了虚假相关</td><td>住院病人中，喝咖啡 ↔ 心脏病（实际是年龄更大的人既喝咖啡又易得心脏病）</td></tr>
+<tr><td><strong>纯属巧合</strong></td><td>在大数据中总能找到一些巧合相关</td><td>美国小姐年龄 ↔ 被蒸汽烫伤死亡人数</td></tr>
+</tbody>
+</table>
+
+<div class="derive-box">
+<h4>混淆变量的因果图表示</h4>
+<p>用有向无环图 (DAG) 表示因果关系：</p>
+<div class="math-block">
+\[
+Z \to X \quad \text{且} \quad Z \to Y \quad \Rightarrow \quad X \text{ 与 } Y \text{ 相关，但 } X \text{ 不导致 } Y
+\]
+</div>
+<p><strong>控制混淆变量：</strong>如果 \(Z\) 是观察到的混淆变量，可以通过以下方法控制：① 分层分析（在 Z 的每个水平内分析 X-Y 关系）。② 偏相关（控制 Z 后计算 X 和 Y 的相关）。③ 回归模型中加入 Z 作为协变量。④ 匹配（为每个处理组样本找一个 Z 值相似的对照）。</p>
+</div>
+
+<div class="warn-box">
+<strong>竞赛论文最致命的逻辑错误：</strong>发现 A 和 B 相关后直接写「A 影响 B」或「A 导致 B 增加」。正确的表述：「A 与 B 显著正相关 (r=0.62, p&lt;0.001)。然而，这一关系可能受到混杂因素（如 C）的影响。在控制 C 后，偏相关系数降至 0.31，但仍显著——说明 A 和 B 的关联部分独立于 C。」这种谨慎的表述会让评委认为你理解统计推断的局限性。
+</div>
+
+<!-- ═══════════ 3.7C 相关系数的置信区间 ═══════════ -->
+<h2>3.7C 相关系数的置信区间</h2>
+
+<div class="concept-box">
+<h4>r 的点估计不够——需要区间</h4>
+<p>报告 r=0.6 后，结论的可靠性取决于样本量。n=10 时 r=0.6 的 95% CI 可能是 [-0.05, 0.89]（涵盖 0，不显著），而 n=100 时 r=0.6 的 95% CI 是 [0.46, 0.71]（精确且显著）。</p>
+</div>
+
+<div class="derive-box">
+<h4>Fisher z-变换</h4>
+<p>r 的抽样分布不是正态的（尤其在 |r| 接近 1 时），需要先做 Fisher z-变换使其近似正态：</p>
+<div class="math-block">
+\[
+z = \frac{1}{2} \ln\left(\frac{1+r}{1-r}\right) = \text{arctanh}(r) \qquad \text{Var}(z) \approx \frac{1}{n-3}
+\]
+</div>
+<p>z 的 95% 置信区间：\(z \pm 1.96 / \sqrt{n-3}\)。然后逆变换回 r：</p>
+<div class="math-block">
+\[
+r = \frac{e^{2z} - 1}{e^{2z} + 1} = \tanh(z)
+\]
+</div>
+<p>例如 r=0.6, n=30：z = arctanh(0.6) = 0.693，SE = 1/√27 = 0.192。z 的 95% CI = [0.316, 1.070] → r 的 95% CI = [0.306, 0.789]。</p>
+</div>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>报告中永远写「r = 0.62, 95% CI [0.41, 0.77]」而不是「r = 0.62, p &lt; 0.001」。置信区间不仅告诉你是否显著，还告诉你效应的精度——宽 CI 说明样本量不足，结论不可靠。
+</div>
+
+<h2>3.8 交互式散点图</h2>
+<p>拖动散点图中的任意点，观察 Pearson <em>r</em>、Spearman ρ 和 r² 的实时变化。尝试制造一个极端离群值，看 r 和 ρ 谁更稳定。</p>
+
+<div class="panel">
+<div class="panel-label">CORRELATION BENCH</div>
+<div id="corr-stats" style="display:flex;gap:32px;flex-wrap:wrap;margin-bottom:16px;">
+  <div><span style="font-family:var(--mono);font-size:0.75rem;color:var(--slate);">Pearson r</span><br>
+    <span style="font-family:var(--mono);font-size:1.6rem;font-weight:600;color:var(--terracotta);" id="pearson-r">0.00</span></div>
+  <div><span style="font-family:var(--mono);font-size:0.75rem;color:var(--slate);">Spearman ρ</span><br>
+    <span style="font-family:var(--mono);font-size:1.6rem;font-weight:600;color:var(--forest);" id="spearman-rho">0.00</span></div>
+  <div><span style="font-family:var(--mono);font-size:0.75rem;color:var(--slate);">r²</span><br>
+    <span style="font-family:var(--mono);font-size:1.6rem;font-weight:600;color:var(--gold);" id="r-squared">0.00</span></div>
+</div>
+<div class="chart-container" id="scatter-container"></div>
+<div style="margin-top:10px;display:flex;gap:8px;">
+  <button class="btn" onclick="resetCorrData()">↩ 重置</button>
+  <button class="btn" onclick="addCorrPoint()">+ 添加点</button>
+</div>
+</div>

@@ -1,0 +1,205 @@
+<div class="competition-box">
+<h4>竞赛真题场景</h4>
+<p><span class="q">Q：</span>某年全国大学生数学建模竞赛 C 题：根据 402 个样本的理化指标，判断样品属于哪一类（二分类问题）。一等奖论文使用逻辑回归作为基线模型，报告了 AUC、混淆矩阵和变量重要性（Odds Ratio）。<br>
+<span class="q">Q：</span>美赛 MCM 中常见：根据历史数据预测事件是否发生（如客户是否流失、贷款是否违约、疾病是否发生）。逻辑回归是最常用且最可解释的分类模型。<br>
+<strong>→ 竞赛中，逻辑回归不仅是分类工具，更是变量重要性分析工具——通过 Odds Ratio 解释每个因素如何影响事件发生的概率。</strong></p>
+</div>
+
+<h2>7.1 为什么不用线性回归？</h2>
+
+<div class="concept-box">
+<h4>线性回归对二分类数据的三个致命问题</h4>
+<p>① 预测的是无界值，但概率必须在 [0,1] 之间。② 线性回归假设误差方差恒定，但二分类数据的方差是 p(1-p)，随 X 变化。③ 线性回归假设误差正态，但 0/1 数据的误差只能是两个值。<br>
+<strong>解决方案：</strong>不直接建模 p，而是建模 p 的 logit 变换：\(\ln(p/(1-p))\)。这被称为<strong>链接函数</strong>。</p>
+</div>
+
+<h2>7.2 Logit → Odds → 概率：三层解读</h2>
+
+<div class="derive-box">
+<h4>三层递进关系</h4>
+<p><strong>第一层 — Logit（对数几率）：</strong>\[ \ln\!\left(\frac{p}{1-p}\right) = \beta_0 + \beta_1 X \]左边范围是 (−∞, +∞)，右边是 X 的线性函数。这是「链接」——把概率问题转化为线性问题。<br>
+<strong>第二层 — Odds（几率）：</strong>\[ \frac{p}{1-p} = e^{\beta_0 + \beta_1 X} = e^{\beta_0} \cdot e^{\beta_1 X} \]X 每增加 1，odds 乘以 e^{β₁}。e^{β₁} = 2 意味着 X+1 时事件发生的几率是 X 时的 2 倍。<br>
+<strong>第三层 — 概率：</strong>\[ p = \frac{1}{1 + e^{-(\beta_0 + \beta_1 X)}} \]这是 Sigmoid 函数，S 形曲线，在 p=0.5 处最陡。</p>
+</div>
+
+<div class="math-block">
+\[ \ln\!\left(\frac{p}{1-p}\right) = \beta_0 + \beta_1 X \qquad \frac{p}{1-p} = e^{\beta_0 + \beta_1 X} \qquad p = \frac{1}{1 + e^{-(\beta_0 + \beta_1 X)}} \]
+\[ \text{Decision Boundary (p=0.5): } X = -\frac{\beta_0}{\beta_1} \qquad \text{Slope at boundary: } \frac{\beta_1}{4} \]
+</div>
+
+<div class="note-box">
+<strong>竞赛报告技巧：</strong>逻辑回归的系数 β 不能直接解读为「X 增加 1 单位，Y 增加 β」——这是线性回归的解读方式。正确解读是：<strong>X 每增加 1 单位，事件发生的几率 (odds) 变为原来的 e^{β} 倍</strong>。e^{β} > 1 → 促进事件发生；e^{β} < 1 → 抑制事件发生。
+</div>
+
+<h2>7.3 MLE 数值求解</h2>
+
+<div class="derive-box">
+<h4>似然函数与 Newton-Raphson 迭代</h4>
+<p>对于 n 个独立观测 (x_i, y_i)，y_i ∈ {0,1}，对数似然函数为：</p>
+\[ \ell(\boldsymbol{\beta}) = \sum_{i=1}^{n} \left[ y_i \ln p_i + (1-y_i) \ln(1-p_i) \right] \qquad p_i = \frac{1}{1 + e^{-(\beta_0 + \beta_1 x_i)}} \]
+<p>得分方程：\(\frac{\partial \ell}{\partial \beta_j} = \sum (y_i - p_i) x_{ij} = 0\)——这个方程<strong>没有闭式解</strong>，需要数值方法。<br>
+<strong>Newton-Raphson 迭代：</strong>β^{(t+1)} = β^{(t)} + I(β^{(t)})⁻¹·U(β^{(t)})，等价于迭代加权最小二乘 (IRLS)。通常 5-10 步收敛。如果发散 → 存在完全分离问题。</p>
+</div>
+
+<div class="math-block">
+\[ \boldsymbol{\beta}^{(t+1)} = \boldsymbol{\beta}^{(t)} + \mathbf{I}(\boldsymbol{\beta}^{(t)})^{-1} \mathbf{U}(\boldsymbol{\beta}^{(t)}) \qquad \mathbf{I} = \mathbf{X}'\mathbf{W}\mathbf{X} \quad \mathbf{U} = \mathbf{X}'(\mathbf{Y} - \mathbf{p}) \]
+</div>
+
+<h2>7.4 ROC 曲线与 AUC</h2>
+
+<div class="derive-box">
+<h4>ROC：遍历所有阈值的分类性能</h4>
+<p><strong>ROC 曲线：</strong>以 1-Specificity (FPR) 为 x 轴，Sensitivity (TPR) 为 y 轴，遍历所有可能的决策阈值。<br>
+<strong>AUC：</strong>ROC 曲线下的面积。AUC ∈ [0, 1]。AUC = 0.5 → 随机猜测；AUC < 0.5 → 排序方向系统性反向（取负后可得 AUC > 0.5）；AUC = 1 → 完美分类。<br>
+<strong>直观解读：</strong>AUC = 随机挑选一个正例和一个负例，模型对正例的预测概率高于负例的概率。<br>
+<strong>常用阈值选择：</strong>Youden 指数最大化（J = Sensitivity + Specificity − 1）是一种常见方法；实际阈值还应考虑误判成本和任务目标。</p>
+</div>
+
+<div class="math-block">
+\[ \text{Sensitivity} = \frac{TP}{TP+FN} \qquad \text{Specificity} = \frac{TN}{TN+FP} \qquad \text{AUC} = \int_0^1 \text{TPR}\,d(\text{FPR}) \]
+\[ \text{Precision} = \frac{TP}{TP+FP} \qquad \text{Recall} = \frac{TP}{TP+FN} \qquad \text{F1} = \frac{2 \cdot \text{Precision} \cdot \text{Recall}}{\text{Precision} + \text{Recall}} \]
+</div>
+
+<h2>7.5 伪 R² 与模型拟合度量</h2>
+
+<div class="concept-box">
+<h4>逻辑回归中「R²」的含义不同</h4>
+<p>线性回归的 R² 有明确的「解释方差比例」含义，但逻辑回归中这个定义不适用。<br>
+<strong>McFadden R²：</strong>\[ R^2_{\text{McFadden}} = 1 - \frac{\ell(\hat{\boldsymbol{\beta}})}{\ell_{\text{null}}} \]值在 0.2-0.4 之间就算很好。与线性 R² 不能直接比较。<br>
+<strong>Nagelkerke R²：</strong>将 Cox-Snell R² 缩放到 [0, 1]，更接近传统 R² 的直觉。</p>
+</div>
+
+<div class="math-block">
+\[ R^2_{\text{McFadden}} = 1 - \frac{\ell(\hat{\boldsymbol{\beta}})}{\ell_{\text{null}}} \qquad R^2_{\text{Nagelkerke}} = \frac{1 - (L_{\text{null}}/L_{\text{full}})^{2/n}}{1 - L_{\text{null}}^{2/n}} \]
+</div>
+
+<!-- ═══════════ 7.5A 校准曲线 ═══════════ -->
+<h2>7.5A 校准曲线：预测概率可信吗？</h2>
+
+<div class="concept-box">
+<h4>区分度 vs 校准度</h4>
+<p>AUC 衡量的是模型的<strong>区分度</strong>（能否把正负样本分开），但不说预测概率是否准确。一个模型可能 AUC = 0.95 但预测概率系统性偏高（如预测概率 0.8 时实际只有 50% 正类）。校准曲线（calibration plot / reliability diagram）评估模型的<strong>校准度</strong>。</p>
+</div>
+
+<p>将预测概率分组（如 10 个 bin），每组内计算：预测概率的均值 vs 实际正类比例。完美校准的模型应该落在对角线 \(y = x\) 上。</p>
+
+<div class="derive-box">
+<h4>概率校准方法</h4>
+<p><strong>Platt Scaling：</strong>在逻辑回归的输出上再拟合一个 sigmoid：</p>
+<div class="math-block">
+\[
+P(y=1 \mid x) = \frac{1}{1 + \exp(A \cdot f(x) + B)}
+\]
+</div>
+<p>其中 \(f(x)\) 是原始模型的决策函数值，\(A, B\) 是在验证集上拟合的参数。<br>
+<strong>Isotonic Regression：</strong>非参数方法——找单调递增的分段常数函数，使预测概率与实际标签的平方误差最小。比 Platt 更灵活，但需要更多数据。</p>
+</div>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>如果论文中报告了预测概率（如「客户流失概率为 73%」），就必须展示校准曲线。SVM 和朴素贝叶斯通常校准较差，需要用 Platt Scaling 或 Isotonic Regression 校正。随机森林的概率输出（类别比例）通常比 SVM 更校准。逻辑回归的 MLE 训练天然产生校准良好的概率。
+</div>
+
+<!-- ═══════════ 7.5B Hosmer-Lemeshow 检验 ═══════════ -->
+<h2>7.5B Hosmer-Lemeshow 拟合优度检验</h2>
+
+<p>HL 检验是逻辑回归最常用的拟合优度检验。将样本按预测概率排序后分为 \(g\) 组（通常 \(g=10\)），比较每组内观测到的正类数与期望正类数：</p>
+
+<div class="math-block">
+\[
+\hat{C} = \sum_{k=1}^{g} \frac{(O_k - E_k)^2}{E_k(1 - E_k/n_k)} \sim \chi^2_{g-2}
+\]
+</div>
+
+<p>其中 \(O_k\) 是第 \(k\) 组中观测到的正类数，\(E_k\) 是期望正类数（预测概率之和），\(n_k\) 是组内样本数。如果 p > 0.05，说明模型拟合良好；如果 p < 0.05，说明模型拟合不佳——考虑增加交互项、非线性项或使用更复杂的模型。</p>
+
+<div class="warn-box">
+<strong>HL 检验的局限：</strong>① 对分组数量 \(g\) 敏感。② 在大样本时几乎总是显著（检测到微小的拟合偏差）。③ 不提供改进方向——只告诉你有问题，不告诉你怎么修。建议结合校准曲线和残差图一起使用。
+</div>
+
+<!-- ═══════════ 7.5C 惩罚逻辑回归 ═══════════ -->
+<h2>7.5C 惩罚逻辑回归</h2>
+
+<div class="concept-box">
+<h4>当特征数远大于样本数时</h4>
+<p>标准逻辑回归通过 MLE 估计参数——当 \(p \gg n\)（特征数远超样本数）时，MLE 不存在或极度不稳定。惩罚逻辑回归在似然函数中加入惩罚项，类似于线性回归中的 LASSO 和 Ridge。</p>
+</div>
+
+<div class="math-block">
+\[
+\hat{\beta} = \arg\max_{\beta} \left\{ \underbrace{\sum_{i=1}^{n} \left[y_i \log p_i + (1-y_i)\log(1-p_i)\right]}_{\text{对数似然}} - \underbrace{\lambda \sum_{j=1}^{p} |\beta_j|}_{\text{L1 惩罚}} \right\}
+\]
+</div>
+
+<p><strong>L1 (LASSO) 惩罚：</strong>将不重要的系数精确压缩到 0 → 自动特征选择。适合高维数据（如基因表达数据，p=10000, n=100）。<br>
+<strong>L2 (Ridge) 惩罚：</strong>将系数向 0 缩小但不精确到 0 → 处理共线性。适合特征之间高度相关时。<br>
+<strong>Elastic Net：</strong>\(\lambda(\alpha\sum|\beta_j| + (1-\alpha)\sum\beta_j^2)\) → 结合两者优点。</p>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>当竞赛数据有大量候选特征（如 >30 个问卷题目）但样本量有限（如 n=200）时，惩罚逻辑回归比逐步回归更可靠——它通过交叉验证选择 λ，避免了逐步回归的过拟合和选择偏差。论文中：「我们使用 LASSO 逻辑回归进行特征选择，通过 10 折交叉验证确定最优 λ = 0.023，最终从 50 个候选特征中筛选出 12 个显著预测因子。」
+</div>
+
+<h2>7.6 类别不平衡</h2>
+
+<div class="toolkit-box">
+<h4>建模工具箱：类别不平衡的四种策略</h4>
+<p>当正例占比极低（如违约率 1%），逻辑回归倾向于把所有样本预测为多数类。<br>
+① <strong>调整阈值：</strong>不默认用 0.5，根据 ROC 选择最优阈值。② <strong>重新加权：</strong>给少数类更高权重。③ <strong>SMOTE 重采样：</strong>在特征空间中插值生成合成少数类样本。④ <strong>使用 AUC 或 F1 而非 Accuracy 评估模型。</strong>⑤ <strong>竞赛中：</strong>如果正例占比 < 10%，报告 Accuracy 没有意义——一个「永远预测多数类」的模型也有 90% 的 Accuracy。必须报告 F1、AUC 或 Precision-Recall 曲线。</p>
+</div>
+
+<h2>7.7 多分类逻辑回归与 GLM 框架</h2>
+
+<div class="derive-box">
+<h4>GLM：所有回归模型的统一视角</h4>
+<p>逻辑回归属于<strong>广义线性模型 (GLM)</strong>：g(E[Y]) = Xβ。线性回归：g(μ)=μ；逻辑回归：g(p)=ln(p/(1-p))；Poisson 回归：g(λ)=ln(λ)。<br>
+<strong>多分类逻辑回归：</strong>对于 K 类问题，用 K-1 个 binary logit 模型：</p>
+\[ \ln\frac{P(Y = j)}{P(Y = K)} = \beta_{0j} + \beta_{1j} X \quad (j=1,\ldots,K-1) \]
+<p><strong>有序逻辑回归：</strong>当 Y 是有序分类（如差/中/良/优），用累积 logit 模型：</p>
+\[ \ln\frac{P(Y \leq j)}{P(Y > j)} = \alpha_j - \mathbf{X}\boldsymbol{\beta} \]
+<p>所有类共享同一个 β，只截距 α_j 不同——这是「比例几率假设」。</p>
+</div>
+
+<div class="toolkit-box">
+<h4>建模工具箱：GLM 统一框架</h4>
+<table class="compact-table">
+<thead><tr><th>模型</th><th>Y 类型</th><th>链接函数 g(μ)</th><th>分布族</th><th>竞赛场景</th></tr></thead>
+<tbody>
+<tr><td>线性回归</td><td>连续</td><td>g(μ) = μ</td><td>正态 (Gaussian)</td><td>预测数值（温度、价格）</td></tr>
+<tr><td>逻辑回归</td><td>二分类</td><td>g(p) = ln(p/(1−p))</td><td>二项 (Binomial)</td><td>是/否判断（违约、患病）</td></tr>
+<tr><td>Poisson 回归</td><td>计数</td><td>g(λ) = ln(λ)</td><td>Poisson</td><td>计数预测（事故数、订单数）</td></tr>
+<tr><td>负二项回归</td><td>过度离散计数</td><td>g(μ) = ln(μ)</td><td>负二项 (NB)</td><td>方差>均值的计数数据</td></tr>
+<tr><td>Gamma 回归</td><td>正连续偏态</td><td>g(μ) = 1/μ</td><td>Gamma</td><td>正偏态连续数据（保险赔付）</td></tr>
+<tr><td>有序 Logistic</td><td>有序分类</td><td>累积 Logit</td><td>多项 (Multinomial)</td><td>有序分类（满意度评级）</td></tr>
+</tbody>
+</table>
+<p style="margin-top:8px;">一旦理解了 GLM 框架，你就不需要为每种数据类型重新学习新方法——只需选择合适的分布族和链接函数。这是建模手最重要的思维框架之一。</p>
+</div>
+
+<div class="warn-box">
+<strong>数模陷阱：</strong>① 对二分类数据用线性回归。② 报告逻辑回归系数时直接解读为线性效应——应解读为 odds ratio = e^{β}。③ 类别不平衡时用 Accuracy 评估。④ 遗漏完全分离 (complete separation) 问题：当 X 完美预测 Y 时，MLE 不存在（β→∞）。⑤ 在多分类逻辑回归中忽略「无关选择独立性 (IIA)」假设。⑥ 过度解读显著性——p < 0.05 的变量不一定对预测有帮助，应结合 AUC 变化和变量重要性评估。
+</div>
+
+<h2>7.8 交互式逻辑回归面板</h2>
+<p>调整 β₀ 和 β₁ 系数，观察 Sigmoid 决策边界如何移动。β₁ 越大，S 形越陡（分类越确定）；β₀ 控制边界位置。</p>
+
+<div class="panel">
+<div class="panel-label">LOGISTIC CLASSIFIER</div>
+<div class="slider-row">
+  <label>β₀ (截距)</label>
+  <input type="range" id="log-b0" min="-10" max="10" value="0" step="0.5" oninput="updateLogistic()">
+  <span class="slider-val" id="log-b0-val">0.0</span>
+</div>
+<div class="slider-row">
+  <label>β₁ (X 系数)</label>
+  <input type="range" id="log-b1" min="-5" max="5" value="1" step="0.1" oninput="updateLogistic()">
+  <span class="slider-val" id="log-b1-val">1.0</span>
+</div>
+<div id="log-stats" style="display:flex;gap:24px;flex-wrap:wrap;margin:12px 0;">
+  <div><span style="font-family:var(--mono);font-size:0.7rem;color:var(--slate);">决策边界 X</span><br>
+    <span style="font-family:var(--mono);font-size:1.1rem;font-weight:600;color:var(--terracotta);" id="log-boundary">0.00</span></div>
+  <div><span style="font-family:var(--mono);font-size:0.7rem;color:var(--slate);">Odds Ratio (e^{β₁})</span><br>
+    <span style="font-family:var(--mono);font-size:1.1rem;font-weight:600;color:var(--forest);" id="log-odds">1.00</span></div>
+  <div><span style="font-family:var(--mono);font-size:0.7rem;color:var(--slate);">p at X=0</span><br>
+    <span style="font-family:var(--mono);font-size:1.1rem;font-weight:600;color:var(--gold);" id="log-p0">0.50</span></div>
+</div>
+<div class="chart-container" id="logistic-plot"></div>
+</div>

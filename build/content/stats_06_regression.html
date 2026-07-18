@@ -1,0 +1,269 @@
+<div class="competition-box">
+<h4>竞赛真题场景</h4>
+<p><span class="q">Q：</span>某年全国大学生数学建模竞赛 B 题：建立回归模型预测城市综合发展指数。需要从 20 个候选指标中选出最重要的 5-8 个，建立多元回归模型，并诊断模型假设是否满足。<br>
+<span class="q">Q：</span>美赛 MCM 中经常要求建立预测模型——回归是首选。但评委期望看到的不只是「跑了一个回归」，而是完整的建模流程：变量选择 → 模型诊断 → 模型比较 → 预测与验证。<br>
+<strong>→ 回归是建模手最核心的工具。一个好的回归模型需要经过变量选择、共线性诊断、残差分析和模型验证四个步骤。</strong></p>
+</div>
+
+<h2>6.1 OLS 估计的矩阵推导</h2>
+
+<div class="derive-box">
+<h4>从 RSS 最小化到正规方程</h4>
+<p>对于多元线性回归 \(\mathbf{Y} = \mathbf{X}\boldsymbol{\beta} + \boldsymbol{\varepsilon}\)，最小二乘估计量是使残差平方和最小化的 β：</p>
+\[ \text{RSS}(\boldsymbol{\beta}) = (\mathbf{Y} - \mathbf{X}\boldsymbol{\beta})'(\mathbf{Y} - \mathbf{X}\boldsymbol{\beta}) \]
+\[ \frac{\partial \text{RSS}}{\partial \boldsymbol{\beta}} = -2\mathbf{X}'\mathbf{Y} + 2\mathbf{X}'\mathbf{X}\boldsymbol{\beta} = 0 \quad\Rightarrow\quad \hat{\boldsymbol{\beta}} = (\mathbf{X}'\mathbf{X})^{-1}\mathbf{X}'\mathbf{Y} \]
+<p>β̂ 的协方差矩阵：\(\text{Var}(\hat{\boldsymbol{\beta}}) = \sigma^2(\mathbf{X}'\mathbf{X})^{-1}\)。每个 β̂_j 的标准误：\(\text{SE}(\hat{\beta}_j) = \hat{\sigma}\sqrt{(\mathbf{X}'\mathbf{X})^{-1}_{jj}}\)。<br>
+<strong>Gauss-Markov 定理：</strong>在满足 LINE 假设的条件下，OLS 估计量是 BLUE (Best Linear Unbiased Estimator)。</p>
+</div>
+
+<div class="math-block">
+\[ \hat{\boldsymbol{\beta}} = (\mathbf{X}'\mathbf{X})^{-1}\mathbf{X}'\mathbf{Y} \qquad \text{Var}(\hat{\boldsymbol{\beta}}) = \sigma^2(\mathbf{X}'\mathbf{X})^{-1} \qquad \hat{\sigma}^2 = \frac{\text{RSS}}{n-p} \]
+\[ \hat{\beta}_1 = \frac{\sum (x_i - \bar{x})(y_i - \bar{y})}{\sum (x_i - \bar{x})^2} = r_{xy} \cdot \frac{s_y}{s_x} \qquad \hat{\beta}_0 = \bar{y} - \hat{\beta}_1 \bar{x} \]
+</div>
+
+<h2>6.2 多元回归、交互项与多项式</h2>
+
+<div class="concept-box">
+<h4>从简单回归到建模</h4>
+<p><strong>多元回归：</strong>\(Y = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \cdots + \beta_p X_p + \varepsilon\)。β_j 的含义是「在其他变量不变的情况下，X_j 每增加 1 单位，Y 平均变化 β_j 单位」。<br>
+<strong>交互项：</strong>\(Y = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \beta_3 (X_1 \cdot X_2) + \varepsilon\)。X₁ 的效应 = β₁ + β₃X₂，取决于 X₂ 的值。交互项显著 → X₁ 和 X₂ 的效应不是简单相加的。<br>
+<strong>多项式回归：</strong>\(Y = \beta_0 + \beta_1 X + \beta_2 X^2 + \cdots + \beta_p X^p + \varepsilon\)。虽然对 X 是非线性的，但对 β 仍然是线性的——仍可用 OLS。</p>
+</div>
+
+<div class="math-block">
+\[ Y = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \beta_3 (X_1 X_2) + \varepsilon \qquad \frac{\partial Y}{\partial X_1} = \beta_1 + \beta_3 X_2 \]
+</div>
+
+<h2>6.3 多重共线性与 VIF</h2>
+
+<div class="derive-box">
+<h4>当 X 变量之间高度相关</h4>
+<p>当多个自变量高度相关时，X'X 接近奇异矩阵，(X'X)⁻¹ 的对角元素极大 → β̂ 的方差极大 → 系数估计非常不稳定。<br>
+<strong>VIF (Variance Inflation Factor)：</strong>\[ \text{VIF}_j = \frac{1}{1 - R_j^2} \]其中 R²_j 是将 X_j 对其他所有 X 做回归的决定系数。VIF_j = 1 表示无共线性；VIF_j > 5 需要关注；VIF_j > 10 表示严重共线性。<br>
+<strong>条件数 (Condition Number)：</strong>\[ \kappa = \sqrt{\frac{\lambda_{\max}}{\lambda_{\min}}} \]其中 λ 是 X'X 的特征值。κ > 30 表示严重共线性。<br>
+<strong>处理：</strong>① 删除高度相关的变量之一 ② 用 PCA 降维（主成分回归）③ 用 Ridge 回归（L2 正则化）④ 增大样本量。</p>
+</div>
+
+<div class="math-block">
+\[ \text{VIF}_j = \frac{1}{1 - R_j^2} \qquad \text{Var}(\hat{\beta}_j) = \frac{\sigma^2}{\sum (x_{ij} - \bar{x}_j)^2} \cdot \text{VIF}_j \]
+</div>
+
+<h2>6.4 变量选择与正则化</h2>
+
+<div class="concept-box">
+<h4>LASSO (L1) vs Ridge (L2) vs Elastic Net</h4>
+<p><strong>LASSO (L1 正则化)：</strong>\[ \min_{\beta} \sum (y_i - \mathbf{x}_i'\boldsymbol{\beta})^2 + \lambda \sum |\beta_j| \]将不重要的系数精确压缩到 0，实现自动变量选择。λ 通过交叉验证选择。<br>
+<strong>Ridge (L2 正则化)：</strong>\[ \hat{\boldsymbol{\beta}}_{\text{Ridge}} = (\mathbf{X}'\mathbf{X} + \lambda\mathbf{I})^{-1}\mathbf{X}'\mathbf{Y} \]将系数向 0 缩小但不精确到 0。适合处理共线性。<br>
+<strong>Elastic Net：</strong>结合 L1 和 L2 的优点——既做变量选择又处理共线性。</p>
+</div>
+
+<div class="math-block">
+\[ \text{AIC} = n\ln(\text{RSS}/n) + 2p \qquad \text{BIC} = n\ln(\text{RSS}/n) + p\ln(n) \]
+</div>
+
+<div class="note-box">
+<strong>AIC vs BIC：</strong>AIC 倾向于选择更多变量（预测导向），BIC 对参数数量惩罚更重（解释导向）。竞赛中建议同时报告两者，如果 AIC 和 BIC 选出的最优模型不同，说明模型选择存在不确定性，需要进一步讨论。
+</div>
+
+<h2>6.5 残差诊断的完整流程</h2>
+
+<div class="derive-box">
+<h4>六步诊断法</h4>
+<p><strong>1. 残差 vs 拟合值：</strong>检查线性假设和同方差。无模式 → 好；漏斗形 → 异方差；曲线 → 非线性。<br>
+<strong>2. Q-Q 图：</strong>检查残差正态性。点偏离对角线 → 非正态。<br>
+<strong>3. Cook's Distance：</strong>\[ D_i = \frac{e_i^2}{p \cdot \text{MSE}} \cdot \frac{h_{ii}}{(1 - h_{ii})^2} \]度量第 i 个观测对全部拟合值的影响。D_i > 4/n → 高影响点。<br>
+<strong>4. Leverage：</strong>\[ h_{ii} = [\mathbf{X}(\mathbf{X}'\mathbf{X})^{-1}\mathbf{X}']_{ii} \]杠杆值 > 2p/n → 高杠杆点。<br>
+<strong>5. Durbin-Watson：</strong>\[ \text{DW} = \frac{\sum (e_t - e_{t-1})^2}{\sum e_t^2} \]检验残差自相关。DW ≈ 2 → 无自相关。<br>
+<strong>6. Breusch-Pagan：</strong>将 e² 对 X 做回归。显著 → 拒绝同方差假设（存在异方差）。</p>
+</div>
+
+<div class="math-block">
+\[ D_i = \frac{e_i^2}{p \cdot \text{MSE}} \cdot \frac{h_{ii}}{(1 - h_{ii})^2} \qquad \text{DW} = \frac{\sum_{t=2}^n (e_t - e_{t-1})^2}{\sum_{t=1}^n e_t^2} \]
+</div>
+
+<h2>6.6 Box-Cox 变换</h2>
+
+<div class="concept-box">
+<h4>当 LINEAR 假设不成立时</h4>
+<p>如果残差 vs 拟合值图显示明显非线性，可以考虑变换响应变量 Y：</p>
+</div>
+
+<div class="math-block">
+\[ Y^{(\lambda)} = \begin{cases} \dfrac{Y^\lambda - 1}{\lambda} & \lambda \neq 0 \\[8pt] \ln Y & \lambda = 0 \end{cases} \qquad \hat{\lambda} = \arg\max_{\lambda} \left[-\frac{n}{2}\ln\frac{\text{RSS}(\lambda)}{n} + (\lambda-1)\sum \ln y_i\right] \]
+</div>
+
+<!-- ═══════════ 6.6A 加权最小二乘 (WLS) ═══════════ -->
+<h2>6.6A 加权最小二乘 (WLS)</h2>
+
+<div class="concept-box">
+<h4>当异方差不可避免时</h4>
+<p>OLS 假设所有观测的误差方差相同（同方差性）。当这个假设不成立时（如收入越高的家庭消费波动越大），OLS 仍然是无偏的，但不再是 BLUE（最优线性无偏估计）。WLS 给每个观测分配一个权重，使得方差大的观测权重小，方差小的观测权重大。</p>
+</div>
+
+<div class="math-block">
+\[
+\hat{\beta}_{\text{WLS}} = \arg\min_{\beta} \sum_{i=1}^{n} w_i (y_i - x_i^T\beta)^2 = (X^T W X)^{-1} X^T W y
+\]
+</div>
+
+<p>其中 \(W = \text{diag}(w_1, \ldots, w_n)\)，\(w_i = 1/\sigma_i^2\)（理想权重 = 误差方差的倒数）。实践中，\(\sigma_i^2\) 未知——通常先用 OLS 拟合，再用残差的绝对值或平方回归得到估计的方差，然后迭代（可行广义最小二乘，FGLS）。</p>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>如果 Breusch-Pagan 检验显著（存在异方差），报告 WLS 结果比 OLS 更可信。在论文中，先报告 BP 检验 → 确认异方差 → 使用 WLS → 报告权重是如何估计的。这展现了完整的诊断-修正流程。
+</div>
+
+<!-- ═══════════ 6.6B 分位数回归 ═══════════ -->
+<h2>6.6B 分位数回归</h2>
+
+<div class="concept-box">
+<h4>不只关心均值</h4>
+<p>OLS 只建模条件均值 \(\mathbb{E}[Y \mid X]\)。但竞赛中，我们可能关心尾部——例如，什么因素影响最高 10% 的房价？什么因素降低最低 5% 的考试成绩？分位数回归建模条件分位数 \(Q_\tau(Y \mid X)\)，对分布的任意位置都能给出洞察。</p>
+</div>
+
+<div class="math-block">
+\[
+\hat{\beta}_{\tau} = \arg\min_{\beta} \sum_{i=1}^{n} \rho_{\tau}(y_i - x_i^T\beta)
+\quad\text{其中}\quad \rho_{\tau}(u) = u(\tau - \mathbf{1}\{u < 0\})
+\]
+</div>
+
+<p>\(\rho_{\tau}\) 是「check function」——对正残差和负残差施加不对称的惩罚。当 \(\tau = 0.5\) 时，分位数回归退化为中位数回归（LAD，最小绝对偏差）。</p>
+
+<div class="derive-box">
+<h4>推导：为什么分位数回归等价于非对称损失？</h4>
+<p>对于 \(\tau \in (0,1)\)，我们希望找到一个值 \(q\) 使得 \(\tau\) 比例的数据在 \(q\) 之下，\(1-\tau\) 比例在 \(q\) 之上。这等价于最小化：</p>
+<div class="math-block">
+\[
+\mathbb{E}[\rho_{\tau}(Y - q)] = \tau \int_{q}^{\infty} (y-q) dF(y) + (1-\tau) \int_{-\infty}^{q} (q-y) dF(y)
+\]
+</div>
+<p>对 \(q\) 求导并令为 0，得到 \(F(q) = \tau\)——即 \(q\) 是第 \(\tau\) 分位数。</p>
+</div>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>分位数回归在竞赛中特别有用当：① 关注极端值（如风险分析中的 VaR）。② 自变量对因变量不同分位数的影响不同（如教育对低收入和高收入人群的影响不同）。③ 数据有严重离群值——分位数回归天然稳健，不需要删除离群值。
+</div>
+
+<!-- ═══════════ 6.6C 稳健回归 ═══════════ -->
+<h2>6.6C 稳健回归 (Robust Regression)</h2>
+
+<div class="concept-box">
+<h4>当异常值不能删除时</h4>
+<p>OLS 的损失函数是平方误差 \(\sum (y_i - \hat{y}_i)^2\)——一个远离回归线的点会产生巨大的平方误差，强力拉动回归线。如果这个点是<strong>真实的</strong>（而非记录错误），你不想删除它，但也不想让它主导模型——稳健回归通过<strong>降低大残差的权重</strong>来解决这个问题。</p>
+</div>
+
+<div class="derive-box">
+<h4>M-估计 (M-Estimation)</h4>
+<p>稳健回归的核心是替代平方损失为增长较慢的损失函数 \(\rho(e)\)：</p>
+<div class="math-block">
+\[
+\hat{\beta} = \arg\min_{\beta} \sum_{i=1}^{n} \rho\left(\frac{y_i - \mathbf{x}_i^T\beta}{\hat{\sigma}}\right)
+\]
+</div>
+<p>三种常见的 \(\rho\) 函数：</p>
+<table class="compact-table">
+<thead><tr><th>方法</th><th>\(\rho(e)\) 行为</th><th>特点</th></tr></thead>
+<tbody>
+<tr><td><strong>Huber</strong></td><td>|e| ≤ c 时平方，|e| > c 时线性</td><td>对小残差像 OLS，对大残差像 MAE</td></tr>
+<tr><td><strong>Tukey 双权 (Bisquare)</strong></td><td>|e| > c 时权重降为 0</td><td>完全忽略极端异常值，需要好的初始值</td></tr>
+<tr><td><strong>Hampel</strong></td><td>三段式：平方 → 线性 → 0</td><td>最灵活，但参数最多</td></tr>
+</tbody>
+</table>
+<p>调谐常数 \(c\) 控制稳健性：\(c=1.345\)（Huber, 95% 效率于正态），\(c=4.685\)（Tukey, 95% 效率）。</p>
+</div>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>如果 Cook's D 检测到多个高影响点，但它们是真实数据不能删除 → 用稳健回归。论文中：「OLS 回归的残差诊断显示存在若干高影响点 (Cook's D > 4/n)。由于这些点代表真实的市场现象而非记录错误，我们使用 Huber 稳健回归来降低其影响。稳健回归的标准误通过 MM 估计获得，在异方差和非正态下均一致。」
+</div>
+
+<!-- ═══════════ 6.6D 分类自变量编码 ═══════════ -->
+<h2>6.6D 分类自变量编码</h2>
+
+<div class="concept-box">
+<h4>如何把「城市」「性别」「血型」放进回归？</h4>
+<p>回归模型需要数值输入，但竞赛中经常遇到分类变量。编码方式的选择会影响系数的解释。</p>
+</div>
+
+<table class="compact-table">
+<thead><tr><th>编码方式</th><th>做法</th><th>系数解释</th><th>适用场景</th></tr></thead>
+<tbody>
+<tr><td><strong>Dummy (Indicator)</strong></td><td>k-1 个 0/1 变量，以一个类别为参照</td><td>每个系数 = 该类别与参照类的差异</td><td>有一个自然参照类（如「对照组」）</td></tr>
+<tr><td><strong>One-Hot</strong></td><td>k 个 0/1 变量（无截距项）</td><td>每个系数 = 该类别的均值</td><td>无自然参照类，但需去掉截距</td></tr>
+<tr><td><strong>Effect (Deviation)</strong></td><td>k-1 个变量，参照类编码为 -1</td><td>每个系数 = 该类别与总均值的偏差</td><td>ANOVA 风格的解释</td></tr>
+<tr><td><strong>Ordinal</strong></td><td>有序类别编码为整数 1, 2, 3...</td><td>假设类别间距相等</td><td>有序变量（如教育程度）</td></tr>
+</tbody>
+</table>
+
+<div class="warn-box">
+<strong>竞赛陷阱：</strong>① 把分类变量直接编码为 1, 2, 3 放进回归——这隐含假设了类别的间距相等且有序（如「北京=1, 上海=2, 广州=3」→ 模型认为上海-北京 = 广州-上海，这毫无意义）。② 忘记去掉一个类别——k 个类别 + 截距 → 完全共线性（哑变量陷阱）。③ 参照类只有很少的观测 → 系数估计不稳定。
+</div>
+
+<!-- ═══════════ 6.6E 交互项的解释 ═══════════ -->
+<h2>6.6E 交互项的解释</h2>
+
+<div class="concept-box">
+<h4>「效果取决于……」——交互效应</h4>
+<p>当模型中包含交互项 \(Y = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \beta_3 (X_1 \cdot X_2)\) 时，\(X_1\) 的效应不再是 \(\beta_1\)，而是 \(\beta_1 + \beta_3 X_2\)——取决于 \(X_2\) 的值。</p>
+</div>
+
+<div class="derive-box">
+<h4>简单斜率分析 (Simple Slopes Analysis)</h4>
+<p>为了解释交互效应，通常在 \(X_2\) 的三个值上估计 \(X_1\) 的效应：</p>
+<div class="math-block">
+\[
+\begin{aligned}
+\text{低 } X_2 \text{ (均值 - 1 SD)：} & \quad \text{效应} = \beta_1 + \beta_3(\bar{X}_2 - s_{X_2}) \\
+\text{中 } X_2 \text{ (均值)：} & \quad \text{效应} = \beta_1 + \beta_3\bar{X}_2 \\
+\text{高 } X_2 \text{ (均值 + 1 SD)：} & \quad \text{效应} = \beta_1 + \beta_3(\bar{X}_2 + s_{X_2})
+\end{aligned}
+\]
+</div>
+<p>然后检验每个简单斜率是否显著不为 0。这揭示了交互效应的具体模式——例如「教育对收入的效应在高能力人群中更强」。</p>
+</div>
+
+<div class="note-box">
+<strong>竞赛技巧：</strong>交互效应是竞赛论文的加分项。论文中：「回归分析揭示了教育年限与社会资本的显著交互效应 (β₃=0.18, p=0.003)。简单斜率分析表明，对于低社会资本的个体（均值-1SD），教育年限每增加 1 年，收入增加 320 元；而对于高社会资本的个体（均值+1SD），教育年限每增加 1 年，收入增加 680 元。这说明社会资本放大了教育的回报。」——这种分析展示了深度理解。
+</div>
+
+<h2>6.7 回归诊断 Checklist</h2>
+
+<div class="toolkit-box">
+<h4>建模工具箱</h4>
+<table class="compact-table">
+<thead><tr><th>检查项</th><th>方法</th><th>不满足时怎么办</th></tr></thead>
+<tbody>
+<tr><td>线性 (Linearity)</td><td>残差 vs 拟合值图</td><td>加二次项/交互项，或变换 Y</td></tr>
+<tr><td>独立性 (Independence)</td><td>Durbin-Watson 检验</td><td>使用时间序列模型 (GLS)</td></tr>
+<tr><td>正态性 (Normality)</td><td>Q-Q 图 + Shapiro-Wilk</td><td>n 大时不太重要；n 小时用 Bootstrap</td></tr>
+<tr><td>同方差</td><td>Breusch-Pagan 检验</td><td>HC 稳健标准误 / WLS / 变换 Y</td></tr>
+<tr><td>无多重共线性</td><td>VIF</td><td>删变量 / Ridge / PCA</td></tr>
+<tr><td>无高杠杆点</td><td>Leverage > 2p/n</td><td>检查数据来源，必要时排除</td></tr>
+<tr><td>无影响点</td><td>Cook's D > 4/n</td><td>敏感性分析（有/无该点）</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="warn-box">
+<strong>数模陷阱：</strong>① 对时间序列数据用普通回归（残差自相关导致标准误严重低估）。② R² 高就认为模型好——加了足够多变量后 R² 总能接近 1（过拟合）。③ 用逐步回归选变量后，对保留的变量报告原始 p 值。④ 外推：用模型预测 X 范围之外的值。⑤ 忽视交互效应。⑥ 混淆统计显著和实际显著——大样本下 β̂=0.001 也可能 p&lt;0.001。⑦ 不检查 VIF 就直接解释回归系数。
+</div>
+
+<h2>6.8 交互式回归面板</h2>
+<p>拖动散点图中的点，观察最小二乘回归线、残差图和 R² 的实时变化。试着把一个点拖到很远的位置，观察高杠杆效应。</p>
+
+<div class="panel">
+<div class="panel-label">LEAST-SQUARES REGRESSOR</div>
+<div id="reg-stats" style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:16px;">
+  <div><span style="font-family:var(--mono);font-size:0.7rem;color:var(--slate);">β₀ (截距)</span><br>
+    <span style="font-family:var(--mono);font-size:1.3rem;font-weight:600;color:var(--forest);" id="reg-b0">0.00</span></div>
+  <div><span style="font-family:var(--mono);font-size:0.7rem;color:var(--slate);">β₁ (斜率)</span><br>
+    <span style="font-family:var(--mono);font-size:1.3rem;font-weight:600;color:var(--terracotta);" id="reg-b1">0.00</span></div>
+  <div><span style="font-family:var(--mono);font-size:0.7rem;color:var(--slate);">R²</span><br>
+    <span style="font-family:var(--mono);font-size:1.3rem;font-weight:600;color:var(--gold);" id="reg-r2">0.00</span></div>
+</div>
+<div class="chart-container" id="reg-scatter"></div>
+<div class="chart-container" id="reg-residuals" style="margin-top:12px;"></div>
+<div style="margin-top:10px;display:flex;gap:8px;">
+  <button class="btn" onclick="resetRegData()">↩ 重置</button>
+  <button class="btn" onclick="addRegPoint()">+ 添加点</button>
+</div>
+</div>
