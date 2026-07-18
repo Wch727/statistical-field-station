@@ -4,10 +4,15 @@
 
 每个章节包含：完整的 KaTeX 公式推导 + D3.js 交互式可视化 + 建模工具箱 + 竞赛实战指南。所有计算在浏览器端完成，所有资源（KaTeX、D3.js、字体）已随仓库本地提供，**完全离线可用**。
 
+**[🌐 在线体验](https://wch727.github.io/statistical-field-station/)** — GitHub Pages 托管，无需下载即可浏览全部章节。
+
 ## 快速开始
 
 ```bash
-# 任意浏览器打开任意章节
+# 在线使用（推荐）
+open https://wch727.github.io/statistical-field-station/
+
+# 或者本地打开
 open stats_tutorial.html        # macOS
 start stats_tutorial.html       # Windows
 xdg-open stats_tutorial.html    # Linux

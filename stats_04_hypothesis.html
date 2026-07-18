@@ -315,13 +315,15 @@ t = \frac{\bar{x} - \mu_0}{s / \sqrt{n}} \sim t_{n-1}
 <div class="toolkit-box">
 <h4>建模工具箱：根据数据类型选择正确的检验</h4>
 <table class="compact-table">
-<thead><tr><th>你的数据</th><th>你的问题</th><th>推荐检验</th><th>非参数替代</th></tr></thead>
+<thead><tr><th>你的数据</th><th>你的问题</th><th>推荐检验</th><th>备选方案</th></tr></thead>
 <tbody>
-<tr><td>连续变量，两组独立</td><td>均值是否相等</td><td>Welch t-test</td><td>Mann-Whitney U</td></tr>
+<tr><td>连续变量，两组独立</td><td>均值是否相等</td><td>Welch t-test</td><td>均值差的置换检验</td></tr>
+<tr><td>连续变量，两组独立</td><td>分布位置是否相同</td><td>Mann-Whitney U</td><td>Brunner-Munzel 检验</td></tr>
 <tr><td>连续变量，两组配对</td><td>差值是否为 0</td><td>配对 t-test</td><td>Wilcoxon Signed-Rank</td></tr>
 <tr><td>连续变量，三组+</td><td>均值是否全相等</td><td>One-Way ANOVA</td><td>Kruskal-Wallis</td></tr>
 <tr><td>分类变量，r×c 表</td><td>是否独立</td><td>卡方独立性检验</td><td>Fisher 精确检验</td></tr>
-<tr><td>分类变量，1 维</td><td>是否符合理论分布</td><td>卡方拟合优度</td><td>Kolmogorov-Smirnov</td></tr>
+<tr><td>分类变量，1 维</td><td>是否符合理论分布</td><td>卡方拟合优度</td><td>精确多项式 / Monte Carlo</td></tr>
+<tr><td>连续变量，单样本</td><td>是否符合某连续分布</td><td>Kolmogorov-Smirnov</td><td>Anderson-Darling / Shapiro-Wilk</td></tr>
 <tr><td>连续变量，单样本</td><td>均值是否等于 μ₀</td><td>单样本 t-test</td><td>Wilcoxon Signed-Rank</td></tr>
 <tr><td>任何分布，任何问题</td><td>最后一招</td><td>——</td><td>Bootstrap / 置换检验</td></tr>
 </tbody>
@@ -329,7 +331,7 @@ t = \frac{\bar{x} - \mu_0}{s / \sqrt{n}} \sim t_{n-1}
 </div>
 
 <div class="note-box">
-<strong>竞赛决策口诀：</strong>连续数据 → t 检验 / ANOVA；不满足正态 → Mann-Whitney / Kruskal-Wallis；分类计数 → 卡方检验；样本量太小 → Fisher 精确检验；不确定 → 置换检验（弱假设的最后堡垒，依赖可交换性）。报告时：p 值 + 效应量 + 置信区间，三者缺一不可！
+<strong>竞赛决策口诀：</strong>关心均值差异 → Welch t / ANOVA 或均值差的置换检验；关心秩或分布位置差异 → Mann-Whitney / Kruskal-Wallis（仅在两组分布形状相仿时才方便解释为中位数差异）；分类计数 → 卡方检验（小样本用 Fisher）；连续变量与连续分布比较 → KS 检验；不确定 → 置换检验。报告时：p 值 + 效应量 + 置信区间，三者缺一不可！
 </div>
 
 <!-- ═══════════ INTERACTIVE 1: t-TEST ═══════════ -->

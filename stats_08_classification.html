@@ -53,8 +53,8 @@ H(t) = -\sum_{k=1}^{K} \hat{p}_{k} \log_2 \hat{p}_{k}
 <p>当所有类别等概率时，熵最大（\(H = \log_2 K\)）；当所有样本属于同一类时，熵最小（\(H = 0\)）。</p>
 
 <div class="derive-box">
-<h4>推导：为什么熵的底数是 2？</h4>
-<p>熵的单位是 <strong>bit</strong>。如果以 \(e\) 为底，单位是 nat；以 10 为底，单位是 dit。在决策树中，使用 \(\log_2\) 是因为每个分裂本质上是一个二分问题——「是/否」恰好对应 1 bit 的信息。信息增益定义为：</p>
+<h4>推导：为什么信息论中常用 \(\log_2\)？</h4>
+<p>对数底数决定信息量的<strong>单位</strong>：\(\log_2\) → bit，\(\ln\) → nat，\(\log_{10}\) → dit。不同底数只会对熵和信息增益乘上一个正常数，<strong>不会改变候选分裂的优劣排序</strong>——因此选择哪个底数不影响决策树的生长结果。CART 虽是二叉分裂，但使用 \(\log_2\) 并非因为「分裂是二分问题」，而只是一种约定（bit 是信息论的标准单位）。信息增益定义为：</p>
 <div class="math-block">
 \[
 \text{Gain}(t, s) = H(t) - \left( \frac{n_L}{n} H(t_L) + \frac{n_R}{n} H(t_R) \right)
@@ -136,7 +136,7 @@ R_{\alpha}(T) = R(T) + \alpha |T|
 <p>每个 Bootstrap 样本大约包含 63.2% 的原始样本（因为 \(1 - (1-1/n)^n \approx 1 - 1/e \approx 0.632\)）。未被抽中的约 36.8% 样本称为 OOB（Out-Of-Bag）样本，可作为<strong>免费的验证集</strong>，无需额外划分训练/测试集。</p>
 
 <div class="note-box">
-<strong>竞赛技巧：</strong>随机森林的 OOB 误差是模型性能的无偏估计（近似于交叉验证）。在数模论文中报告 OOB 误差可以作为模型评估的一部分，不需要单独划分验证集。此外，随机森林的<strong>特征重要性</strong>（基于平均不纯度减少或排列重要性）是分析变量影响力的重要工具。
+<strong>竞赛技巧：</strong>随机森林的 OOB 误差通常能提供一个方便的内部泛化性能估计，在许多场景下接近交叉验证结果（但并非严格的「无偏估计」——当样本量较小或特征维度较高时，OOB 估计可能偏乐观）。在数模论文中报告 OOB 误差可以作为模型评估的参考，但仍建议配合交叉验证结果。此外，随机森林的<strong>特征重要性</strong>（基于平均不纯度减少或排列重要性）是分析变量影响力的重要工具。
 </div>
 
 <h3>8.2.3 随机森林 vs 单棵决策树</h3>
@@ -149,9 +149,11 @@ R_{\alpha}(T) = R(T) + \alpha |T|
 <tr><td>偏差</td><td>低</td><td>略高（但通常可接受）</td></tr>
 <tr><td>过拟合风险</td><td>高（需要剪枝）</td><td>低（树越多越稳定）</td></tr>
 <tr><td>特征重要性</td><td>基于分裂增益</td><td>更稳定（平均多棵树）</td></tr>
-<tr><td>计算复杂度</td><td>\(O(pn\log n)\)</td><td>\(O(Bp\sqrt{p}n\log n)\)</td></tr>
+<tr><td>计算复杂度</td><td>\(O(pn\log n)\)</td><td>\(O(B \cdot m_{\text{try}} \cdot n \log n)\)</td></tr>
 </tbody>
 </table>
+
+<p style="font-size:0.88rem;color:var(--text-muted)">其中 \(B\) 是树的数量，\(m_{\text{try}}\) 是每棵树每次分裂时随机选取的特征数。分类任务通常取 \(m_{\text{try}} \approx \sqrt{p}\)，回归任务通常取 \(m_{\text{try}} \approx p/3\)。实际复杂度还受树深、节点数、实现方式等影响，上表仅为典型渐近表达式。</p>
 
 <!-- ══════════════════════════════════════════════ -->
 <h2>8.2A 梯度提升：XGBoost 与 LightGBM</h2>
