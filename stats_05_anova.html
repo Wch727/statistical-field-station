@@ -315,7 +315,7 @@ function updateANOVA(){
 
   labels.forEach((l,i)=>{
     const line=d3.line().x(d=>xScale(d.x)).y(d=>yScale(d.y)).curve(d3.curveBasis);
-    const data=Array.from({length:pts},(_,j)=>{const x=xMin+(xMax-xMin)*j/pts;return{x,y:Math.exp(-((x-means[i])**2)/(2*sigma*sigma))/(sigma*Math.sqrt(2*Math.PI))};});
+    const data=Array.from({length:pts},(_,j)=>{const x=xMin+(xMax-xMin)*j/pts;return{x,y:Math.exp(-(((x-means[i])**2))/(2*sigma*sigma))/(sigma*Math.sqrt(2*Math.PI))};});
     svg.append('path').datum(data).attr('d',line).attr('fill',colors[i]).attr('opacity',0.25).attr('stroke',colors[i]).attr('stroke-width',1.5);
     svg.append('text').attr('x',xScale(means[i])).attr('y',MM.t+8).attr('text-anchor','middle').attr('font-family','var(--mono)').attr('font-size','0.65rem').attr('fill',colors[i]).text(l);
   });

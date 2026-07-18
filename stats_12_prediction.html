@@ -724,12 +724,12 @@ renderMathInElement(document.body, {
 
     // Step 4: Time response
     const x0_1 = data[0];
-    const C = x0_1 - b / a;
+    const x0Term = x0_1 - b / a;
 
     const fittedAgo = [];
     const fittedOrig = [x0_1];
     for (let k = 0; k < n + steps; k++) {
-      const agoVal = C * Math.exp(-a * k) + b / a;
+      const agoVal = x0Term * Math.exp(-a * k) + b / a;
       fittedAgo.push(agoVal);
       if (k > 0) {
         fittedOrig.push(agoVal - fittedAgo[k-1]);
