@@ -15,17 +15,12 @@ function updateCorrelation(){
   const mx=mean(xs),my=mean(ys);
   const num=sum(xs.map((x,i)=>(x-mx)*(ys[i]-my)));
   const den=Math.sqrt(sum(xs.map(x=>(x-mx)**2))*sum(ys.map(y=>(y-my)**2)));
-  const r=den===0?0:num/den;
-  document.getElementById('pearson-r').textContent=r.toFixed(4);
-
-  function rank(arr){const sorted=[...arr].map((v,i)=>({v,i})).sort((a,b)=>a.v-b.v);const ranks=Array(arr.length);sorted.forEach((s,i)=>{ranks[s.i]=i+1});return ranks;}
-  const rx=rank(xs),ry=rank(ys);
-  const mrx=mean(rx),mry=mean(ry);
-  const numR=sum(rx.map((r_,i)=>(r_-mrx)*(ry[i]-mry)));
-  const denR=Math.sqrt(sum(rx.map(r_=>(r_-mrx)**2))*sum(ry.map(r_=>(r_-mry)**2)));
-  const rho=denR===0?0:numR/denR;
-  document.getElementById('spearman-rho').textContent=rho.toFixed(4);
-  document.getElementById('r-squared').textContent=(r*r).toFixed(4);
+  const r=pearsonCorrelation(xs,ys);
+  const rho=spearmanCorrelation(xs,ys);
+  const display=value=>Number.isFinite(value)?value.toFixed(4):'未定义（常量或样本不足）';
+  document.getElementById('pearson-r').textContent=display(r);
+  document.getElementById('spearman-rho').textContent=display(rho);
+  document.getElementById('r-squared').textContent=display(r*r);
 
   const container=document.getElementById('scatter-container');
   container.innerHTML='';

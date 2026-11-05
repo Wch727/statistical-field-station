@@ -121,3 +121,34 @@ function tTestPValue(t, df) {
 function chiSquarePValue(chi2, df) {
   return 1 - chiCDF(chi2, df);
 }
+// Average ranks for ties; ranks start at 1, as in scipy.stats.rankdata.
+function averageRanks(values) {
+  const sorted = values.map((value, index) => ({ value, index })).sort((a, b) => a.value - b.value);
+  const ranks = new Array(values.length);
+  for (let start = 0; start < sorted.length;) {
+    let end = start + 1;
+    while (end < sorted.length && sorted[end].value === sorted[start].value) end++;
+    const rank = (start + 1 + end) / 2;
+    for (let i = start; i < end; i++) ranks[sorted[i].index] = rank;
+    start = end;
+  }
+  return ranks;
+}
+
+function pearsonCorrelation(xs, ys) {
+  if (xs.length !== ys.length || xs.length < 2 || !xs.every(Number.isFinite) || !ys.every(Number.isFinite)) return NaN;
+  const mx = xs.reduce((s, x) => s + x, 0) / xs.length;
+  const my = ys.reduce((s, y) => s + y, 0) / ys.length;
+  let covariance = 0, vx = 0, vy = 0;
+  for (let i = 0; i < xs.length; i++) {
+    const dx = xs[i] - mx, dy = ys[i] - my;
+    covariance += dx * dy; vx += dx * dx; vy += dy * dy;
+  }
+  if (vx === 0 || vy === 0) return NaN;
+  return Math.max(-1, Math.min(1, covariance / Math.sqrt(vx * vy)));
+}
+
+function spearmanCorrelation(xs, ys) {
+  if (xs.length !== ys.length || xs.length < 2 || !xs.every(Number.isFinite) || !ys.every(Number.isFinite)) return NaN;
+  return pearsonCorrelation(averageRanks(xs), averageRanks(ys));
+}

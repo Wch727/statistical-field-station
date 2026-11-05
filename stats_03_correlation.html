@@ -68,7 +68,7 @@ em{font-style:italic}
 
 <div class="concept-box">
 <h4>Spearman ρ：单调关系的度量</h4>
-<p>将原始数据替换为秩次 (1, 2, ..., n)，然后计算 Pearson r。度量<strong>单调关系</strong>（不一定是线性）。优势：① 对离群值稳健 ② 不要求正态分布 ③ 适用于有序变量。</p>
+<p>将原始数据替换为秩次，再计算秩的 Pearson r；遇到相同值时使用平均秩。若任一变量为常量，相关系数未定义。度量<strong>单调关系</strong>（不一定是线性）。优势：① 对离群值稳健 ② 不要求正态分布 ③ 适用于有序变量。</p>
 </div>
 
 <div class="math-block">
@@ -179,7 +179,7 @@ em{font-style:italic}
 </div>
 
 <div class="warn-box">
-<strong>数模陷阱：</strong>① 报告 r=0.6 后说「强相关」——r²=0.36，只解释了 36% 方差。② 相关系数显著 (p&lt;0.05) 但 r 很小 (如 r=0.15)——大样本下几乎任何 r 都显著。③ 用 Pearson r 分析有明显曲线关系的数据。④ 忽视离群值——一个点就能毁掉 r。⑤ 相关 ≠ 因果——论文中必须写「X 与 Y 显著相关 (r=0.6, p&lt;0.001)」，而不能写「X 导致 Y 增加」。⑥ 忽视分类变量，对「性别」和「是否购买」这种 0/1 数据用 Pearson r——应该用 Cramér's V 或 φ 系数。
+<strong>数模陷阱：</strong>① 报告 r=0.6 后说「强相关」——在含截距的一元最小二乘回归中，r²=0.36 对应样本内 R²；不能把它泛化为任意关系的解释率。② 相关系数显著 (p&lt;0.05) 但 r 很小 (如 r=0.15)——大样本下几乎任何 r 都显著。③ 用 Pearson r 分析有明显曲线关系的数据。④ 忽视离群值——一个点就能毁掉 r。⑤ 相关 ≠ 因果——论文中必须写「X 与 Y 显著相关 (r=0.6, p&lt;0.001)」，而不能写「X 导致 Y 增加」。⑥ 两个 0/1 二元变量的 Pearson r 就是 φ 系数；2×2 表的 Cramér's V 等于 |φ|。多类别名义变量不能随意编码为数字后用 Pearson r；应使用列联表方法。
 </div>
 
 <!-- ═══════════ 3.7A 互信息 ═══════════ -->
@@ -343,17 +343,12 @@ function updateCorrelation(){
   const mx=mean(xs),my=mean(ys);
   const num=sum(xs.map((x,i)=>(x-mx)*(ys[i]-my)));
   const den=Math.sqrt(sum(xs.map(x=>(x-mx)**2))*sum(ys.map(y=>(y-my)**2)));
-  const r=den===0?0:num/den;
-  document.getElementById('pearson-r').textContent=r.toFixed(4);
-
-  function rank(arr){const sorted=[...arr].map((v,i)=>({v,i})).sort((a,b)=>a.v-b.v);const ranks=Array(arr.length);sorted.forEach((s,i)=>{ranks[s.i]=i+1});return ranks;}
-  const rx=rank(xs),ry=rank(ys);
-  const mrx=mean(rx),mry=mean(ry);
-  const numR=sum(rx.map((r_,i)=>(r_-mrx)*(ry[i]-mry)));
-  const denR=Math.sqrt(sum(rx.map(r_=>(r_-mrx)**2))*sum(ry.map(r_=>(r_-mry)**2)));
-  const rho=denR===0?0:numR/denR;
-  document.getElementById('spearman-rho').textContent=rho.toFixed(4);
-  document.getElementById('r-squared').textContent=(r*r).toFixed(4);
+  const r=pearsonCorrelation(xs,ys);
+  const rho=spearmanCorrelation(xs,ys);
+  const display=value=>Number.isFinite(value)?value.toFixed(4):'未定义（常量或样本不足）';
+  document.getElementById('pearson-r').textContent=display(r);
+  document.getElementById('spearman-rho').textContent=display(rho);
+  document.getElementById('r-squared').textContent=display(r*r);
 
   const container=document.getElementById('scatter-container');
   container.innerHTML='';

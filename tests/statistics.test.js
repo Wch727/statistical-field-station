@@ -87,6 +87,17 @@
   assert('I_0(a,b) = 0', regularizedIncompleteBeta(0, 2, 3), 0, 0);
   assert('I_1(a,b) = 1', regularizedIncompleteBeta(1, 2, 3), 1, 0);
 
+  // Correlation regression cases: ties, permutation, constant inputs and phi.
+  assert('Spearman average ties', spearmanCorrelation([1,1,2],[1,2,3]), Math.sqrt(3)/2, 1e-12);
+  assert('Spearman row permutation', spearmanCorrelation([2,1,1],[3,2,1]), Math.sqrt(3)/2, 1e-12);
+  assert('Spearman reverse with ties', spearmanCorrelation([1,1,2,3],[3,3,2,1]), -1, 1e-12);
+  assert('Pearson equals phi for binary variables', pearsonCorrelation([0,0,1,1],[0,1,1,1]), 1/Math.sqrt(3), 1e-12);
+  assert('Constant Pearson undefined', Number.isNaN(pearsonCorrelation([2,2,2],[1,2,3])) ? 1 : 0, 1, 0);
+  assert('Constant Spearman undefined', Number.isNaN(spearmanCorrelation([2,2,2],[1,2,3])) ? 1 : 0, 1, 0);
+  assert('Single observation undefined', Number.isNaN(spearmanCorrelation([1],[2])) ? 1 : 0, 1, 0);
+  assert('Mismatched lengths undefined', Number.isNaN(pearsonCorrelation([1,2],[1])) ? 1 : 0, 1, 0);
+  assert('Nonfinite values undefined', Number.isNaN(spearmanCorrelation([1,Infinity],[1,2])) ? 1 : 0, 1, 0);
+
   // ─── Summary ───
   console.log('─── Results ───');
   console.log(passed + ' passed, ' + failed + ' failed, ' + (passed + failed) + ' total');

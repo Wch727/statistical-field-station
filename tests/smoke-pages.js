@@ -90,6 +90,31 @@ async function main() {
         if (!await page.$('.top-nav')) errors.push('MISSING: .top-nav');
       }
 
+      if (pageFile === 'stats_03_correlation.html') {
+        const correlationCheck = await page.evaluate(async () => {
+          const points = [...document.querySelectorAll('#scatter-container circle')].map(node => node.__data__);
+          const original = points.map(point => ({...point}));
+          const redraw = async () => {
+            window.dispatchEvent(new Event('resize'));
+            await new Promise(resolve => setTimeout(resolve, 400));
+          };
+          try {
+            points.forEach((point, i) => { point.x = i % 3 === 2 ? 2 : 1; point.y = i % 3 + 1; });
+            await redraw();
+            const tied = document.getElementById('spearman-rho').textContent;
+            points.forEach(point => { point.x = 2; });
+            await redraw();
+            const pearson = document.getElementById('pearson-r').textContent;
+            const spearman = document.getElementById('spearman-rho').textContent;
+            return tied === '0.8660' && pearson.includes('未定义') && spearman.includes('未定义');
+          } finally {
+            points.forEach((point, i) => Object.assign(point, original[i]));
+            await redraw();
+          }
+        });
+        if (!correlationCheck) errors.push('REGRESSION: tied ranks or constant correlation display');
+      }
+
       await context.close();
     } catch (err) {
       errors.push(`FATAL: ${err.message}`);
