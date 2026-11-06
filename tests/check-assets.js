@@ -66,6 +66,16 @@ for (const file of htmlFiles) {
   }
 }
 
+// Keep the offline JS glossary and its editable JSON source identical.
+try {
+  const glossary = JSON.parse(fs.readFileSync('assets/data/glossary.json','utf8'));
+  const context = {window:{}};
+  require('vm').runInNewContext(fs.readFileSync('assets/data/glossary.js','utf8'), context);
+  if (JSON.stringify(glossary) !== JSON.stringify(context.window.GLOSSARY_DATA)) {
+    console.error('GLOSSARY: JSON and offline JS data differ'); errors++;
+  }
+} catch (error) { console.error('GLOSSARY: ' + error.message); errors++; }
+
 if (errors === 0) {
   console.log('✅ All assets present and correctly ordered.');
 } else {

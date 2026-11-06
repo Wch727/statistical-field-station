@@ -1,14 +1,14 @@
 <div class="competition-box">
-<h4>竞赛真题场景</h4>
-<p><span class="q">Q：</span>国赛 B 题常考：根据多个特征判断样本类别（如根据化学成分判断葡萄酒产地、根据消费行为判断用户类型）。<br>
-<span class="q">Q：</span>美赛 MCM C 题：对亚马逊评论进行情感分类（正面/负面），一等奖论文使用随机森林 + TF-IDF 特征。<br>
+<h4>建模应用示例（非特定真题或获奖论文引用）</h4>
+<p><span class="q">Q：</span>应用示例：根据多个特征判断样本类别（如根据化学成分判断葡萄酒产地、根据消费行为判断用户类型）。<br>
+<span class="q">Q：</span>应用示例：对产品评论进行情感分类（正面/负面），可以用 TF-IDF 配合线性分类器作为基线，再验证其他模型。<br>
 <span class="q">Q：</span>泰坦尼克号生存预测（Kaggle 经典）：根据乘客属性（舱位、性别、年龄）预测是否生存。<br>
 <strong>→ 竞赛中，分类问题的核心不只是准确率，而是模型的可解释性——评委需要知道「为什么这样分类」。</strong></p>
 </div>
 
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 <h2>8.1 决策树</h2>
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 
 <div class="concept-box">
 <h4>核心思想</h4>
@@ -40,7 +40,7 @@ H(t) = -\sum_{k=1}^{K} \hat{p}_{k} \log_2 \hat{p}_{k}
 
 <h3>8.1.2 基尼不纯度</h3>
 
-<p>CART（Classification and Regression Tree）使用基尼系数代替熵：</p>
+<p>CART 分类树通常使用基尼不纯度；也可选熵等准则，回归树则使用回归损失：</p>
 
 <div class="math-block">
 \[
@@ -48,7 +48,7 @@ G(t) = 1 - \sum_{k=1}^{K} \hat{p}_{k}^2 = \sum_{k \neq j} \hat{p}_{k} \hat{p}_{j
 \]
 </div>
 
-<p>基尼系数可以理解为：从节点 \(t\) 中随机抽取两个样本，它们属于不同类别的概率。熵和基尼在大多数情况下给出相似的分裂结果，但基尼计算更快（不需要对数运算）。</p>
+<p>基尼系数可以理解为：按节点经验类别分布独立抽取两次（相当于有放回），它们属于不同类别的概率。熵和基尼在大多数情况下给出相似的分裂结果，但基尼计算更快（不需要对数运算）。</p>
 
 <div class="note-box">
 <strong>竞赛提示：</strong>CART 默认使用基尼系数，且每个节点只产生<strong>二叉树</strong>（binary split）。这避免了 ID3/C4.5 的多路分裂导致的数据碎片化问题。在数模竞赛中，推荐使用 CART（sklearn 的默认决策树实现）。
@@ -56,7 +56,7 @@ G(t) = 1 - \sum_{k=1}^{K} \hat{p}_{k}^2 = \sum_{k \neq j} \hat{p}_{k} \hat{p}_{j
 
 <h3>8.1.3 剪枝策略</h3>
 
-<p>完全生长的决策树几乎必然过拟合（每个叶子只有一个样本，训练误差为 0）。剪枝是控制复杂度的关键：</p>
+<p>不加复杂度约束的深树通常方差较大；当特征无法区分相反标签或存在其他停止条件时，叶子不一定只有一个样本，训练误差也不保证为 0。剪枝是控制复杂度的关键：</p>
 
 <div class="concept-box">
 <h4>代价复杂度剪枝 (Cost-Complexity Pruning)</h4>
@@ -66,20 +66,20 @@ G(t) = 1 - \sum_{k=1}^{K} \hat{p}_{k}^2 = \sum_{k \neq j} \hat{p}_{k} \hat{p}_{j
 R_{\alpha}(T) = R(T) + \alpha |T|
 \]
 </div>
-<p>其中 \(R(T)\) 是训练误差（如误分类率），\(|T|\) 是叶子节点数，\(\alpha\) 是复杂度惩罚参数。\(\alpha = 0\) 给出完全生长的树，\(\alpha \to \infty\) 给出只有根节点的树。通过交叉验证选择最优 \(\alpha\)。</p>
+<p>其中 \(R(T)\) 是经验风险；sklearn 的实现采用样本加权叶节点不纯度总和，\(|T|\) 是叶子节点数，\(\alpha\) 是复杂度惩罚参数。\(\alpha = 0\) 给出完全生长的树，\(\alpha \to \infty\) 给出只有根节点的树。通过交叉验证选择最优 \(\alpha\)。</p>
 </div>
 
 <div class="warn-box">
 <strong>常见陷阱：</strong>决策树对训练数据的微小变化极度敏感——增加或删除一个样本可能导致完全不同的树结构。这被称为<strong>高方差</strong>问题。随机森林正是为了解决这个问题而设计的。
 </div>
 
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 <h2>8.2 随机森林</h2>
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 
 <div class="concept-box">
 <h4>核心思想</h4>
-<p>随机森林 = <strong>Bagging + 随机特征选择</strong>。训练多棵决策树，每棵树在随机抽样的数据子集上训练，且每次分裂只考虑随机选取的特征子集。最终通过投票（分类）或平均（回归）来预测。</p>
+<p>随机森林 = <strong>Bagging + 随机特征选择</strong>。训练多棵决策树，通常每棵树在 bootstrap 有放回抽样数据上训练，且每次分裂只考虑随机选取的特征子集。最终通过投票（分类）或平均（回归）来预测。</p>
 </div>
 
 <h3>8.2.1 Bootstrap Aggregating (Bagging)</h3>
@@ -103,12 +103,12 @@ R_{\alpha}(T) = R(T) + \alpha |T|
 = \frac{\sigma^2}{B} + \frac{B-1}{B}\rho\sigma^2
 \]
 </div>
-<p>当 \(B \to \infty\)，方差趋近于 \(\rho\sigma^2\)。关键洞察：<strong>随机特征选择</strong>减少了树之间的相关性 \(\rho\)，从而进一步降低方差。这就是随机森林比单纯 Bagging 更好的原因。</p>
+<p>当 \(B \to \infty\)，方差趋近于 \(\rho\sigma^2\)。关键洞察：<strong>随机特征选择</strong>减少了树之间的相关性 \(\rho\)，从而进一步降低方差。这就是随机森林常能优于纯 Bagging 的机制之一；随机化也可能增加单树偏差。</p>
 </div>
 
 <h3>8.2.2 袋外误差 (OOB Error)</h3>
 
-<p>每个 Bootstrap 样本大约包含 63.2% 的原始样本（因为 \(1 - (1-1/n)^n \approx 1 - 1/e \approx 0.632\)）。未被抽中的约 36.8% 样本称为 OOB（Out-Of-Bag）样本，可作为<strong>免费的验证集</strong>，无需额外划分训练/测试集。</p>
+<p>每个 Bootstrap 样本大约包含 63.2% 的原始样本（因为 \(1 - (1-1/n)^n \approx 1 - 1/e \approx 0.632\)）。未被抽中的约 36.8% 样本称为 OOB（Out-Of-Bag）样本，可作为<strong>免费的验证集</strong>，为内部评估提供便利，但最终评估或大量调参后仍应保留独立测试数据。</p>
 
 <div class="note-box">
 <strong>竞赛技巧：</strong>随机森林的 OOB 误差通常能提供一个方便的内部泛化性能估计，在许多场景下接近交叉验证结果，但并非严格的「无偏估计」——在小样本、高维或弱效应等情况下，OOB 可能系统性偏离真实泛化误差（部分研究发现其可能高估真实错误率，即偏悲观）。在数模论文中报告 OOB 误差可以作为模型评估的参考，但重要结论仍建议配合独立测试集或交叉验证结果。此外，随机森林的<strong>特征重要性</strong>（基于平均不纯度减少或排列重要性）是分析变量影响力的重要工具。
@@ -123,20 +123,20 @@ R_{\alpha}(T) = R(T) + \alpha |T|
 <tr><td>方差</td><td>高（对数据敏感）</td><td>低（Bagging 降低方差）</td></tr>
 <tr><td>偏差</td><td>低</td><td>略高（但通常可接受）</td></tr>
 <tr><td>过拟合风险</td><td>高（需要剪枝）</td><td>低（树越多越稳定）</td></tr>
-<tr><td>特征重要性</td><td>基于分裂增益</td><td>更稳定（平均多棵树）</td></tr>
+<tr><td>特征重要性</td><td>基于分裂增益</td><td>可较稳定，但不纯度重要性有高基数偏倚</td></tr>
 <tr><td>计算复杂度</td><td>\(O(pn\log n)\)</td><td>\(O(B \cdot m_{\text{try}} \cdot n \log n)\)</td></tr>
 </tbody>
 </table>
 
 <p style="font-size:0.88rem;color:var(--text-muted)">其中 \(B\) 是树的数量，\(m_{\text{try}}\) 是每棵树每次分裂时随机选取的特征数。分类任务通常取 \(m_{\text{try}} \approx \sqrt{p}\)，回归任务通常取 \(m_{\text{try}} \approx p/3\)。实际复杂度还受树深、节点数、实现方式等影响，上表仅为典型渐近表达式。</p>
 
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 <h2>8.2A 梯度提升：XGBoost 与 LightGBM</h2>
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 
 <div class="concept-box">
 <h4>核心思想</h4>
-<p>梯度提升（Gradient Boosting）与随机森林不同——它不是并行训练多棵树然后平均，而是<strong>串行地</strong>训练树，每棵新树专门拟合前一轮的残差。最终预测是所有树的加权和。XGBoost 和 LightGBM 是梯度提升的工业级实现，在 Kaggle 和竞赛中统治表格数据。</p>
+<p>梯度提升（Gradient Boosting）与随机森林不同——它不是并行训练多棵树然后平均，而是<strong>串行地</strong>训练树，每棵新树拟合当前损失的负梯度；平方损失下才与残差成比例。最终预测是所有树的加权和。XGBoost 和 LightGBM 是梯度提升的工业级实现，在 Kaggle 和竞赛中统治表格数据。</p>
 </div>
 
 <h3>梯度提升的数学原理</h3>
@@ -156,7 +156,7 @@ r_{im} = -\left[ \frac{\partial L(y_i, F(x_i))}{\partial F(x_i)} \right]_{F = F_
 F_m(x) = F_{m-1}(x) + \nu \cdot h_m(x)
 \]
 </div>
-<p>其中 \(\nu \in (0,1]\) 是<strong>学习率</strong>（shrinkage），控制每棵树的贡献。\(\nu\) 越小，需要的树越多，但泛化性能越好——这是 boosting 最重要的超参数。</p>
+<p>其中 \(\nu \in (0,1]\) 是<strong>学习率</strong>（shrinkage），控制每棵树的贡献。\(\nu\) 越小，需要的树越多，通常需要更多轮数；是否改善泛化须验证——这是 boosting 最重要的超参数。</p>
 </div>
 
 <h3>XGBoost 的改进</h3>
@@ -190,21 +190,21 @@ F_m(x) = F_{m-1}(x) + \nu \cdot h_m(x)
 </table>
 
 <div class="note-box">
-<strong>竞赛技巧：</strong>XGBoost 和 LightGBM 是竞赛中<strong>必试的模型</strong>。调参顺序：① 先调 n_estimators（树的数量）和 learning_rate（通常 0.01-0.1）。② 再调 max_depth 和 min_child_weight。③ 最后调 subsample 和 colsample_bytree。④ 使用早停（early stopping）防止过拟合。LightGBM 在大数据上更快，XGBoost 在小数据上更稳定。
+<strong>竞赛技巧：</strong>XGBoost 和 LightGBM 是竞赛中<strong>必试的模型</strong>。调参顺序：① 先调 n_estimators（树的数量）和 learning_rate（通常 0.01-0.1）。② 再调 max_depth 和 min_child_weight。③ 最后调 subsample 和 colsample_bytree。④ 使用早停（early stopping）防止过拟合。速度和稳定性取决于数据、实现与参数，应在相同验证与计算预算下比较。
 </div>
 
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 <h2>8.3 支持向量机 (SVM)</h2>
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 
 <div class="concept-box">
 <h4>核心思想</h4>
-<p>SVM 寻找一个<strong>最大化间隔</strong>的超平面来分离两类样本。间隔（margin）定义为超平面到最近样本的距离。最大化间隔等价于最小化结构风险，这赋予了 SVM 出色的泛化能力。</p>
+<p>SVM 寻找一个<strong>最大化间隔</strong>的超平面来分离两类样本。间隔（margin）定义为超平面到最近样本的距离。控制间隔与训练误差是结构风险控制思想的一种实现，这赋予了 SVM 出色的泛化能力。</p>
 </div>
 
 <h3>8.3.1 硬间隔 SVM（线性可分情况）</h3>
 
-<p>设超平面为 \(w^T x + b = 0\)。对于线性可分的数据，要求所有样本满足 \(y_i(w^T x_i + b) \ge 1\)。几何间隔为 \(\frac{2}{\|w\|}\)。最大化间隔等价于：</p>
+<p>设超平面为 \(w^T x + b = 0\)。对于线性可分的数据，要求所有样本满足 \(y_i(w^T x_i + b) \ge 1\)。最近样本到超平面的单侧几何间隔为 \(1/\|w\|\)，两条支持超平面之间的间隔宽度为 \(2/\|w\|\)。标签约定为 −1 和 +1。最大化间隔等价于：</p>
 
 <div class="math-block">
 \[
@@ -248,21 +248,21 @@ F_m(x) = F_{m-1}(x) + \nu \cdot h_m(x)
 <tr><td>线性核</td><td>\(K(x_i,x_j) = x_i^T x_j\)</td><td>高维稀疏数据（文本分类）</td></tr>
 <tr><td>多项式核</td><td>\(K(x_i,x_j) = (x_i^T x_j + c)^d\)</td><td>已知多项式关系</td></tr>
 <tr><td>RBF (高斯) 核</td><td>\(K(x_i,x_j) = \exp(-\gamma\|x_i-x_j\|^2)\)</td><td>最通用，竞赛首选</td></tr>
-<tr><td>Sigmoid 核</td><td>\(K(x_i,x_j) = \tanh(\kappa x_i^T x_j + c)\)</td><td>等价于两层神经网络</td></tr>
+<tr><td>Sigmoid 核</td><td>\(K(x_i,x_j) = \tanh(\kappa x_i^T x_j + c)\)</td><td>形式类似神经元激活；并非任意参数都满足半正定核条件，也不等价于训练两层神经网络</td></tr>
 </tbody>
 </table>
 
 <div class="toolkit-box">
 <h4>竞赛工具箱：SVM 调参</h4>
-<p><strong>核心参数：</strong>\(C\)（正则化强度）和 \(\gamma\)（RBF 核的带宽）。<br>
+<p><strong>核心参数：</strong>\(C\)（误差惩罚，越大通常正则化越弱）和 \(\gamma\)（RBF 宽度的倒数尺度，越大核越窄）。<br>
 <strong>调参策略：</strong>网格搜索 \(C \in \{10^{-3}, 10^{-2}, \ldots, 10^{3}\}\)，\(\gamma \in \{10^{-3}, \ldots, 10^{3}\}\)，配合交叉验证。<br>
 <strong>数据预处理：</strong>SVM 对特征尺度敏感——<strong>必须先标准化</strong>（Z-score 或 MinMax）。<br>
 <strong>竞赛模板：</strong>先用线性 SVM 做基线 → 再用 RBF SVM 调参 → 报告支持向量数量作为模型复杂度指标。</p>
 </div>
 
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 <h2>8.4 K 近邻 (KNN)</h2>
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 
 <div class="concept-box">
 <h4>核心思想</h4>
@@ -277,20 +277,20 @@ F_m(x) = F_{m-1}(x) + \nu \cdot h_m(x)
 \text{欧氏距离：} & d(x, x') = \sqrt{\sum_{j=1}^{p} (x_j - x_j')^2} \\
 \text{曼哈顿距离：} & d(x, x') = \sum_{j=1}^{p} |x_j - x_j'| \\
 \text{闵可夫斯基距离：} & d(x, x') = \left(\sum_{j=1}^{p} |x_j - x_j'|^q\right)^{1/q} \\
-\text{余弦相似度：} & d(x, x') = 1 - \frac{x \cdot x'}{\|x\| \|x'\|}
+\text{余弦不相似度（非零向量）：} & d(x, x') = 1 - \frac{x \cdot x'}{\|x\| \|x'\|}
 \end{aligned}
 \]
 </div>
 
 <div class="note-box">
-<strong>竞赛提示：</strong>高维空间中，所有点之间的距离趋于相等（<strong>维度灾难</strong>），KNN 失效。经验法则：当 \(p > 10\) 时，先做 PCA 降维或特征选择，再使用 KNN。此外，KNN 对特征尺度极度敏感——如果某个特征的取值范围是 [0,1000]，另一个是 [0,1]，距离几乎完全由第一个特征决定。<strong>必须标准化。</strong>
+<strong>竞赛提示：</strong>高维噪声特征较多时，距离可能集中（<strong>维度灾难</strong>），削弱 KNN 的区分力；不存在 p&gt;10 即失效的普适界限。可通过 CV 比较特征选择/PCA 与原始特征。此外，KNN 对特征尺度极度敏感——如果某个特征的取值范围是 [0,1000]，另一个是 [0,1]，距离几乎完全由第一个特征决定。<strong>必须标准化。</strong>
 </div>
 
 <h3>8.4.2 K 的选择</h3>
 
 <p>\(K\) 控制偏差-方差权衡：</p>
 <ul style="margin:0 0 14px 24px;max-width:var(--text-w)">
-  <li>\(K = 1\)：零偏差（训练误差为 0），但方差极大（决策边界非常曲折）</li>
+  <li>\(K = 1\)：通常偏差较低、方差较高；无相反标签的重合点时，包含自身的训练误差为 0，但这不表示预测偏差为零（决策边界非常曲折）</li>
   <li>\(K\) 很大：决策边界平滑，但偏差增大（可能忽略局部模式）</li>
   <li>经验法则：\(K \approx \sqrt{n}\)，通过交叉验证精调</li>
 </ul>
@@ -298,10 +298,10 @@ F_m(x) = F_{m-1}(x) + \nu \cdot h_m(x)
 <div class="derive-box">
 <h4>推导：KNN 的渐近性质</h4>
 <p>KNN 有两个重要的渐近结论，容易混淆：</p>
-<p><strong>① 固定 K，\(n \to \infty\)（Cover &amp; Hart, 1967）：</strong>对于 1-NN，渐近错误率满足 \(R^* \le R_{1NN} \le 2R^*(1 - R^*)\)，即不超过贝叶斯错误率的两倍。对于一般固定 K，有更紧的界：</p>
+<p><strong>① 固定 K，\(n \to \infty\)（Cover &amp; Hart, 1967）：</strong>在二分类欧氏空间等标准条件下，对于 1-NN，渐近错误率满足 \(R^* \le R_{1NN} \le 2R^*(1 - R^*)\)，即不超过贝叶斯错误率的两倍；这个二分类公式不可直接用于多分类。固定有限 K 一般不保证达到贝叶斯风险：</p>
 <div class="math-block">
 \[
-R_{kNN} \le R^* \left(2 - \frac{K}{K-1}R^*\right)
+R_{1NN} \le 2R^*(1-R^*)
 \]
 </div>
 <p><strong>② K → ∞，K/n → 0（Stone, 1977）：</strong>当 K 随样本量增长同时满足 \(K \to \infty\) 且 \(K/n \to 0\) 时，在适当条件下 KNN 是<strong>贝叶斯一致的</strong>——风险收敛到贝叶斯风险：</p>
@@ -310,12 +310,12 @@ R_{kNN} \le R^* \left(2 - \frac{K}{K-1}R^*\right)
 R_{kNN} \to R^*
 \]
 </div>
-<p>其中 \(R^*\) 是贝叶斯错误率（任何分类器能达到的最低错误率）。这两个结论给出了 KNN 强大的理论保证：足够大样本下，它是渐近一致的非参数分类器。</p>
+<p>其中 \(R^*\) 是贝叶斯错误率（任何分类器能达到的最低错误率）。一致性需要第二种 K 随样本量增长的设定；不能把它误套到固定 K 的分类器上。</p>
 </div>
 
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 <h2>8.4B 朴素贝叶斯</h2>
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 
 <div class="concept-box">
 <h4>核心思想</h4>
@@ -338,7 +338,7 @@ P(Y = k \mid X = x) = \frac{P(X = x \mid Y = k) \cdot P(Y = k)}{P(X = x)}
 <table class="compact-table">
 <thead><tr><th>变体</th><th>\(P(X_j \mid Y=k)\) 的假设</th><th>适用场景</th></tr></thead>
 <tbody>
-<tr><td>Gaussian NB</td><td>正态分布 \(N(\mu_{jk}, \sigma^2_{jk})\)</td><td>连续特征，特征近似正态</td></tr>
+<tr><td>Gaussian NB</td><td>正态分布 \(N(\mu_{jk}, \sigma^2_{jk})\)</td><td>连续特征，在各类别内的条件分布近似正态</td></tr>
 <tr><td>Multinomial NB</td><td>多项分布（词频）</td><td>文本分类、离散计数</td></tr>
 <tr><td>Bernoulli NB</td><td>伯努利分布（出现/不出现）</td><td>二元特征（如词袋模型）</td></tr>
 </tbody>
@@ -356,18 +356,18 @@ P(Y = k \mid X = x) = \frac{P(X = x \mid Y = k) \cdot P(Y = k)}{P(X = x)}
 <p>预测时，计算每个类别的对数后验概率（取对数避免下溢）：</p>
 <div class="math-block">
 \[
-\log P(Y=k \mid x) \propto \log P(Y=k) + \sum_{j=1}^{p} \left[ -\frac{1}{2}\log(2\pi\hat{\sigma}^2_{jk}) - \frac{(x_j - \hat{\mu}_{jk})^2}{2\hat{\sigma}^2_{jk}} \right]
+\log P(Y=k \mid x) = C(x) + \log P(Y=k) + \sum_{j=1}^{p} \left[ -\frac{1}{2}\log(2\pi\hat{\sigma}^2_{jk}) - \frac{(x_j - \hat{\mu}_{jk})^2}{2\hat{\sigma}^2_{jk}} \right]
 \]
 </div>
 </div>
 
 <div class="note-box">
-<strong>竞赛技巧：</strong>朴素贝叶斯是绝佳的<strong>基线模型</strong>。训练只需计算均值和方差（O(np)），预测是 O(p)。在文本分类竞赛中，Multinomial NB + TF-IDF 是经典组合。此外，朴素贝叶斯的概率输出天然可解释——每个特征对最终分类的贡献可以精确计算。
+<strong>竞赛技巧：</strong>朴素贝叶斯是绝佳的<strong>基线模型</strong>。训练只需计算均值和方差（O(np)），预测是 O(p)。在文本分类竞赛中，Multinomial NB + TF-IDF 是经典组合。此外，可在模型假设下分解各特征的对数分数贡献，但相关特征可能被重复计入；预测概率往往需要独立校准，不能将其直接解释为因果贡献。连续变量应使用密度而非单点概率，零方差需平滑。
 </div>
 
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 <h2>8.5 分类方法选择决策树</h2>
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 
 <table class="compact-table">
 <thead><tr><th>条件</th><th>推荐方法</th><th>理由</th></tr></thead>
@@ -382,9 +382,9 @@ P(Y = k \mid X = x) = \frac{P(X = x \mid Y = k) \cdot P(Y = k)}{P(X = x)}
 </tbody>
 </table>
 
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 <h2>8.5A 类别不平衡处理</h2>
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 
 <div class="concept-box">
 <h4>问题的本质</h4>
@@ -423,7 +423,7 @@ x_{\text{new}} = x_i + \lambda \cdot (x_{nn} - x_i), \quad \lambda \sim U(0,1)
 </table>
 
 <div class="warn-box">
-<strong>竞赛常见错误：</strong>① 不标准化就使用 SVM/KNN（距离和核函数对尺度敏感）。② 用随机森林却无法解释结果——评委需要知道哪些特征最重要。③ 在极度不平衡的数据上只报告准确率——需要看精确率、召回率、F1（见 §X）。④ 没有报告交叉验证结果——单次训练/测试划分的随机性太大。⑤ 在测试集上做 SMOTE——SMOTE 只能用于训练集，测试集必须保持原始分布。
+<strong>竞赛常见错误：</strong>① 不标准化就使用 SVM/KNN（距离和核函数对尺度敏感）。② 用随机森林却无法解释结果——评委需要知道哪些特征最重要。③ 在极度不平衡的数据上只报告准确率——需要看精确率、召回率、F1（见 §10.1）。④ 没有报告交叉验证结果——单次训练/测试划分的随机性太大。⑤ 在测试集上做 SMOTE——SMOTE 只能用于每个 CV 训练折，不能先对全训练集 SMOTE 再 CV；验证/测试集保持原始分布。普通插值不适合直接处理名义类别编码，应使用适合混合类型的方法。
 </div>
 
 <!-- ═══════════ 8.5B AdaBoost ═══════════ -->
@@ -435,14 +435,15 @@ x_{\text{new}} = x_i + \lambda \cdot (x_{nn} - x_i), \quad \lambda \sim U(0,1)
 </div>
 
 <div class="derive-box">
-<h4>AdaBoost 算法</h4>
+<h4>二分类 AdaBoost（标签与弱分类器输出均为 −1/+1）</h4>
+<p>要求弱分类器加权错误率小于 1/2；若错误率为 0，应提前停止以避免无限权重，达到或超过 1/2 时需停止或调整弱学习器。</p>
 <p><strong>Step 1：</strong>初始化所有样本权重 \(w_i = 1/n\)。<br>
 <strong>Step 2：</strong>对于 m = 1 到 M：</p>
 <ol style="margin:0 0 0 20px">
   <li>用当前权重 \(w_i\) 训练弱分类器 \(G_m(x)\)</li>
   <li>计算加权误差 \(err_m = \sum w_i \cdot \mathbf{1}\{G_m(x_i) \neq y_i\} / \sum w_i\)</li>
-  <li>计算分类器权重 \(\alpha_m = \ln\left(\frac{1 - err_m}{err_m}\right)\)</li>
-  <li>更新样本权重：\(w_i \leftarrow w_i \cdot \exp(\alpha_m \cdot \mathbf{1}\{G_m(x_i) \neq y_i\})\)</li>
+  <li>计算分类器权重 \(\alpha_m = \frac12\ln\left(\frac{1 - err_m}{err_m}\right)\)</li>
+  <li>更新样本权重：\(w_i \leftarrow w_i \cdot \exp(-\alpha_m y_i G_m(x_i))\)，然后归一化</li>
 </ol>
 <p><strong>Step 3：</strong>最终分类器：\(G(x) = \text{sign}\left(\sum_{m=1}^{M} \alpha_m G_m(x)\right)\)</p>
 <div class="math-block">
@@ -465,7 +466,7 @@ x_{\text{new}} = x_i + \lambda \cdot (x_{nn} - x_i), \quad \lambda \sim U(0,1)
 </div>
 
 <h3>Grid Search (网格搜索)</h3>
-<p>预先定义每个超参数的候选值集合，<strong>穷举所有组合</strong>，通过交叉验证选择最优组合。例如：KNN 的 K ∈ {1,3,5,7,9,11}，SVM 的 C ∈ {0.1,1,10,100}，γ ∈ {0.01,0.1,1} → 共 6×4×3=72 种组合。</p>
+<p>预先定义每个超参数的候选值集合，<strong>穷举所有组合</strong>，通过交叉验证选择最优组合。例如：分别搜索 KNN 的 6 个 K 值，以及 RBF-SVM 的 4 个 C × 3 个 γ，共 6+12=18 组模型配置；不同模型不应将无关超参数做笛卡尔积。</p>
 
 <h3>Random Search (随机搜索)</h3>
 <p>从超参数空间中<strong>随机采样</strong>一定数量的组合。研究表明，在相同计算预算下，随机搜索通常优于网格搜索——因为不是所有超参数都同等重要，随机搜索能探索更多重要超参数的值。</p>
@@ -500,18 +501,18 @@ x_{\text{new}} = x_i + \lambda \cdot (x_{nn} - x_i), \quad \lambda \sim U(0,1)
 
 <p><strong>CatBoost 的三个关键创新：</strong></p>
 <ol style="margin:0 0 0 24px;max-width:var(--text-w)">
-  <li><strong>有序目标统计 (Ordered Target Statistics)：</strong>将分类特征的值替换为该类别的目标均值——但使用<strong>排序后的历史数据</strong>计算，避免数据泄漏（传统目标编码会导致过拟合）。</li>
-  <li><strong>有序提升 (Ordered Boosting)：</strong>每棵树只用前 i-1 个样本训练，预测第 i 个样本——避免梯度估计的偏差。</li>
-  <li><strong>对称树 (Symmetric Trees)：</strong>与 XGBoost 的非对称树不同，CatBoost 使用对称（平衡）树——所有叶子在同一深度分裂，预测速度更快。</li>
+  <li><strong>有序目标统计 (Ordered Target Statistics)：</strong>将分类特征的值替换为该类别的目标均值——但使用<strong>随机排列中排在当前样本之前的数据</strong>计算（不一定是时间顺序），避免数据泄漏（传统目标编码会导致过拟合）。</li>
+  <li><strong>有序提升 (Ordered Boosting)：</strong>按随机排列的前缀构造用于计算梯度的预测，避免用包含样本自身目标的信息预测该样本，从而减轻 prediction shift；并非每棵最终树只训练前 i−1 个样本。</li>
+  <li><strong>对称树 (Symmetric Trees)：</strong>与 XGBoost 的非对称树不同，CatBoost 使用对称（平衡）树——每一层的所有内部节点共享同一特征与阈值，预测速度更快。</li>
 </ol>
 
 <div class="note-box">
 <strong>竞赛选择：</strong>当数据中<strong>分类特征很多</strong>（如城市、职业、产品类别等）且不想手动编码时，CatBoost 值得优先尝试（原生类别特征支持最完善）。当特征主要是数值型时，LightGBM 通常更快，XGBoost 更稳定。三者性能差异通常很小——竞赛中都值得尝试，选交叉验证最好的即可。
 </div>
 
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 <!-- INSTRUMENT No.8A: KNN 决策边界 -->
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 <h2>仪器 No.8A — KNN 决策边界可视化</h2>
 <div class="panel">
 <div class="panel-label">INSTRUMENT No.8A · KNN Decision Boundary</div>
@@ -534,9 +535,9 @@ x_{\text{new}} = x_i + \lambda \cdot (x_{nn} - x_i), \quad \lambda \sim U(0,1)
 <div class="chart-container" id="knn-chart"></div>
 </div>
 
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 <!-- INSTRUMENT No.8B: 决策树分裂演示 -->
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 <h2>仪器 No.8B — 决策树分裂演示</h2>
 <div class="panel">
 <div class="panel-label">INSTRUMENT No.8B · Decision Tree Split</div>
@@ -553,17 +554,19 @@ x_{\text{new}} = x_i + \lambda \cdot (x_{nn} - x_i), \quad \lambda \sim U(0,1)
 <div class="chart-container" id="dt-chart"></div>
 </div>
 
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 <h2>8.6 竞赛实战流程</h2>
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 
 <div class="toolkit-box">
 <h4>分类问题竞赛流程</h4>
-<p><strong>Step 1：</strong>数据预处理——标准化（SVM/KNN 必需）、处理缺失值、编码分类变量。<br>
-<strong>Step 2：</strong>探索性分析——各类别在特征空间中的分布（PCA 降维可视化，见 §X）。<br>
+<p><strong>Step 1：</strong>先按采样结构划分训练/测试数据；预处理、编码、重采样、特征选择与调参均在 CV 训练折内拟合，再应用于验证折。距离模型通常需要尺度处理。<br>
+<strong>Step 2：</strong>探索性分析——各类别在特征空间中的分布（PCA 降维可视化，见 §10.3）。<br>
 <strong>Step 3：</strong>基线模型——逻辑回归或 KNN（简单快速，建立性能基准）。<br>
 <strong>Step 4：</strong>进阶模型——随机森林或 SVM（RBF 核），调参 + 交叉验证。<br>
-<strong>Step 5：</strong>模型比较——报告准确率、精确率、召回率、F1、AUC（见 §X）。<br>
-<strong>Step 6：</strong>特征重要性分析——哪些特征对分类贡献最大？用随机森林的特征重要性。<br>
+<strong>Step 5：</strong>模型比较——报告准确率、精确率、召回率、F1、AUC（见 §10.1）。<br>
+<strong>Step 6：</strong>特征重要性分析——哪些特征对分类贡献最大？可用验证集排列重要性；不纯度重要性偏爱高基数特征，相关特征也会影响重要性解释。<br>
 <strong>Step 7：</strong>结果解释——不只报告数字，要解释为什么选择这个模型（结合数据特征，而非仅凭指标排序）。</p>
 </div>
+
+<div class="note-box"><strong>延伸核对：</strong><a href="https://scikit-learn.org/stable/modules/tree.html" target="_blank" rel="noopener noreferrer">scikit-learn 树模型</a>；<a href="https://scikit-learn.org/stable/modules/ensemble.html" target="_blank" rel="noopener noreferrer">scikit-learn 集成方法与 AdaBoost</a>。公式使用条件与库默认值应一并阅读。</div>

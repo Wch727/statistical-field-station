@@ -34,9 +34,9 @@
 
 <main id="main-content">
 <div class="competition-box">
-<h4>竞赛真题场景</h4>
-<p><span class="q">Q：</span>国赛 2023 D 题：如何安排养殖场的饲料配比，使成本最低且满足营养需求？→ 线性规划 + 灵敏度分析。<br>
-<span class="q">Q：</span>美赛 MCM B 题：如何在多个地点中选址建设配送中心，使总运输成本最小？→ 整数规划 + 设施选址模型。<br>
+<h4>竞赛建模示例（改编场景，非原题题面）</h4>
+<p><span class="q">Q：</span>建模场景：如何安排养殖场的饲料配比，使成本最低且满足营养需求？→ 线性规划 + 灵敏度分析。<br>
+<span class="q">Q：</span>建模场景：如何在多个地点中选址建设配送中心，使总运输成本最小？→ 整数规划 + 设施选址模型。<br>
 <span class="q">Q：</span>电工杯/华中赛：如何在有限资源下安排生产计划，使利润最大？→ 混合整数规划。<br>
 <span class="q">Q：</span>几乎所有优化题都会问：如果参数变化了，方案还最优吗？→ 灵敏度分析。<br>
 <strong>→ 优化题的真正难点不是调用求解器，而是把一段中文描述精准地翻译成数学语言。翻译错了，求解器再快也没用。</strong></p>
@@ -100,7 +100,7 @@
 </div>
 
 <div class="note-box">
-<strong>建模自查清单：</strong>写完模型后逐条检查——□ 每个决策变量都有明确的定义和单位？□ 目标函数的方向（min/max）正确？□ 每个约束的左边是决策变量的函数，右边是常数？□ 所有变量都有非负约束？□ 需要整数的变量是否标记了整数约束？□ 检查是否有遗漏的约束（从题目中逐句翻译）。
+<strong>建模自查清单：</strong>写完模型后逐条检查——□ 每个决策变量都有明确的定义和单位？□ 目标函数的方向（min/max）正确？□ 约束表达式及参数是否准确？□ 每个变量的范围是否符合含义（可为自由变量）？□ 需要整数的变量是否标记了整数约束？□ 检查是否有遗漏的约束（从题目中逐句翻译）。
 </div>
 
 <!-- ══════════════════════════════════════════════ -->
@@ -124,12 +124,12 @@
 
 <h3>13.2.1 几何直觉：可行域与最优解</h3>
 
-<p>在二维空间中，每个线性约束是一个半平面。所有约束的交集构成<strong>可行域</strong>（feasible region）——一个凸多边形。目标函数 \(Z = c_1x_1 + c_2x_2\) 是一族平行线，沿着梯度方向 \(\nabla Z = (c_1, c_2)\) 平移，与可行域最后的接触点就是最优解。</p>
+<p>在二维空间中，每个线性约束是一个半平面。所有约束的交集构成<strong>可行域</strong>（feasible region）——一个凸多边形。目标函数 \(Z = c_1x_1 + c_2x_2\) 是一族平行线，最大化时沿梯度方向、最小化时沿负梯度方向 \(\nabla Z = (c_1, c_2)\) 平移，与可行域最后的接触点就是最优解。</p>
 
 <div class="derive-box">
 <h4>线性规划的基本定理</h4>
 <p><strong>1. 可行域是凸集：</strong>任意两个可行解的凸组合仍在可行域内。这保证了没有「局部最优陷阱」——LP 的任何局部最优就是全局最优。</p>
-<p><strong>2. 最优解在顶点取得：</strong>如果存在最优解，则至少有一个最优解位于可行域的顶点（极点）。这就是单纯形法的基础——只需检查顶点，不需要搜索内部。</p>
+<p><strong>2. 最优解在顶点取得：</strong>对于本节含非负约束的标准型非空可行域，若存在有限最优值，至少有一个极点最优解。一般含直线的可行域可能没有极点，不能无条件推广。这就是单纯形法的基础——只需检查顶点，不需要搜索内部。</p>
 <p><strong>3. 四种可能的结果：</strong>① 唯一最优解（顶点）。② 无穷多最优解（一条边上的所有点）。③ 无界解（目标函数可以无限优）。④ 无可行解（约束条件相互矛盾）。</p>
 </div>
 
@@ -152,7 +152,7 @@
 </div>
 <p><strong>弱对偶定理：</strong>对于任意可行解 \(\mathbf{x}\) 和 \(\mathbf{y}\)，有 \(\mathbf{c}^T\mathbf{x} \geq \mathbf{b}^T\mathbf{y}\)。原始目标值永远 ≥ 对偶目标值。<br>
 <strong>强对偶定理：</strong>如果原始问题有最优解 \(\mathbf{x}^*\)，则对偶问题也有最优解 \(\mathbf{y}^*\)，且 \(\mathbf{c}^T\mathbf{x}^* = \mathbf{b}^T\mathbf{y}^*\)。</p>
-<p><strong>影子价格：</strong>对偶变量 \(y_i\) 表示第 \(i\) 个资源约束的<strong>影子价格</strong>——如果增加 1 单位该资源，最优目标值改善 \(y_i\)。在竞赛中，影子价格告诉决策者「最值得投资增加哪种资源」。</p>
+<p><strong>影子价格：</strong>对偶变量 \(y_i\) 表示第 \(i\) 个资源约束的<strong>影子价格</strong>——在当前基有效且可微的局部范围内，\(y_i=\partial v^*/\partial b_i\)。本页 min、≥ 形式中增加最低要求会使成本增加 \(y_i\)；max、≤ 资源容量形式才常解释为增加资源带来的收益。在竞赛中，影子价格告诉决策者「最值得投资增加哪种资源」。</p>
 </div>
 
 <h3>13.2.3 灵敏度分析</h3>
@@ -190,7 +190,7 @@
 \end{aligned}
 \]
 </div>
-<p><strong>解读：</strong>与错误解的结论相反——正确解中<strong>蛋白质约束是紧的</strong>（恰好卡在最低要求 15），而脂肪约束是松弛的。产量约束始终紧（等式约束）。蛋白质约束的允许 RHS 范围为 [8, 20]：低于 8 时最优解为纯玉米，高于 20 时脂肪约束变紧。脂肪约束开始起作用的上限约为 3.42（超过此值影子价格不再为零）。</p>
+<p><strong>解读：</strong>该解中<strong>蛋白质约束是紧的</strong>（恰好卡在最低要求 15），而脂肪约束是松弛的。产量约束始终紧（等式约束）。蛋白质约束的允许 RHS 范围为 [8, 20]：低于 8 时最优解为纯玉米，高于 20 时脂肪约束变紧。脂肪约束开始起作用的上限约为 3.42（超过此值影子价格不再为零）。</p>
 <p><strong>竞赛论文灵敏度分析模板：</strong></p>
 <div class="math-block">
 \[
@@ -198,13 +198,13 @@
 \text{参数} & \text{当前值} & \text{允许下限} & \text{允许上限} & \text{影子价格} \\ \hline
 c_1\ \text{（玉米价格）} & 2.0 & 0 & 3.0 & — \\
 c_2\ \text{（豆粕价格）} & 3.0 & 2.0 & — & — \\
-b_1\ \text{（产量需求）} & 100 & 91.1 & 187.5 & \approx 1.78 \\
+b_1\ \text{（产量需求）} & 100 & 91.18 & 187.5 & \approx 1.78 \\
 b_2\ \text{（蛋白质需求）} & 15 & 8.0 & 20.0 & \approx 2.78 \\
 b_3\ \text{（脂肪需求）} & 3 & — & 3.42 & 0
 \end{array}
 \]
 </div>
-<p><strong>论文核心句式：</strong>「灵敏度分析表明，当玉米价格在 [0, 3.0] 元/kg 范围内时，最优配比方案保持稳定（基不变，解随参数连续变化）。产量约束和蛋白质约束的影子价格分别为 1.78 和 2.78 元，说明蛋白质最低要求的边际成本影响最大——若蛋白质标准提高，成本将显著上升。建议优先关注豆粕价格波动和蛋白质标准变化对方案的影响。」</p>
+<p><strong>论文核心句式：</strong>「灵敏度分析表明，当玉米价格在 [0, 3.0] 元/kg 范围内时，最优配比方案保持稳定（目标系数变动时该配比仍最优，端点可能有多个最优解）。产量约束和蛋白质约束的影子价格分别为 1.78 和 2.78 元，说明蛋白质最低要求的边际成本影响最大——若蛋白质标准提高，成本将显著上升。建议优先关注豆粕价格波动和蛋白质标准变化对方案的影响。」</p>
 </div>
 
 <!-- ══════════════════════════════════════════════ -->
@@ -276,7 +276,7 @@ infeasible_count = <span class="num" style="color:#C792EA">0</span>
 
 <div class="derive-box">
 <h4>核心思想</h4>
-<p>整数规划是 NP-hard 的——没有多项式时间算法。分支定界法是求解 IP 的标准方法：</p>
+<p>一般整数规划是 NP-hard；尚无已知的通用多项式时间精确算法，特殊结构可高效求解。分支定界法是求解 IP 的标准方法：</p>
 <p><strong>Step 1 — 松弛：</strong>先忽略整数约束，求解 LP 松弛问题。如果最优解恰好是整数 → 完成。</p>
 <p><strong>Step 2 — 分支：</strong>如果某个变量 \(x_j\) 在 LP 松弛解中是小数（如 \(x_j = 3.7\)），分成两个子问题：\(x_j \leq 3\) 和 \(x_j \geq 4\)。</p>
 <p><strong>Step 3 — 定界：</strong>LP 松弛的最优值提供下界（min 问题）。如果某分支的 LP 松弛值 ≥ 当前最好整数解的值 → 剪枝，不再继续分支。</p>
@@ -303,7 +303,7 @@ infeasible_count = <span class="num" style="color:#C792EA">0</span>
 </div>
 
 <div class="warn-box">
-<strong>竞赛陷阱：</strong>① 不要对小数解「四舍五入」——这不保证可行，也不保证最优。② Big-M 的 M 不要取太大（会导致数值问题），也不要取太小（会切断可行解）。M 取约束中变量能取到的最大值即可。③ 整数规划的求解时间随变量数指数增长——变量太多（>50）时，考虑启发式算法或松弛。
+<strong>竞赛陷阱：</strong>① 不要对小数解「四舍五入」——这不保证可行，也不保证最优。② Big-M 的 M 不要取太大（会导致数值问题），也不要取太小（会切断可行解）。M 取约束中变量能取到的最大值即可。③ 整数规划的最坏情况复杂度很高，但没有“超过50变量就不能精确求解”的门槛；结构、松弛质量和求解容差更关键，先报告求解状态与最优间隙。
 </div>
 
 <!-- ══════════════════════════════════════════════ -->
@@ -325,7 +325,7 @@ infeasible_count = <span class="num" style="color:#C792EA">0</span>
 \mathcal{L}(\mathbf{x}, \boldsymbol{\mu}, \boldsymbol{\lambda}) = f(\mathbf{x}) + \sum_i \mu_i g_i(\mathbf{x}) + \sum_j \lambda_j h_j(\mathbf{x})
 \]
 </div>
-<p><strong>Karush-Kuhn-Tucker (KKT) 条件：</strong></p>
+<p><strong>在可微性及适当约束资格条件（如 LICQ）下，局部最优解满足 KKT 必要条件；凸目标、凸不等式、仿射等式下，可行 KKT 点也是全局最优。条件如下：</strong></p>
 <div class="math-block">
 \[
 \begin{aligned}
@@ -342,7 +342,7 @@ infeasible_count = <span class="num" style="color:#C792EA">0</span>
 
 <h3>13.4.2 凸优化</h3>
 
-<p>如果目标函数是凸函数，约束定义凸可行域，则 NLP 的任何局部最优就是全局最优。竞赛中判断凸性：</p>
+<p>如果目标函数是凸函数，约束定义凸可行域，则 NLP 的任何局部最优就是全局最优。在凸定义域上、f 二阶连续可微时，可用 Hessian 判断凸性：</p>
 <div class="math-block">
 \[
 f \text{ 是凸函数 } \iff \text{Hessian } \nabla^2 f(\mathbf{x}) \succeq 0 \text{（半正定）}
@@ -450,12 +450,12 @@ V(s) = \max_{a \in A(s)} \left\{ r(s, a) + \gamma V(T(s, a)) \right\}
 \min \quad & \sum_{i=1}^{n} \sum_{j=1}^{n} c_{ij} x_{ij} \\
 \text{s.t.} \quad & \sum_{j=1}^{n} x_{ij} = 1 \quad \forall i \quad \text{（每个点恰好离开一次）} \\
 & \sum_{i=1}^{n} x_{ij} = 1 \quad \forall j \quad \text{（每个点恰好到达一次）} \\
-& \sum_{i \in S} \sum_{j \notin S} x_{ij} \geq 1 \quad \forall S \subset \{1,\ldots,n\}, S \neq \emptyset \quad \text{（子环消除）} \\
+& \sum_{i \in S} \sum_{j \notin S} x_{ij} \geq 1 \quad \forall \emptyset \ne S \subsetneq \{1,\ldots,n\} \quad \text{（子环消除）} \\
 & x_{ij} \in \{0,1\}
 \end{aligned}
 \]
 </div>
-<p>子环消除约束的数量是指数级的（\(2^n\)），实际求解中通常使用割平面法——先求解不含子环消除的松弛问题，发现子环后再动态添加约束。</p>
+<p>另明确禁止自环：\(x_{ii}=0\)。子环消除约束仅针对非空真子集，其数量是指数级的（\(2^n\)），实际求解中通常使用割平面法——先求解不含子环消除的松弛问题，发现子环后再动态添加约束。</p>
 </div>
 
 <div class="note-box">
@@ -482,7 +482,7 @@ V(s) = \max_{a \in A(s)} \left\{ r(s, a) + \gamma V(T(s, a)) \right\}
 \end{aligned}
 \]
 </div>
-<p><strong>全幺模性（Totally Unimodular）：</strong>运输问题的约束矩阵是<strong>全幺模矩阵</strong>——每个子方阵的行列式为 0 或 ±1。这意味着：<strong>如果所有 \(s_i\) 和 \(d_j\) 都是整数，则最优解 \(x_{ij}^*\) 自动为整数</strong>——不需要显式添加整数约束！这是运输问题可以用 LP 求解的根本原因。</p>
+<p><strong>全幺模性（Totally Unimodular）：</strong>运输问题的约束矩阵是<strong>全幺模矩阵</strong>——每个子方阵的行列式为 0 或 ±1。这意味着：<strong>如果所有 \(s_i\) 和 \(d_j\) 都是整数，则存在整数最优极点解（某些最优解的凸组合仍可为小数）</strong>——不需要显式添加整数约束！这是运输问题可以用 LP 求解的根本原因。</p>
 <p><strong>产销平衡条件：</strong>\(\sum s_i = \sum d_j\)。如果产销不平衡，需引入虚拟供应地或虚拟需求地将问题转化为平衡运输问题。</p>
 </div>
 
@@ -524,7 +524,7 @@ V(s) = \max_{a \in A(s)} \left\{ r(s, a) + \gamma V(T(s, a)) \right\}
 </div>
 
 <div class="note-box">
-<strong>竞赛技巧：</strong>指派问题在竞赛中出现在「任务分配」「人员调度」「项目匹配」等场景。Python 中 scipy.optimize.linear_sum_assignment 直接实现匈牙利算法。如果任务数 ≠ 人数，引入虚拟任务或虚拟人（成本为 0 或无穷大）转化为标准指派问题。
+<strong>竞赛技巧：</strong>指派问题在竞赛中出现在「任务分配」「人员调度」「项目匹配」等场景。Python 中 scipy.optimize.linear_sum_assignment 使用改进的 Jonker-Volgenant 算法求解指派，直接支持矩形矩阵；未匹配惩罚如有业务成本应显式建模，不能一律设零。
 </div>
 
 <!-- ═══════════ 13.7.4 选址问题 ═══════════ -->
@@ -589,7 +589,7 @@ V(s) = \max_{a \in A(s)} \left\{ r(s, a) + \gamma V(T(s, a)) \right\}
 \end{aligned}
 \]
 </div>
-<p>其中节点 0 是仓库，节点 1…n 是客户。</p>
+<p>其中节点 0 是仓库，节点 1…n 是客户；禁止自环 xᵏᵢᵢ=0。可补完整子环约束：对每个车辆k及非空客户子集S，∑ᵢ∈S∑ⱼ∈S xᵏᵢⱼ ≤ |S|−1。上式出发次数=1要求恰好K辆均使用；至多K辆时改为≤1。</p>
 </div>
 
 <table class="compact-table">
@@ -603,7 +603,7 @@ V(s) = \max_{a \in A(s)} \left\{ r(s, a) + \gamma V(T(s, a)) \right\}
 </table>
 
 <div class="warn-box">
-<strong>竞赛警告：</strong>VRP 是 NP-hard 问题——精确求解通常只能处理 50 个客户左右。竞赛中大规模 VRP 一律用启发式算法（蚁群算法 ACO 是 VRP 最经典的启发式方法）。OR-Tools 内置了 VRP 求解器，支持 CVRP、VRPTW 等多种变体，是竞赛首选工具。
+<strong>竞赛警告：</strong>VRP 是 NP-hard 问题——精确求解能力取决于实例结构和时间限制，没有统一50客户界限。大规模 VRP 常用启发式算法（蚁群算法 ACO 是 VRP 最经典的启发式方法）。OR-Tools 内置了 VRP 求解器，支持 CVRP、VRPTW 等多种变体，是竞赛首选工具。
 </div>
 
 <!-- ═══════════ 13.7A 启发式算法 ═══════════ -->
@@ -662,7 +662,7 @@ x_i^{t+1} = x_i^t + v_i^{t+1}
 
 <div class="derive-box">
 <h4>模拟蚂蚁觅食路径</h4>
-<p>蚂蚁在路径上释放信息素 (pheromone)——路径越短，蚂蚁往返越快，信息素积累越多，后续蚂蚁选择该路径的概率越大。正反馈机制使群体最终收敛到最短路径。</p>
+<p>蚂蚁在路径上释放信息素 (pheromone)——路径越短，蚂蚁往返越快，信息素积累越多，后续蚂蚁选择该路径的概率越大。正反馈帮助集中搜索优质路径，但也可能过早收敛，有限运行不保证找到最短路径。</p>
 <div class="math-block">
 \[
 P_{ij}^k = \frac{[\tau_{ij}]^\alpha \cdot [\eta_{ij}]^\beta}{\sum_{l \in \text{allowed}} [\tau_{il}]^\alpha \cdot [\eta_{il}]^\beta}
@@ -708,7 +708,7 @@ P_{ij}^k = \frac{[\tau_{ij}]^\alpha \cdot [\eta_{ij}]^\beta}{\sum_{l \in \text{a
 </div>
 
 <div class="note-box">
-<strong>竞赛技巧：</strong>网络流问题在竞赛中经常隐藏在「运输」「调度」「配送」的描述中——识别出它并建模为网络流，往往比整数规划更快求解。Python 的 networkx 库提供了 max_flow 和 min_cost_flow 的实现。
+<strong>竞赛技巧：</strong>网络流问题在竞赛中经常隐藏在「运输」「调度」「配送」的描述中——识别出它并建模为网络流，往往比整数规划更快求解。Python 的 networkx 库提供了 maximum_flow 和 min_cost_flow 的实现。
 </div>
 
 <!-- ═══════════ 13.7C 博弈论入门 ═══════════ -->
@@ -813,8 +813,8 @@ P_{ij}^k = \frac{[\tau_{ij}]^\alpha \cdot [\eta_{ij}]^\beta}{\sum_{l \in \text{a
 <table class="compact-table">
 <thead><tr><th>工具</th><th>适用场景</th><th>安装</th><th>特点</th></tr></thead>
 <tbody>
-<tr><td><strong>scipy.optimize.linprog</strong></td><td>线性规划</td><td>内置</td><td>简单直接，不需要额外安装</td></tr>
-<tr><td><strong>scipy.optimize.minimize</strong></td><td>非线性规划</td><td>内置</td><td>支持多种算法（SLSQP, L-BFGS-B）</td></tr>
+<tr><td><strong>scipy.optimize.linprog</strong></td><td>线性规划</td><td>pip install scipy</td><td>SciPy 提供的求解函数</td></tr>
+<tr><td><strong>scipy.optimize.minimize</strong></td><td>非线性规划</td><td>pip install scipy</td><td>支持多种算法（SLSQP, L-BFGS-B）</td></tr>
 <tr><td><strong>PuLP</strong></td><td>LP / IP / MIP</td><td>pip install pulp</td><td>语法简洁，支持多种求解器（CBC, GLPK）</td></tr>
 <tr><td><strong>cvxpy</strong></td><td>凸优化</td><td>pip install cvxpy</td><td>声明式建模，自动选择求解器</td></tr>
 <tr><td><strong>OR-Tools</strong></td><td>LP / IP / VRP / 排班</td><td>pip install ortools</td><td>Google 出品，内置 VRP/TSP 求解器</td></tr>
@@ -823,8 +823,12 @@ P_{ij}^k = \frac{[\tau_{ij}]^\alpha \cdot [\eta_{ij}]^\beta}{\sum_{l \in \text{a
 </table>
 
 <div class="warn-box">
-<strong>一票否决的致命错误：</strong>① 决策变量定义不清晰——评委不知道 x₁ 代表什么。② 遗漏约束——特别是非负约束和整数约束。③ 约束条件写成「x₁ + x₂ &lt; 100」而不是「x₁ + x₂ ≤ 100」——严格不等号在优化中无法处理（除非是整数变量）。④ 对 NP-hard 问题（TSP, VRP）声称找到了「最优解」——实际上你只能找到近似解。⑤ 不做灵敏度分析——优化题论文的灵魂。⑥ 强行把多目标合并成单目标而不讨论权重的合理性。
+<strong>一票否决的致命错误：</strong>① 决策变量定义不清晰——评委不知道 x₁ 代表什么。② 遗漏约束——特别是非负约束和整数约束。③ 约束条件写成「x₁ + x₂ &lt; 100」而不是「x₁ + x₂ ≤ 100」——严格不等号在优化中无法处理（除非是整数变量）。④ 对 NP-hard 问题（TSP, VRP）声称找到了「最优解」——精确求解器若证明最优（或给出可接受间隙）可报告对应结论，启发式结果不能据此宣称全局最优。⑤ 不做灵敏度分析——优化题论文的灵魂。⑥ 强行把多目标合并成单目标而不讨论权重的合理性。
 </div>
+
+<div class="note-box"><strong>适用条件与边界：</strong>灵敏度表中各RHS范围按其他右端固定计算：产量约束下限约91.18，上限187.5；若蛋白质/脂肪标准随产量同比变化，产量增加1公斤的边际成本应为219.44/100≈2.1944元，而非1.78元。成本系数变化时最优配比通常保持，RHS变化时配比一般变化；不同单位的影子价格不能直接比大小。KKT中的紧约束也可能有零乘子。Bellman递推需终端条件；无限时域常用0≤γ<1保证有界与收敛。</div>
+
+<p class="source-note">核对资料：<a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.linprog.html">SciPy线性规划与边际量</a>；<a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.linear_sum_assignment.html">SciPy指派算法</a></p>
 </main>
 
 
@@ -839,7 +843,7 @@ P_{ij}^k = \frac{[\tau_{ij}]^\alpha \cdot [\eta_{ij}]^\beta}{\sum_{l \in \text{a
   <div class="footer-meta">
     <span>版本 v1.2.0</span> <span>|</span>
     <span>持续更新中 · 欢迎反馈纠错</span> <span>|</span>
-    <span>最后更新: 2026-07</span>
+    <span>最后更新: 2026-11</span>
   </div>
   <p>Statistical Field Station &copy; 2026 · KaTeX + D3.js</p>
 </footer>
@@ -935,7 +939,7 @@ if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
 
     // Feasible region
     if (vertices.length >= 3) {
-      const areaGen = d3.area().x(d => xScale(d[0])).y0(yScale(0)).y1(d => yScale(d[1]));
+      const areaGen = d3.line().x(d => xScale(d[0])).y(d => yScale(d[1])).curve(d3.curveLinearClosed);
       svg.append('path').datum(vertices).attr('d', areaGen)
         .attr('fill','rgba(45,107,160,0.15)').attr('stroke','#2D6BA0').attr('stroke-width',1.5);
     }
@@ -1002,12 +1006,14 @@ if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
         .style('font-family','var(--mono)').style('font-size','0.7rem').style('fill','var(--terracotta)');
     }
 
+    const optimalVertices = vertices.filter(([x1,x2]) => Math.abs(c1*x1 + c2*x2 - bestVal) < 1e-8);
     // Info
     const isMin = true; // always min in this viz
     d3.select('#lp-info').html(`
       <div class="stat-card"><div class="lbl">最优解 x₁*</div><div class="val">${bestPt ? bestPt[0].toFixed(2) : '—'}</div></div>
       <div class="stat-card"><div class="lbl">最优解 x₂*</div><div class="val">${bestPt ? bestPt[1].toFixed(2) : '—'}</div></div>
       <div class="stat-card"><div class="lbl">最优值 Z*</div><div class="val" style="color:var(--terracotta)">${bestPt ? (c1*bestPt[0]+c2*bestPt[1]).toFixed(2) : '—'}</div></div>
+      <div class="stat-card"><div class="lbl">最优解情况</div><div class="val" style="font-size:0.85rem">${optimalVertices.length > 1 ? '多个最优解（显示其一）' : '唯一最优解'}</div></div>
       <div class="stat-card"><div class="lbl">顶点数</div><div class="val">${vertices.length}</div></div>
     `);
     d3.select('#lp-constraints-text').html(`

@@ -81,7 +81,7 @@
     const [mx, my] = d3.pointer(event);
     const x = Math.max(0, Math.min(1, (mx - margin.left) / pw));
     const y = Math.max(0, Math.min(1, (margin.top + ph - my) / ph));
-    const cls = d3.event && d3.event.shiftKey ? 1 : currentClass;
+    const cls = event.shiftKey ? 1 : currentClass;
     points.push({x, y, cls});
     redraw();
   });
@@ -93,7 +93,7 @@
   });
 
   svg.on('mouseup', function() {
-    d3.select('#knn-current-class').text('Class A (红)').style('color','var(--terracotta)');
+    d3.select('#knn-current-class').text(currentClass === 0 ? 'Class A (红)' : 'Class B (蓝)').style('color',currentClass === 0 ? 'var(--terracotta)' : '#2D6BA0');
   });
 
   d3.select('#knn-k').on('input', function() {
@@ -243,16 +243,18 @@
   });
 
   d3.select('#dt-best').on('click', function() {
-    let bestSplit = 0.5, bestGain = 0;
-    for (let s = 0.05; s <= 0.95; s += 0.01) {
+    let bestSplit = 0.5, bestGain = -Infinity;
+    const xs = [...new Set(data.map(d => d.x))].sort((a,b) => a-b);
+    for (let i = 1; i < xs.length; i++) {
+      const s = (xs[i-1]+xs[i])/2;
       const left = data.filter(d => d.x < s), right = data.filter(d => d.x >= s);
-      if (left.length < 3 || right.length < 3) continue;
+      if (!left.length || !right.length) continue;
       const Hp = entropy(data.map(d=>d.cls));
       const h = (left.length/data.length)*entropy(left.map(d=>d.cls)) + (right.length/data.length)*entropy(right.map(d=>d.cls));
       const gain = Hp - h;
       if (gain > bestGain) { bestGain = gain; bestSplit = s; }
     }
-    slider.property('value', bestSplit);
+    slider.attr('min', 0).attr('max', 1).attr('step', 'any').property('value', bestSplit);
     d3.select('#dt-split-val').text(bestSplit.toFixed(2));
     update(bestSplit);
   });

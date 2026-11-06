@@ -77,7 +77,7 @@
 
     // Feasible region
     if (vertices.length >= 3) {
-      const areaGen = d3.area().x(d => xScale(d[0])).y0(yScale(0)).y1(d => yScale(d[1]));
+      const areaGen = d3.line().x(d => xScale(d[0])).y(d => yScale(d[1])).curve(d3.curveLinearClosed);
       svg.append('path').datum(vertices).attr('d', areaGen)
         .attr('fill','rgba(45,107,160,0.15)').attr('stroke','#2D6BA0').attr('stroke-width',1.5);
     }
@@ -144,12 +144,14 @@
         .style('font-family','var(--mono)').style('font-size','0.7rem').style('fill','var(--terracotta)');
     }
 
+    const optimalVertices = vertices.filter(([x1,x2]) => Math.abs(c1*x1 + c2*x2 - bestVal) < 1e-8);
     // Info
     const isMin = true; // always min in this viz
     d3.select('#lp-info').html(`
       <div class="stat-card"><div class="lbl">最优解 x₁*</div><div class="val">${bestPt ? bestPt[0].toFixed(2) : '—'}</div></div>
       <div class="stat-card"><div class="lbl">最优解 x₂*</div><div class="val">${bestPt ? bestPt[1].toFixed(2) : '—'}</div></div>
       <div class="stat-card"><div class="lbl">最优值 Z*</div><div class="val" style="color:var(--terracotta)">${bestPt ? (c1*bestPt[0]+c2*bestPt[1]).toFixed(2) : '—'}</div></div>
+      <div class="stat-card"><div class="lbl">最优解情况</div><div class="val" style="font-size:0.85rem">${optimalVertices.length > 1 ? '多个最优解（显示其一）' : '唯一最优解'}</div></div>
       <div class="stat-card"><div class="lbl">顶点数</div><div class="val">${vertices.length}</div></div>
     `);
     d3.select('#lp-constraints-text').html(`

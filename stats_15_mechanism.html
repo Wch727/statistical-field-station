@@ -30,8 +30,8 @@
 
 <main id="main-content">
 <div class="competition-box">
-<h4>竞赛真题场景</h4>
-<p><span class="q">Q：</span>美赛 MCM A 题：鱼类种群如何响应捕捞压力？→ Logistic 增长 + 捕捞项。<br>
+<h4>竞赛建模示例（改编场景，非原题题面）</h4>
+<p><span class="q">Q：</span>建模场景：鱼类种群如何响应捕捞压力？→ Logistic 增长 + 捕捞项。<br>
 <span class="q">Q：</span>国赛/美赛：传染病如何传播？何时达到峰值？→ SIR 模型 + 参数估计。<br>
 <span class="q">Q：</span>美赛 ICM：物种竞争如何影响种群动态？→ Lotka-Volterra 竞争模型。<br>
 <span class="q">Q：</span>物理/工程类：热传导、扩散过程中的温度分布？→ 扩散方程 + 数值求解。<br>
@@ -82,7 +82,7 @@ x_{t+1} = a x_t + b
 x_t = a^t x_0 + b \cdot \frac{1 - a^t}{1 - a}
 \]
 </div>
-<p><strong>稳态：</strong>令 \(x_{t+1} = x_t = x^*\)，得 \(x^* = \frac{b}{1-a}\)。稳态稳定当且仅当 \(|a| < 1\)。</p>
+<p><strong>稳态：</strong>令 \(x_{t+1} = x_t = x^*\)，得 \(x^* = \frac{b}{1-a}\)。在 a≠1 时，该稳态渐近稳定当且仅当 \(|a| < 1\)；a=1 时 xₜ=x₀+bt，b=0 为中性情形。</p>
 <p><strong>竞赛应用：</strong>人口模型（逐年迭代）、经济增长（GDP 年增长率）、药物代谢（每半衰期残留量减半）。</p>
 </div>
 
@@ -93,7 +93,7 @@ x_t = a^t x_0 + b \cdot \frac{1 - a^t}{1 - a}
 x_{t+1} = r x_t (1 - x_t)
 \]
 </div>
-<p>这是著名的混沌模型——当 \(r\) 增大时，系统从稳定点 → 周期振荡 → 混沌。竞赛中注意：<strong>连续 Logistic 方程（ODE）不会混沌</strong>，只有离散版本才会。这提醒我们，离散化可能引入原连续模型没有的行为。</p>
+<p>这是著名的混沌模型——当 \(r\) 增大时，系统从稳定点 → 周期振荡 → 混沌。竞赛中注意：<strong>连续 Logistic 方程（ODE）不会混沌</strong>，该一维自治连续模型不会混沌。离散 Logistic 映射有自身的参数含义，并非直接套用连续增长率；数值离散也可能引入伪振荡，应检查步长与稳定性。</p>
 </div>
 
 <!-- ══════════════════════════════════════════════ -->
@@ -149,7 +149,7 @@ x_{t+1} = r x_t (1 - x_t)
 N(t) = \frac{K}{1 + \left(\frac{K - N_0}{N_0}\right) e^{-rt}}
 \]
 </div>
-<p><strong>拐点：</strong>在 \(N = K/2\) 处，增长率达到最大。拐点时间：\(t_{\text{inf}} = \frac{1}{r} \ln\left(\frac{K - N_0}{N_0}\right)\)。</p>
+<p><strong>拐点：</strong>在 \(N = K/2\) 处，增长率达到最大。假设 r>0、K>0、0<N₀<K，拐点时间：\(t_{\text{inf}} = \frac{1}{r} \ln\left(\frac{K - N_0}{N_0}\right)\)。当N₀>K/2时该拐点在t<0，所显示的未来轨迹仅为趋近K的凹增长；N₀≥K无未来增长拐点。</p>
 </div>
 
 <h3>15.4.3 SIR 传染病模型</h3>
@@ -166,9 +166,9 @@ N(t) = \frac{K}{1 + \left(\frac{K - N_0}{N_0}\right) e^{-rt}}
 \end{aligned}
 \]
 </div>
-<p>其中 \(\beta\) = 传播率（单位时间一个感染者传染的人数），\(\gamma\) = 恢复率（\(1/\gamma\) = 平均感染期），\(N = S + I + R\) = 总人口。</p>
+<p>其中 \(\beta\) = 传播率（单位时间有效传播接触率；实际人均新增感染率为βS/N），\(\gamma\) = 恢复率（\(1/\gamma\) = 平均感染期），\(N = S + I + R\) = 总人口。</p>
 <p><strong>基本再生数：</strong>\(R_0 = \beta / \gamma\)——一个感染者在完全易感人群中平均传染的人数。注意：\(R_0 > 1\) 是疫情扩散的<strong>必要条件</strong>；初始阶段是否增长取决于有效再生数 \(R_{\text{eff}}(0) = R_0 \cdot S_0/N\)——只有当 \(R_{\text{eff}}(0) > 1\) 即 \(S_0 > N/R_0\) 时，感染人数才会在初期增长。</p>
-<p><strong>峰值条件：</strong>令 \(dI/dt = \beta SI/N - \gamma I = 0\)，得 \(S = \gamma N / \beta = N / R_0\) 时 \(I\) 达到最大值。若使用比例 \(s = S/N\)，则峰值条件简洁地写为 \(s = 1 / R_0\)。最终规模由超越方程 \(S_\infty = S_0 \exp\left(-\frac{\beta}{\gamma N}(N - S_\infty)\right)\)（人数形式）或 \(s_\infty = s_0 \exp\left(-R_0(1 - s_\infty)\right)\)（比例形式）决定。</p>
+<p><strong>峰值条件：</strong>令 \(dI/dt = \beta SI/N - \gamma I = 0\)，得 \(S = \gamma N / \beta = N / R_0\) 时 \(I\) 达到最大值。若使用比例 \(s = S/N\)，则峰值条件简洁地写为 \(s = 1 / R_0\)。假设封闭、均匀混合、参数恒定、无出生死亡/再感染。若I₀>0，最终规模由超越方程 \(S_\infty = S_0 \exp\left(-\frac{\beta}{\gamma N}(N - R(0) - S_\infty)\right)\)（人数形式）或 \(s_\infty = s_0 \exp\left(-R_0(1 - r(0) - s_\infty)\right)\)（比例形式）决定。</p>
 </div>
 
 <h3>15.4.4 捕食者-猎物模型 (Lotka-Volterra)</h3>
@@ -183,7 +183,7 @@ N(t) = \frac{K}{1 + \left(\frac{K - N_0}{N_0}\right) e^{-rt}}
 \end{aligned}
 \]
 </div>
-<p><strong>特性：</strong>① 解是周期性的——猎物和捕食者数量交替振荡，相位差约 1/4 周期。② 存在一个<strong>非平凡平衡点</strong>：\(H^* = \gamma / \delta\)，\(P^* = \alpha / \beta\)。③ 平衡点是<strong>中心</strong>（中性稳定）——扰动后系统在新的轨道上振荡，不回到原平衡点。</p>
+<p><strong>特性：</strong>① 正参数、正初值且非平衡的经典模型轨道周期振荡；近共存平衡点的小振幅线性近似中相位相差约1/4周期，非线性大振幅下不是固定比例。② 存在一个<strong>非平凡平衡点</strong>：\(H^* = \gamma / \delta\)，\(P^* = \alpha / \beta\)。③ 平衡点是<strong>中心</strong>（中性稳定）——扰动后系统在新的轨道上振荡，不回到原平衡点。</p>
 <p><strong>竞赛变体：</strong>① 竞争模型（两个物种竞争同一资源）② 互惠模型（两个物种互相帮助）③ 加入 Allee 效应（种群过小时增长率下降）。</p>
 </div>
 
@@ -223,7 +223,8 @@ N(t) = \frac{K}{1 + \left(\frac{K - N_0}{N_0}\right) e^{-rt}}
 <span style="color:var(--slate)">def sir(t, y, beta, gamma, N):</span>
 <span style="color:var(--slate)">    S, I, R = y</span>
 <span style="color:var(--slate)">    return [-beta*S*I/N, beta*S*I/N - gamma*I, gamma*I]</span>
-<span style="color:var(--slate)">sol = solve_ivp(sir, [0, 100], [S0, I0, R0], args=(0.3, 0.1, 1000),</span>
+<span style="color:var(--slate)">N = 1000; S0, I0, R_initial = 995, 5, 0
+</span><span style="color:var(--slate)">sol = solve_ivp(sir, [0, 100], [S0, I0, R_initial], args=(0.3, 0.1, 1000),</span>
 <span style="color:var(--slate)">                dense_output=True, max_step=1.0)</span>
 </pre>
 </div>
@@ -245,13 +246,13 @@ N(t) = \frac{K}{1 + \left(\frac{K - N_0}{N_0}\right) e^{-rt}}
 \hat{\boldsymbol{\theta}} = \arg\min_{\boldsymbol{\theta}} \sum_{i=1}^{n} (y_i^{\text{obs}} - y(t_i; \boldsymbol{\theta}))^2
 \]
 </div>
-<p><strong>方法二：最大似然估计（MLE）：</strong>当数据有明确的概率模型时（如计数数据→Poisson），MLE 比最小二乘更准确。</p>
+<p><strong>方法二：最大似然估计（MLE）：</strong>当数据有明确的概率模型时（如计数数据→Poisson），可按该观测模型构造似然；正确似然可更合适，但并不无条件比最小二乘更准确。</p>
 <p><strong>方法三：贝叶斯推断（MCMC）：</strong>当需要参数的不确定性量化时，MCMC 给出参数的后验分布。</p>
 <p><strong>竞赛流程：</strong>① 先手动调参，让模型趋势大致匹配数据。② 用 curve_fit 或 minimize 精调。③ 报告参数估计值 ± 标准误。④ 画拟合图（数据点 + 模型曲线）。</p>
 </div>
 
 <div class="warn-box">
-<strong>参数估计的常见陷阱：</strong>① <strong>参数不可识别</strong>——多组参数产生相同的拟合曲线（如 SIR 中只有 R₀=β/γ 可识别，β 和 γ 单独不可识别）。解决：固定一个参数或使用先验信息。② <strong>过拟合</strong>——参数太多而数据太少。附加正则化或使用更简单的模型。③ <strong>局部最优</strong>——curve_fit 可能陷入局部极小。解决：多组初始值、全局优化算法（differential_evolution）。
+<strong>参数估计的常见陷阱：</strong>① <strong>参数不可识别</strong>——多组参数产生相同的拟合曲线（如仅观察早期感染人数时常主要识别组合βS₀/N−γ，β与γ可高度混淆；完整观测及外部恢复期信息可改善识别，并非一般只能识别R₀）。解决：固定一个参数或使用先验信息。② <strong>过拟合</strong>——参数太多而数据太少。附加正则化或使用更简单的模型。③ <strong>局部最优</strong>——curve_fit 可能陷入局部极小。解决：多组初始值、全局优化算法（differential_evolution）。
 </div>
 
 <!-- ══════════════════════════════════════════════ -->
@@ -260,7 +261,7 @@ N(t) = \frac{K}{1 + \left(\frac{K - N_0}{N_0}\right) e^{-rt}}
 <h2>仪器 No.15A — Logistic 增长模型</h2>
 <div class="panel">
 <div class="panel-label">INSTRUMENT No.15A · Logistic Growth Explorer</div>
-<p style="font-size:0.9rem;color:var(--slate);margin-bottom:12px">拖动滑块调整增长率 r、环境承载力 K 和初始种群 N₀。N₀ &lt; K 时为经典 S 形增长；N₀ &gt; K 时种群从上方衰减至 K；N₀ = K 时保持恒定。虚线标记拐点（仅增长阶段）。</p>
+<p style="font-size:0.9rem;color:var(--slate);margin-bottom:12px">拖动滑块调整增长率 r、环境承载力 K 和初始种群 N₀。0&lt;N₀&lt;K/2 时可见完整未来 S 形增长，K/2≤N₀&lt;K 时仅见凹增长；N₀ &gt; K 时种群从上方衰减至 K；N₀ = K 时保持恒定。虚线标记拐点（仅增长阶段）。</p>
 <div class="slider-row">
   <label>增长率 r = <span class="slider-val" id="log-r-val">0.30</span></label>
   <input type="range" id="log-r" min="0.05" max="1.0" value="0.3" step="0.01">
@@ -285,7 +286,7 @@ N(t) = \frac{K}{1 + \left(\frac{K - N_0}{N_0}\right) e^{-rt}}
 <h2>仪器 No.15B — SIR 传染病模型</h2>
 <div class="panel">
 <div class="panel-label">INSTRUMENT No.15B · SIR Epidemic Simulator</div>
-<p style="font-size:0.9rem;color:var(--slate);margin-bottom:12px">S=易感者（蓝），I=感染者（红），R=康复者（绿）。R₀ > 1 时疫情扩散。观察峰值和最终规模如何随 β 和 γ 变化。</p>
+<p style="font-size:0.9rem;color:var(--slate);margin-bottom:12px">S=易感者（蓝），I=感染者（红），R=康复者（绿）。初期增长要求 R₀S₀/N>1。图表仅显示80天内曲线、峰值及累计感染，末日数值不能直接称为最终规模。</p>
 <div class="slider-row">
   <label>传播率 β = <span class="slider-val" id="sir-beta-val">0.30</span></label>
   <input type="range" id="sir-beta" min="0.05" max="0.8" value="0.3" step="0.01">
@@ -295,8 +296,8 @@ N(t) = \frac{K}{1 + \left(\frac{K - N_0}{N_0}\right) e^{-rt}}
   <input type="range" id="sir-gamma" min="0.02" max="0.5" value="0.1" step="0.01">
 </div>
 <div class="btn-group">
-  <button class="btn" id="sir-preset1">预设: 流感 (R₀≈3)</button>
-  <button class="btn" id="sir-preset2">预设: 普通感冒 (R₀≈1.5)</button>
+  <button class="btn" id="sir-preset1">预设: 示例 A (R₀=3)</button>
+  <button class="btn" id="sir-preset2">预设: 示例 B (R₀=1.5)</button>
   <button class="btn" id="sir-preset3">预设: 快速消退</button>
 </div>
 <div class="panel-grid">
@@ -323,6 +324,10 @@ N(t) = \frac{K}{1 + \left(\frac{K - N_0}{N_0}\right) e^{-rt}}
 <div class="note-box">
 <strong>竞赛加分项：</strong>① 相图分析——在 (S, I) 平面上画出轨道，展示系统动力学。② 分岔分析——当参数变化时，系统行为如何定性改变（如从稳定到振荡）。③ 模型对比——比较不同模型（如 SIR vs SEIR）的拟合效果，用 AIC 选择。④ 不确定性量化——参数的后验分布或 Bootstrap 置信区间。⑤ 模型扩展——在基本模型上添加符合实际的项（如 SIR 加疫苗接种、Logistic 加 Allee 效应）。
 </div>
+
+<div class="note-box"><strong>适用条件与边界：</strong>一阶自治标量ODE的导数判据只用于双曲平衡点；f′=0需高阶分析。多维系统需检查Jacobian特征值实部。扩散问题还必须指定初始与边界条件；显式一维中心差分/前向Euler通常要求DΔt/Δx²≤1/2。数值解需检查求解成功、误差容差、守恒与非负性；dense_output仅用于积分时间区间内插值。</div>
+
+<p class="source-note">核对资料：<a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.integrate.solve_ivp.html">SciPy初值问题求解</a></p>
 </main>
 
 
@@ -337,7 +342,7 @@ N(t) = \frac{K}{1 + \left(\frac{K - N_0}{N_0}\right) e^{-rt}}
   <div class="footer-meta">
     <span>版本 v1.2.0</span> <span>|</span>
     <span>持续更新中 · 欢迎反馈纠错</span> <span>|</span>
-    <span>最后更新: 2026-07</span>
+    <span>最后更新: 2026-11</span>
   </div>
   <p>Statistical Field Station &copy; 2026 · KaTeX + D3.js</p>
 </footer>
@@ -400,7 +405,7 @@ if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
     svg.append('text').attr('x',margin.left+4).attr('y',yScale(K)-6).text('K').style('font-family','var(--mono)').style('font-size','0.7rem').style('fill','var(--gold)');
 
     // Inflection point
-    if (tInf > 0 && tInf < tMax) {
+    if (tInf >= 0 && tInf < tMax) {
       svg.append('line').attr('x1',xScale(tInf)).attr('x2',xScale(tInf)).attr('y1',yScale(NInf)).attr('y2',yScale(0)).attr('stroke','var(--terracotta)').attr('stroke-width',1).attr('stroke-dasharray','4,4');
       svg.append('circle').attr('cx',xScale(tInf)).attr('cy',yScale(NInf)).attr('r',4).attr('fill','var(--terracotta)');
       svg.append('text').attr('x',xScale(tInf)+6).attr('y',yScale(NInf)-8).text('拐点').style('font-family','var(--mono)').style('font-size','0.65rem').style('fill','var(--terracotta)');
@@ -420,8 +425,8 @@ if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
     // Stats
     d3.select('#logistic-stats').html(`
       <div class="stat-card"><div class="lbl">阶段</div><div class="val">${direction==='growth'?'增长':direction==='decay'?'衰减':'恒定'}</div></div>
-      <div class="stat-card"><div class="lbl">拐点时间 t*</div><div class="val">${tInf > 0 ? tInf.toFixed(2) : '—'}</div></div>
-      <div class="stat-card"><div class="lbl">拐点 N</div><div class="val">${tInf > 0 ? NInf.toFixed(0) : '—'}</div></div>
+      <div class="stat-card"><div class="lbl">拐点时间 t*</div><div class="val">${tInf >= 0 ? tInf.toFixed(2) : '—'}</div></div>
+      <div class="stat-card"><div class="lbl">拐点 N</div><div class="val">${tInf >= 0 ? NInf.toFixed(0) : '—'}</div></div>
       <div class="stat-card"><div class="lbl">终值 N(∞)</div><div class="val">${K}</div></div>
     `);
   }
@@ -440,18 +445,24 @@ if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
 
   const svg = d3.select('#sir-chart').append('svg').attr('width',W).attr('height',H).attr('viewBox',`0 0 ${W} ${H}`);
 
-  function sirEuler(beta, gamma, N, I0, days, dt) {
+  function sirRK4(beta, gamma, N, I0, days, dt) {
     const steps = Math.floor(days / dt);
     let S = N - I0, I = I0, R = 0;
     const data = [];
     for (let i = 0; i <= steps; i++) {
       const t = i * dt;
       data.push({t, S, I, R});
-      const dS = -beta * S * I / N;
-      const dI = beta * S * I / N - gamma * I;
-      const dR = gamma * I;
-      S += dS * dt; I += dI * dt; R += dR * dt;
-      if (S < 0) S = 0; if (I < 0) I = 0;
+      // Classical RK4: no ad-hoc clipping that would break S+I+R conservation.
+      const rhs = ([s, infected, removed]) => {
+        const incidence = beta * s * infected / N;
+        return [-incidence, incidence - gamma * infected, gamma * infected];
+      };
+      const state = [S, I, R];
+      const k1 = rhs(state);
+      const k2 = rhs(state.map((v,j) => v + dt * k1[j] / 2));
+      const k3 = rhs(state.map((v,j) => v + dt * k2[j] / 2));
+      const k4 = rhs(state.map((v,j) => v + dt * k3[j]));
+      [S, I, R] = state.map((v,j) => v + dt * (k1[j] + 2*k2[j] + 2*k3[j] + k4[j]) / 6);
     }
     return data;
   }
@@ -463,7 +474,7 @@ if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
     d3.select('#sir-gamma-val').text(gamma.toFixed(2));
 
     const N = 1000, I0 = 5, days = 80, dt = 0.2;
-    const data = sirEuler(beta, gamma, N, I0, days, dt);
+    const data = sirRK4(beta, gamma, N, I0, days, dt);
     const R0 = beta / gamma;
 
     const xScale = d3.scaleLinear().domain([0, days]).range([margin.left, margin.left+pw]);
@@ -499,12 +510,13 @@ if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
     const peakI = d3.max(data, d => d.I);
     const peakT = data.find(d => d.I === peakI)?.t || 0;
     const finalR = data[data.length-1].R;
+    const cumulative = N - data[data.length-1].S;
 
     d3.select('#sir-stats').html(`
       <div class="stat-card"><div class="lbl">R₀ = β/γ</div><div class="val" style="color:${R0>1?'var(--terracotta)':'var(--forest)'}">${R0.toFixed(2)}</div></div>
-      <div class="stat-card"><div class="lbl">峰值感染</div><div class="val">${Math.round(peakI)} 人</div></div>
-      <div class="stat-card"><div class="lbl">峰值时间</div><div class="val">第 ${peakT.toFixed(0)} 天</div></div>
-      <div class="stat-card"><div class="lbl">最终感染</div><div class="val">${Math.round(finalR)} 人 (${(finalR/N*100).toFixed(1)}%)</div></div>
+      <div class="stat-card"><div class="lbl">80天内峰值感染</div><div class="val">${Math.round(peakI)} 人</div></div>
+      <div class="stat-card"><div class="lbl">80天内峰值时间</div><div class="val">第 ${peakT.toFixed(0)} 天</div></div>
+      <div class="stat-card"><div class="lbl">第80天累计感染（I+R）</div><div class="val">${Math.round(cumulative)} 人 (${(cumulative/N*100).toFixed(1)}%)</div></div>
     `);
   }
 
@@ -512,7 +524,7 @@ if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
   d3.select('#sir-gamma').on('input', update);
   d3.select('#sir-preset1').on('click', () => { d3.select('#sir-beta').property('value',0.3); d3.select('#sir-gamma').property('value',0.1); update(); });
   d3.select('#sir-preset2').on('click', () => { d3.select('#sir-beta').property('value',0.15); d3.select('#sir-gamma').property('value',0.1); update(); });
-  d3.select('#sir-preset3').on('click', () => { d3.select('#sir-beta').property('value',0.5); d3.select('#sir-gamma').property('value',0.4); update(); });
+  d3.select('#sir-preset3').on('click', () => { d3.select('#sir-beta').property('value',0.15); d3.select('#sir-gamma').property('value',0.4); update(); });
   update();
 })();
 

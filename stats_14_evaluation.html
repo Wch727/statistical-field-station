@@ -34,9 +34,9 @@
 
 <main id="main-content">
 <div class="competition-box">
-<h4>竞赛真题场景</h4>
-<p><span class="q">Q：</span>国赛 2024 C 题：如何综合评价多个城市的可持续发展水平？→ 指标体系构建 + 熵权法 + TOPSIS。<br>
-<span class="q">Q：</span>美赛 MCM C 题：如何对多个国家的环境政策进行综合排序？→ AHP 确定权重 + 加权综合评分。<br>
+<h4>竞赛建模示例（改编场景，非原题题面）</h4>
+<p><span class="q">Q：</span>建模场景：如何综合评价多个城市的可持续发展水平？→ 指标体系构建 + 熵权法 + TOPSIS。<br>
+<span class="q">Q：</span>建模场景：如何对多个国家的环境政策进行综合排序？→ AHP 确定权重 + 加权综合评分。<br>
 <span class="q">Q：</span>华中赛/电工杯：如何评价多个供应商的综合表现？→ 灰色关联分析 + TOPSIS。<br>
 <span class="q">Q：</span>几乎所有评价题都会问：排名是否稳定？换一种权重会怎样？→ 灵敏度分析。<br>
 <strong>→ 评价类题目最容易踩的坑：机械套用「熵权法 + TOPSIS」模板，不解释指标体系、不验证权重合理性、不做灵敏度分析。评委一眼就能看出模板痕迹。</strong></p>
@@ -68,7 +68,7 @@ x_{m1} & x_{m2} & \cdots & x_{mn}
 \end{bmatrix}
 \]
 </div>
-<p>所有评价方法本质上都是同一个流程：</p>
+<p>许多多指标评价方法可按以下流程组织（PCA、因子分析等另有结构）：</p>
 <div class="math-block">
 \[
 \text{原始数据 } \mathbf{X} \xrightarrow{\text{标准化}} \text{规范矩阵 } \mathbf{R} \xrightarrow{\text{赋权}} \text{加权矩阵 } \mathbf{V} \xrightarrow{\text{聚合}} \text{综合得分 } S_i \xrightarrow{\text{排序}} \text{最终排名}
@@ -138,7 +138,7 @@ w_j = \frac{d_j}{\sum_{j=1}^{n} d_j} = \frac{1 - e_j}{\sum_{j=1}^{n} (1 - e_j)}
 </div>
 
 <div class="note-box">
-<strong>熵权法的优缺点：</strong>优点——完全客观，不需要专家判断，论文中容易论述。缺点——① 权重完全由数据驱动，可能与实际重要性不符（一个不重要的指标因为数据波动大而获得高权重）；② 对异常值敏感；③ 忽略了指标间的相关性。竞赛中熵权法常与 TOPSIS 或灰色关联分析结合使用。
+<strong>熵权法的优缺点：</strong>优点——给定数据与预处理后可复算，不需要专家判断，论文中容易论述。缺点——① 权重完全由数据驱动，可能与实际重要性不符（一个不重要的指标因为数据波动大而获得高权重）；② 对异常值敏感；③ 忽略了指标间的相关性。竞赛中熵权法常与 TOPSIS 或灰色关联分析结合使用。
 </div>
 
 <!-- ══════════════════════════════════════════════ -->
@@ -184,7 +184,7 @@ C_i = \frac{S_i^-}{S_i^+ + S_i^-} \in [0, 1]
 </div>
 
 <div class="warn-box">
-<strong>TOPSIS 的致命误解：</strong>① TOPSIS 不是「离理想解最近」就可以了——必须同时考虑「离负理想解最远」。一个方案离理想解很近但如果离负理想解也很近，可能不如一个折中方案。② TOPSIS 假设指标之间<strong>独立</strong>——如果两个指标高度相关，它们会重复计入，导致偏误。③ 权重的选择对结果影响极大——必须做权重灵敏度分析。
+<strong>TOPSIS 的致命误解：</strong>① TOPSIS 不是「离理想解最近」就可以了——必须同时考虑「离负理想解最远」。一个方案离理想解很近但如果离负理想解也很近，可能不如一个折中方案。② 欧氏 TOPSIS 不校正指标间的相关性，并非要求统计独立——如果两个指标高度相关，它们会重复计入，导致偏误。③ 权重的选择对结果影响极大——必须做权重灵敏度分析。
 </div>
 
 <!-- ══════════════════════════════════════════════ -->
@@ -220,7 +220,7 @@ w_i = \frac{\left(\prod_{j=1}^{n} a_{ij}\right)^{1/n}}{\sum_{k=1}^{n} \left(\pro
 \lambda_{\max} = \frac{1}{n} \sum_{i=1}^{n} \frac{(\mathbf{A}\mathbf{w})_i}{w_i}, \quad CI = \frac{\lambda_{\max} - n}{n - 1}, \quad CR = \frac{CI}{RI(n)}
 \]
 </div>
-<p>其中 \(RI(n)\) 是随机一致性指标（查表得）。<strong>如果 \(CR < 0.1\)，判断矩阵通过一致性检验</strong>——这是 AHP 论文的必写内容。如果 \(CR \geq 0.1\)，需要调整判断矩阵。</p>
+<p>上式 λ 的等号要求 w 为主特征向量；几何平均权重代入只得到近似值。本页计算器用幂迭代求主特征向量。n≤2 的正互反矩阵天然一致，不应计算0/0的CR。<br>其中 \(RI(n)\) 是随机一致性指标（查表得）。<strong>如果 \(CR < 0.1\)，判断矩阵通过一致性检验</strong>（不代表判断真实或权重客观）——这是 AHP 论文的必写内容。如果 \(CR \geq 0.1\)，需要调整判断矩阵。</p>
 </div>
 
 <div class="note-box">
@@ -233,7 +233,7 @@ w_i = \frac{\left(\prod_{j=1}^{n} a_{ij}\right)^{1/n}}{\sum_{k=1}^{n} \left(\pro
 
 <div class="concept-box">
 <h4>当指标太多时——提取主要信息</h4>
-<p>PCA 不仅用于降维（§X），也可以用于综合评价：将多个相关指标转化为少数几个不相关的主成分，以方差贡献率为权重，计算综合得分。</p>
+<p>PCA 不仅用于降维，也可以用于综合评价：将多个相关指标转化为少数几个不相关的主成分，以方差贡献率为权重，计算综合得分。</p>
 </div>
 
 <div class="derive-box">
@@ -242,7 +242,7 @@ w_i = \frac{\left(\prod_{j=1}^{n} a_{ij}\right)^{1/n}}{\sum_{k=1}^{n} \left(\pro
 <strong>Step 2：</strong>计算相关系数矩阵的特征值 \(\lambda_1 \geq \lambda_2 \geq \cdots \geq \lambda_n\) 和特征向量。<br>
 <strong>Step 3：</strong>确定保留的主成分个数 \(k\)（累积方差贡献率 > 85% 为常用参考；\(\lambda_k > 1\) 的 Kaiser 准则主要适用于对标准化变量做相关矩阵 PCA，并非所有 PCA 的普遍规则）。<br>
 <strong>Step 4：</strong>计算各主成分得分：\(F_p = \sum_{j=1}^{n} w_{pj} z_j\)，其中 \(w_{pj}\) 是特征向量第 \(j\) 个分量（得分系数）。<strong>注意：</strong>载荷 \(l_{pj} = w_{pj} \cdot \sqrt{\lambda_p}\) 表示变量与主成分的相关系数，不直接用于计算得分。不同软件（sklearn、SPSS、R）对「loading」的定义可能不同，代入前应先确认。<br>
-<strong>Step 5：</strong>以方差贡献率为权重计算综合得分：</p>
+<strong>Step 5：</strong>若各主成分有明确、可辩护的价值方向，可在统一方向后以方差贡献率作一种描述性加权评分（这不是PCA自动推出的优劣标准，特征向量符号可任意反转）：</p>
 <div class="math-block">
 \[
 F = \frac{\lambda_1}{\sum_{p=1}^{k} \lambda_p} F_1 + \frac{\lambda_2}{\sum_{p=1}^{k} \lambda_p} F_2 + \cdots + \frac{\lambda_k}{\sum_{p=1}^{k} \lambda_p} F_k
@@ -328,7 +328,7 @@ F = \frac{\lambda_1}{\sum_{p=1}^{k} \lambda_p} F_1 + \frac{\lambda_2}{\sum_{p=1}
 \xi_i(j) = \frac{\min_i \min_j |x_0(j) - x_i(j)| + \rho \cdot \max_i \max_j |x_0(j) - x_i(j)|}{|x_0(j) - x_i(j)| + \rho \cdot \max_i \max_j |x_0(j) - x_i(j)|}
 \]
 </div>
-<p>其中 \(\rho \in [0, 1]\) 是分辨系数，通常取 \(\rho = 0.5\)。<br>
+<p>其中 \(\rho \in (0, 1]\) 是分辨系数，通常取 \(\rho = 0.5\)。<br>
 <strong>Step 4 — 计算关联度：</strong>\(r_i = \frac{1}{n} \sum_{j=1}^{n} \xi_i(j)\)（等权）或 \(r_i = \sum_{j=1}^{n} w_j \cdot \xi_i(j)\)（加权）。</p>
 </div>
 
@@ -336,8 +336,8 @@ F = \frac{\lambda_1}{\sum_{p=1}^{k} \lambda_p} F_1 + \frac{\lambda_2}{\sum_{p=1}
 <thead><tr><th>维度</th><th>TOPSIS</th><th>灰色关联分析</th></tr></thead>
 <tbody>
 <tr><td>核心思想</td><td>距离：离理想解越近越好</td><td>形状：与参考序列越相似越好</td></tr>
-<tr><td>数据要求</td><td>需要足够样本量</td><td>小样本（≥4 个对象即可）</td></tr>
-<tr><td>对异常值</td><td>敏感</td><td>较稳健</td></tr>
+<tr><td>数据要求</td><td>无固定最少对象数；需可比指标</td><td>无统一4对象门槛；仍需可比指标</td></tr>
+<tr><td>对异常值</td><td>对极值和标准化敏感</td><td>全局最大差也受极端值影响，不能保证稳健</td></tr>
 <tr><td>适用场景</td><td>多方案、多指标评价</td><td>小样本、贫信息评价</td></tr>
 </tbody>
 </table>
@@ -349,20 +349,20 @@ F = \frac{\lambda_1}{\sum_{p=1}^{k} \lambda_p} F_1 + \frac{\lambda_2}{\sum_{p=1}
 <table class="compact-table">
 <thead><tr><th>方法</th><th>赋权方式</th><th>核心假设</th><th>最适合</th><th>数据要求</th></tr></thead>
 <tbody>
-<tr><td><strong>熵权法</strong></td><td>客观</td><td>信息量 = 变异程度</td><td>数据驱动、指标差异大</td><td>≥5 个对象</td></tr>
-<tr><td><strong>TOPSIS</strong></td><td>需外部权重</td><td>指标独立</td><td>多方案定量评价</td><td>≥5 个对象</td></tr>
+<tr><td><strong>熵权法</strong></td><td>客观</td><td>信息量 = 变异程度</td><td>数据驱动、指标差异大</td><td>无统一5对象门槛；熵公式需对象数m>1</td></tr>
+<tr><td><strong>TOPSIS</strong></td><td>需外部权重</td><td>欧氏距离与可补偿权衡；警惕重复指标</td><td>多方案定量评价</td><td>无统一5对象门槛；熵公式需对象数m>1</td></tr>
 <tr><td><strong>AHP</strong></td><td>主观</td><td>两两比较可量化</td><td>有专家知识、定性指标多</td><td>任何规模</td></tr>
-<tr><td><strong>PCA 评价</strong></td><td>客观</td><td>线性关系、方差最大化</td><td>指标多且高度相关</td><td>≥20 个对象</td></tr>
-<tr><td><strong>因子分析</strong></td><td>客观</td><td>存在潜在因子</td><td>探索性分析、指标体系验证</td><td>≥50 个对象</td></tr>
+<tr><td><strong>PCA 评价</strong></td><td>客观</td><td>线性关系、方差最大化</td><td>指标多且高度相关</td><td>无固定20门槛；需足够样本支撑协方差估计</td></tr>
+<tr><td><strong>因子分析</strong></td><td>客观</td><td>存在潜在因子</td><td>探索性分析、指标体系验证</td><td>无固定50门槛；取决于因子结构与共同度</td></tr>
 <tr><td><strong>模糊综合评价</strong></td><td>需外部权重</td><td>模糊性可量化</td><td>定性指标多、评价等级明确</td><td>任何规模</td></tr>
-<tr><td><strong>灰色关联分析</strong></td><td>需外部权重</td><td>形状相似 = 优劣相似</td><td>小样本、贫信息</td><td>≥4 个对象</td></tr>
+<tr><td><strong>灰色关联分析</strong></td><td>需外部权重</td><td>形状相似 = 优劣相似</td><td>小样本、贫信息</td><td>无统一4对象门槛</td></tr>
 </tbody>
 </table>
 
 <div class="toolkit-box">
 <h4>竞赛选择决策树</h4>
 <p><strong>Q1：</strong>指标是定量的还是定性的？ → 定性为主 → 模糊综合评价。<br>
-<strong>Q2：</strong>数据量多少？ → 很少（< 10 个对象） → 灰色关联分析。<br>
+<strong>Q2：</strong>数据量多少？ → 很少时 → 仍可比较 TOPSIS、灰色关联或加权评分，不能仅凭对象数决定。<br>
 <strong>Q3：</strong>指标之间是否高度相关？ → 是 → 先用 PCA 降维，再用 TOPSIS。<br>
 <strong>Q4：</strong>有没有专家判断或先验知识？ → 有 → AHP 确定权重 + TOPSIS 聚合。<br>
 <strong>Q5：</strong>默认方案 → 熵权法确定权重 + TOPSIS 聚合（但必须论证为什么选择这个组合！）。</p>
@@ -404,7 +404,7 @@ F = \frac{\lambda_1}{\sum_{p=1}^{k} \lambda_p} F_1 + \frac{\lambda_2}{\sum_{p=1}
 <h2>仪器 No.14A — TOPSIS 交互演示</h2>
 <div class="panel">
 <div class="panel-label">INSTRUMENT No.14A · TOPSIS Interactive Demo</div>
-<p style="font-size:0.9rem;color:var(--slate);margin-bottom:12px">6 个方案在 2 个指标上的评价。绿色星标 = 理想解 A⁺，红色星标 = 负理想解 A⁻。实线 = 到 A⁺ 的距离，虚线 = 到 A⁻ 的距离。拖动权重滑块观察排名如何变化。</p>
+<p style="font-size:0.9rem;color:var(--slate);margin-bottom:12px">6 个方案在 2 个指标上的评价。蓝色点 = 理想解 A⁺，红色点 = 负理想解 A⁻；连接线分别标示两种距离。滑块给出相对重要性，显示值已归一化使 w₁+w₂=1。拖动权重滑块观察排名如何变化。</p>
 <div class="slider-row">
   <label>指标 1 权重 w₁ = <span class="slider-val" id="ts-w1-val">0.50</span></label>
   <input type="range" id="ts-w1" min="0.05" max="0.95" value="0.5" step="0.01">
@@ -461,6 +461,10 @@ F = \frac{\lambda_1}{\sum_{p=1}^{k} \lambda_p} F_1 + \frac{\lambda_2}{\sum_{p=1}
 <div class="note-box">
 <strong>关键提醒：</strong>评价类题目的论文，<strong>论证过程比计算结果更重要</strong>。评委要看的是：你为什么这样选指标？为什么这样赋权？为什么这样聚合？排名是否可靠？——而不是你算出了 0.8732 还是 0.8733。把精力放在方法论的论证上，而不是追求小数点后第四位的精度。
 </div>
+
+<div class="note-box"><strong>适用条件与边界：</strong>标准化前先处理常数列：极差/标准差为0不可直接相除。向量规范化为[0,1]及比重法非负范围要求输入非负；倒数正向化要求严格正值。熵权需m>1、各有效列和>0，约定0ln0=0；常数列设差异度0，全部列无差异时不得据此排序。TOPSIS需先统一指标方向；理想解=负理想解时贴近度0/0，说明无区分能力。本页计算器使用0.5作为并列约定。灰色关联全体差为0时也应约定并列，不直接计算0/0。PCA主成分符号任意，须有领域依据统一优劣方向；正交不自动代表可用于评价。</div>
+
+<p class="source-note">核对资料：<a href="https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html">scikit-learn PCA定义</a></p>
 </main>
 
 
@@ -475,7 +479,7 @@ F = \frac{\lambda_1}{\sum_{p=1}^{k} \lambda_p} F_1 + \frac{\lambda_2}{\sum_{p=1}
   <div class="footer-meta">
     <span>版本 v1.2.0</span> <span>|</span>
     <span>持续更新中 · 欢迎反馈纠错</span> <span>|</span>
-    <span>最后更新: 2026-07</span>
+    <span>最后更新: 2026-11</span>
   </div>
   <p>Statistical Field Station &copy; 2026 · KaTeX + D3.js</p>
 </footer>
@@ -527,7 +531,7 @@ if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
     const result = wnorm.map(d => {
       const sp = Math.sqrt((d.v1-ideal.v1)**2 + (d.v2-ideal.v2)**2);
       const sm = Math.sqrt((d.v1-anti.v1)**2 + (d.v2-anti.v2)**2);
-      const c = sm / (sp + sm);
+      const c = sp + sm > 0 ? sm / (sp + sm) : 0.5;
       return {name: d.name, v1: d.v1, v2: d.v2, sp, sm, c};
     });
     result.sort((a,b) => b.c - a.c);
@@ -535,8 +539,9 @@ if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
   }
 
   function update() {
-    const w1 = +d3.select('#ts-w1').property('value');
-    const w2 = +d3.select('#ts-w2').property('value');
+    const raw1 = +d3.select('#ts-w1').property('value');
+    const raw2 = +d3.select('#ts-w2').property('value');
+    const w1 = raw1 / (raw1 + raw2), w2 = raw2 / (raw1 + raw2);
     d3.select('#ts-w1-val').text(w1.toFixed(2));
     d3.select('#ts-w2-val').text(w2.toFixed(2));
 
@@ -631,6 +636,30 @@ if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
   });
   const wSvg = d3.select('#ahp-weight-chart').append('svg').attr('width',380).attr('height',160).attr('viewBox','0 0 380 160');
 
+  function ahpEigen(A) {
+    const n = A.length;
+    // Perron eigenvector, not the geometric-mean approximation.
+    let w = new Array(n).fill(1 / n);
+    for (let iteration = 0; iteration < 1000; iteration++) {
+      const next = A.map(row => row.reduce((s,v,j) => s + v * w[j], 0));
+      const sum = next.reduce((s,v) => s + v, 0);
+      const normalized = next.map(v => v / sum);
+      const error = Math.max(...normalized.map((v,i) => Math.abs(v - w[i])));
+      w = normalized;
+      if (error < 1e-13) break;
+    }
+
+    // lambda_max
+    const Aw = A.map(row => row.reduce((s,v,j)=>s+v*w[j], 0));
+    const lambdaMax = Aw.reduce((s,v,i) => s + v/w[i], 0) / n;
+
+    // Consistency
+    const CI = Math.max(0, (lambdaMax - n) / (n - 1));
+    const CR = CI / 0.90;
+
+    return {w, lambdaMax, CI, CR};
+  }
+
   function update() {
     // Get values
     const pairs = pairLabels.map((_,i) => {
@@ -648,18 +677,7 @@ if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
       for (let j = i+1; j < n; j++)
         A[j][i] = 1 / A[i][j];
 
-    // Geometric mean weights
-    const gm = A.map(row => Math.pow(row.reduce((p,v)=>p*v,1), 1/n));
-    const gmSum = gm.reduce((s,v)=>s+v,0);
-    const w = gm.map(v => v / gmSum);
-
-    // lambda_max
-    const Aw = A.map(row => row.reduce((s,v,j)=>s+v*w[j], 0));
-    const lambdaMax = Aw.reduce((s,v,i) => s + v/w[i], 0) / n;
-
-    // Consistency
-    const CI = (lambdaMax - n) / (n - 1);
-    const CR = CI / RI[n];
+    const {w, lambdaMax, CI, CR} = ahpEigen(A);
 
     // Stats
     d3.select('#ahp-stats').html(`
@@ -670,7 +688,7 @@ if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
     `);
 
     const verdict = CR < 0.1
-      ? '<span style="color:var(--forest)">✓ CR < 0.1，判断矩阵通过一致性检验。权重结果可信。</span>'
+      ? '<span style="color:var(--forest)">✓ CR < 0.1，判断矩阵通过一致性检验；仍需核实判断来源与权重合理性。</span>'
       : '<span style="color:var(--terracotta)">✗ CR ≥ 0.1，判断矩阵不一致！请调整两两比较，减少矛盾判断。</span>';
     d3.select('#ahp-verdict').html(verdict);
 

@@ -79,6 +79,9 @@ async function main() {
       // Wait for KaTeX + D3 + page scripts to settle
       await page.waitForTimeout(2000);
 
+      const mathErrors = await page.locator('.katex-error').evaluateAll(nodes => nodes.map(node => node.getAttribute('title') || node.textContent));
+      for (const message of mathErrors) errors.push('MATH RENDER: ' + message);
+
       // Page-specific smoke assertions
       const hasHero = await page.$('.hero h1');
       if (!hasHero) errors.push('MISSING: .hero h1');
@@ -88,6 +91,39 @@ async function main() {
         if (!await page.$('.entry-grid')) errors.push('MISSING: .entry-grid');
       } else {
         if (!await page.$('.top-nav')) errors.push('MISSING: .top-nav');
+      }
+
+      if (pageFile === 'stats_07_logistic.html') {
+        await page.locator('#log-b1').evaluate(node => { node.value='0'; node.dispatchEvent(new Event('input',{bubbles:true})); });
+        if (!(await page.locator('#log-boundary').textContent()).includes('所有')) errors.push('REGRESSION: zero logistic slope at intercept 0');
+        await page.locator('#log-b0').evaluate(node => { node.value='1'; node.dispatchEvent(new Event('input',{bubbles:true})); });
+        if (!(await page.locator('#log-boundary').textContent()).includes('无交点')) errors.push('REGRESSION: zero logistic slope at nonzero intercept');
+      }
+      if (pageFile === 'stats_08_classification.html') {
+        await page.locator('#knn-clear').click();
+        await page.locator('#knn-chart svg').evaluate(node => {
+          const box=node.getBoundingClientRect();
+          node.dispatchEvent(new MouseEvent('click',{clientX:box.left+150,clientY:box.top+100,shiftKey:true,bubbles:true}));
+        });
+        const blue = await page.locator('#knn-chart circle').evaluateAll(nodes => nodes.length===1 && nodes[0].__data__.cls===1);
+        if (!blue) errors.push('REGRESSION: KNN Shift-click did not add class B');
+      }
+      if (pageFile === 'stats_09_clustering.html') {
+        await page.locator('#km-clear').click();
+        await page.locator('#km-k').evaluate(node => { node.value='6'; node.dispatchEvent(new Event('input',{bubbles:true})); });
+        await page.locator('#km-chart svg').evaluate(node => {
+          const box=node.getBoundingClientRect();
+          node.dispatchEvent(new MouseEvent('click',{clientX:box.left+150,clientY:box.top+100,bubbles:true}));
+        });
+        await page.locator('#km-step').click();
+        if (await page.locator('#km-chart .km-point').count() !== 1) errors.push('REGRESSION: KMeans fewer points than K');
+      }
+      if (pageFile === 'stats_10_evaluation.html') {
+        const rates = () => page.locator('#pca-stats .val').evaluateAll(nodes => nodes.slice(0,4).map(node => parseFloat(node.textContent)));
+        const before = await rates();
+        await page.locator('#pca-rotate').click();
+        const after = await rates();
+        if (before.length !== 4 || after.some((value,i) => !Number.isFinite(value) || Math.abs(value-before[i])>0.001)) errors.push('REGRESSION: PCA explained variance changed under orthogonal rotation');
       }
 
       if (pageFile === 'stats_03_correlation.html') {

@@ -1,3 +1,32 @@
+// Symmetric 3x3 eigensystem; eigenvectors are columns accumulated by rotations.
+function symmetricEigen3(matrix) {
+  const a=matrix.map(row => [...row]);
+  const v=[[1,0,0],[0,1,0],[0,0,1]];
+  const scale=Math.max(...a.flat().map(Math.abs));
+  for(let iter=0;iter<100;iter++) {
+    let p=0,q=1;
+    for(let i=0;i<3;i++) for(let j=i+1;j<3;j++)
+      if(Math.abs(a[i][j])>Math.abs(a[p][q])) { p=i; q=j; }
+    if(Math.abs(a[p][q])<=Number.EPSILON*scale*16) break;
+    const angle=0.5*Math.atan2(2*a[p][q],a[q][q]-a[p][p]);
+    const c=Math.cos(angle),s=Math.sin(angle), app=a[p][p],aqq=a[q][q],apq=a[p][q];
+    for(let k=0;k<3;k++) if(k!==p && k!==q) {
+      const akp=a[k][p],akq=a[k][q];
+      a[k][p]=a[p][k]=c*akp-s*akq;
+      a[k][q]=a[q][k]=s*akp+c*akq;
+    }
+    a[p][p]=c*c*app-2*c*s*apq+s*s*aqq;
+    a[q][q]=s*s*app+2*c*s*apq+c*c*aqq;
+    a[p][q]=a[q][p]=0;
+    for(let k=0;k<3;k++) {
+      const vkp=v[k][p],vkq=v[k][q];
+      v[k][p]=c*vkp-s*vkq; v[k][q]=s*vkp+c*vkq;
+    }
+  }
+  const order=[0,1,2].sort((i,j)=>a[j][j]-a[i][i]);
+  return {values:order.map(i=>a[i][i]),vectors:order.map(i=>v.map(row=>row[i]))};
+}
+
 // ============ INSTRUMENT No.10A: Confusion Matrix ============
 (function() {
   const W = 520, H = 280, margin = {top:20, right:30, bottom:35, left:40};
@@ -37,25 +66,25 @@
   }
 
   function computeROCPoints() {
-    const points = [];
-    for (let t = 0; t <= 1.01; t += 0.02) {
-      const tp = scoresPos.filter(s => s >= t).length;
-      const fn = scoresPos.length - tp;
-      const fp = scoresNeg.filter(s => s >= t).length;
-      const tn = scoresNeg.length - fp;
-      const tpr = tp/(tp+fn) || 0;
-      const fpr = fp/(fp+tn) || 0;
-      points.push({fpr, tpr, thresh: t});
+    const rows = [...scoresPos.map(score => ({score, positive:true})),
+      ...scoresNeg.map(score => ({score, positive:false}))].sort((a,b) => b.score-a.score);
+    const points = [{fpr:0, tpr:0, thresh:Infinity}];
+    let tp=0, fp=0;
+    for (let i=0; i<rows.length;) {
+      const threshold=rows[i].score;
+      do { if(rows[i].positive) tp++; else fp++; i++; }
+      while(i<rows.length && rows[i].score===threshold);
+      points.push({fpr:fp/scoresNeg.length, tpr:tp/scoresPos.length, thresh:threshold});
     }
     return points;
   }
 
   function computeAUC() {
-    const pts = computeROCPoints().sort((a, b) => a.fpr - b.fpr);
-    let auc = 0;
-    for (let i = 1; i < pts.length; i++) {
-      auc += (pts[i].fpr - pts[i-1].fpr) * (pts[i].tpr + pts[i-1].tpr) / 2;
-    }
+    if (!scoresPos.length || !scoresNeg.length) return NaN;
+    const pts = computeROCPoints();
+    let auc=0;
+    for(let i=1;i<pts.length;i++)
+      auc += (pts[i].fpr-pts[i-1].fpr)*(pts[i].tpr+pts[i-1].tpr)/2;
     return auc;
   }
 
@@ -156,7 +185,7 @@
       .attr('fill','none').attr('stroke','var(--terracotta)').attr('stroke-width',2);
 
     // AUC fill
-    const areaPts = [...rocPts, {fpr:1,tpr:0}];
+    const areaPts = rocPts;
     const area = d3.area().x(d => rx(d.fpr)).y0(ry(0)).y1(d => ry(d.tpr));
     rSvg.append('path').datum(areaPts).attr('d',area)
       .attr('fill','rgba(199,81,70,0.1)');
@@ -225,58 +254,10 @@
         cov[i][j] = s / (n-1);
       }
     }
-    // Power iteration for eigenvalues/vectors (simplified for 3x3)
-    // Use characteristic polynomial for 3x3
-    const a = cov[0][0], b = cov[0][1], c = cov[0][2];
-    const d = cov[1][0], e = cov[1][1], f = cov[1][2];
-    const g = cov[2][0], h = cov[2][1], i = cov[2][2];
-
-    // Trace, determinant, and sum of principal minors
-    const tr = a + e + i;
-    const det = a*(e*i-f*h) - b*(d*i-f*g) + c*(d*h-e*g);
-    const m2 = (a*e-b*d) + (a*i-c*g) + (e*i-f*h);
-
-    // Characteristic: λ³ - tr·λ² + m2·λ - det = 0
-    // Use numerical approach for eigenvalues
-    function charPoly(lam) { return lam*lam*lam - tr*lam*lam + m2*lam - det; }
-    // Find roots via simple search
-    const roots = [];
-    for (let lam = -5; lam <= 5; lam += 0.001) {
-      const v = charPoly(lam);
-      if (Math.abs(v) < 0.01 && (roots.length === 0 || Math.abs(lam - roots[roots.length-1]) > 0.05)) {
-        roots.push(lam);
-      }
-    }
-    evals = roots.sort((a,b) => b-a).slice(0,3);
-    if (evals.length < 3) evals = [1, 0.5, 0.2]; // fallback
-
-    // Compute eigenvectors (simplified: use inverse iteration)
-    // For simplicity, approximate PC1, PC2 by projecting
-    // Actually, let's compute eigenvectors properly
-    function computeEigenvector(lambda) {
-      const M = [[a-lambda, b, c], [d, e-lambda, f], [g, h, i-lambda]];
-      // Solve M·v = 0 using cross product of two rows
-      // Pick two independent rows
-      let v = [0,0,0];
-      // Cross product of row 0 and row 1
-      v[0] = M[0][1]*M[1][2] - M[0][2]*M[1][1];
-      v[1] = M[0][2]*M[1][0] - M[0][0]*M[1][2];
-      v[2] = M[0][0]*M[1][1] - M[0][1]*M[1][0];
-      const norm = Math.sqrt(v[0]*v[0]+v[1]*v[1]+v[2]*v[2]);
-      if (norm < 1e-10) {
-        // Use row 0 and row 2
-        v[0] = M[0][1]*M[2][2] - M[0][2]*M[2][1];
-        v[1] = M[0][2]*M[2][0] - M[0][0]*M[2][2];
-        v[2] = M[0][0]*M[2][1] - M[0][1]*M[2][0];
-        const n2 = Math.sqrt(v[0]*v[0]+v[1]*v[1]+v[2]*v[2]);
-        if (n2 < 1e-10) return [1,0,0];
-        return [v[0]/n2, v[1]/n2, v[2]/n2];
-      }
-      return [v[0]/norm, v[1]/norm, v[2]/norm];
-    }
-
-    const ev1 = computeEigenvector(evals[0]);
-    const ev2 = computeEigenvector(evals[1]);
+    // Jacobi rotations diagonalize the real symmetric covariance matrix.
+    const decomposition = symmetricEigen3(cov);
+    evals = decomposition.values.map(v => Math.max(0,v));
+    const ev1 = decomposition.vectors[0], ev2 = decomposition.vectors[1];
 
     // Project to PC1, PC2
     pc1 = X.map(x => x[0]*ev1[0] + x[1]*ev1[1] + x[2]*ev1[2]);
@@ -366,7 +347,11 @@
   }
 
   d3.select('#pca-reshuffle').on('click', () => { generateData(); update(); });
-  d3.select('#pca-rotate').on('click', () => { generateData(); update(); });
+  d3.select('#pca-rotate').on('click', () => {
+    const angle=Math.PI/6, c=Math.cos(angle), s=Math.sin(angle);
+    data3D=data3D.map(d => ({x1:c*d.x1-s*d.x2, x2:s*d.x1+c*d.x2, x3:d.x3}));
+    update();
+  });
 
   generateData();
   update();

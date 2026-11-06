@@ -14,7 +14,9 @@
     predData = [];
     for (let i = 0; i < nPts; i++) {
       const x = 10 + Math.random() * 80;
-      const y = 0.7 * x + 5 + (Math.random() + Math.random() + Math.random())/3 * noise * 2 - noise;
+      const u = Math.max(Number.MIN_VALUE, Math.random());
+      const error = Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * Math.random()) * noise;
+      const y = 0.7 * x + 5 + error;
       predData.push({x, y});
     }
   }
@@ -47,12 +49,14 @@
 
     // Compute metrics
     let mae = 0, mape = 0, rmse = 0, ssRes = 0, ssTot = 0;
+    let hasZeroActual = false;
     const my = d3.mean(ys);
     for (let i = 0; i < n; i++) {
       const yHat = b0 + b1 * xs[i];
       const err = Math.abs(ys[i] - yHat);
       mae += err;
-      mape += ys[i] !== 0 ? err / Math.abs(ys[i]) : 0;
+      if (ys[i] === 0) hasZeroActual = true;
+      else mape += err / Math.abs(ys[i]);
       ssRes += (ys[i] - yHat) ** 2;
       ssTot += (ys[i] - my) ** 2;
     }
@@ -73,7 +77,13 @@
     const yScale = d3.scaleLinear().domain([yMin, yMax]).range([margin.top + ph, margin.top]);
 
     // Prediction interval band
-    const tVal = 1.96; // approximate t_{n-2, 0.975} for n >= 30
+    // Invert the shared Student t CDF at the actual residual degrees of freedom.
+    let tLo = 0, tHi = 100;
+    for (let i = 0; i < 80; i++) {
+      const mid = (tLo + tHi) / 2;
+      if (tCDF(mid, n - 2) < 0.975) tLo = mid; else tHi = mid;
+    }
+    const tVal = (tLo + tHi) / 2;
     const piUpper = xAll.map((x, i) => {
       const se = sigma * Math.sqrt(1 + 1/n + (x - mx)**2 / Sxx);
       return yHats[i] + tVal * se;
@@ -142,7 +152,7 @@
     d3.select('#pred-metrics').html(`
       <div class="stat-card"><div class="lbl">RMSE</div><div class="val" style="color:var(--terracotta)">${rmse.toFixed(3)}</div></div>
       <div class="stat-card"><div class="lbl">MAE</div><div class="val">${mae.toFixed(3)}</div></div>
-      <div class="stat-card"><div class="lbl">MAPE</div><div class="val">${mape.toFixed(1)}%</div></div>
+      <div class="stat-card"><div class="lbl">MAPE</div><div class="val">${hasZeroActual ? '未定义（真实值为0）' : mape.toFixed(1) + '%'}</div></div>
       <div class="stat-card"><div class="lbl">R²</div><div class="val" style="color:var(--gold)">${r2.toFixed(4)}</div></div>
       <div class="stat-card"><div class="lbl">β₁ (斜率)</div><div class="val">${b1.toFixed(3)}</div></div>
       <div class="stat-card"><div class="lbl">σ̂ (残差SE)</div><div class="val">${sigma.toFixed(3)}</div></div>
@@ -194,6 +204,9 @@
 
   function gm11(data, steps) {
     const n = data.length;
+    if (n < 4 || data.some(x => !Number.isFinite(x) || x <= 0)) return null;
+    const ratioLimit = 2 / (n + 1);
+    const ratioOK = data.slice(1).every((x,i) => Math.abs(Math.log(data[i] / x)) < ratioLimit);
     // Step 1: 1-AGO
     const ago = [];
     let sum = 0;
@@ -222,7 +235,7 @@
     // Actually B = [[-z1, 1], [-z2, 1], ...]
     // B^T B = [[sum(z^2), -sum(z)], [-sum(z), n-1]]
     const BtB00v = BtB00;
-    const BtB01v = -BtB01; // -sum(z)
+    const BtB01v = BtB01; // -sum(z), already accumulated with its sign
     const BtB10v = BtB01v;
     const BtB11v = n - 1;
 
@@ -241,16 +254,15 @@
     const a = inv00 * BtY0v + inv01 * BtY1v;
     const b = inv10 * BtY0v + inv11 * BtY1v;
 
-    if (Math.abs(a) < 1e-12) return null;
 
     // Step 4: Time response
     const x0_1 = data[0];
-    const x0Term = x0_1 - b / a;
 
     const fittedAgo = [];
     const fittedOrig = [x0_1];
     for (let k = 0; k < n + steps; k++) {
-      const agoVal = x0Term * Math.exp(-a * k) + b / a;
+      const agoVal = Math.abs(a) < 1e-10 ? x0_1 + b * k
+        : x0_1 * Math.exp(-a * k) - (b / a) * Math.expm1(-a * k);
       fittedAgo.push(agoVal);
       if (k > 0) {
         fittedOrig.push(agoVal - fittedAgo[k-1]);
@@ -271,7 +283,7 @@
     const S1 = Math.sqrt(d3.sum(data, d => (d - meanOrig)**2) / (n - 1));
     const meanRes = d3.mean(residuals);
     const S2 = Math.sqrt(d3.sum(residuals, r => (r - meanRes)**2) / (n - 1));
-    const C = S1 > 0 ? S2 / S1 : 0;
+    const C = S1 > 0 ? S2 / S1 : NaN;
 
     const threshold = 0.6745 * S1;
     let pCount = 0;
@@ -285,13 +297,14 @@
     else if (mape > 5 || C > 0.50 || P < 0.80) grade = '三级（勉强）';
     else if (mape > 1 || C > 0.35 || P < 0.95) grade = '二级（合格）';
 
-    return {a, b, ago, fittedAgo, fittedOrig, residuals, mape, C, P, grade, n};
+    if (!Number.isFinite(C)) grade = '常数序列：C/P不适用';
+    return {a, b, ago, fittedAgo, fittedOrig, residuals, mape, C, P, grade, n, ratioOK};
   }
 
   function updateGM() {
     const result = gm11(gmData, forecastSteps);
     if (!result) { d3.select('#gm-stats').html('<div class="stat-card"><div class="lbl">错误</div><div class="val" style="color:var(--terracotta)">模型不可拟合</div></div>'); return; }
-    const {a, b, ago, fittedAgo, fittedOrig, mape, C, P, grade, n} = result;
+    const {a, b, ago, fittedAgo, fittedOrig, mape, C, P, grade, n, ratioOK} = result;
 
     // Original chart
     origSvg.selectAll('*').remove();
@@ -314,7 +327,7 @@
 
     // Fitted + forecast line
     const fitLine = d3.line().x((d,i) => xScale(i)).y(d => yScale(d));
-    origSvg.append('path').datum(fittedOrig).attr('d',fitLine)
+    origSvg.append('path').datum(fittedOrig.slice(0, n)).attr('d',fitLine)
       .attr('fill','none').attr('stroke','var(--terracotta)').attr('stroke-width',2);
 
     // Fitted part (historical) - solid
@@ -322,7 +335,7 @@
       .attr('fill','none').attr('stroke','var(--terracotta)').attr('stroke-width',2.5);
 
     // Forecast part - dashed
-    origSvg.append('path').datum(fittedOrig.slice(n-1)).attr('d',fitLine)
+    origSvg.append('path').datum(fittedOrig.slice(n-1)).attr('d', d3.line().x((d,i) => xScale(n - 1 + i)).y(d => yScale(d)))
       .attr('fill','none').attr('stroke','var(--terracotta)').attr('stroke-width',2.5).attr('stroke-dasharray','5,4');
 
     // Original data points
@@ -369,12 +382,13 @@
     // Stats
     const gradeColor = grade.includes('一') ? 'var(--forest)' : (grade.includes('二') ? '#2D6BA0' : (grade.includes('三') ? 'var(--gold)' : 'var(--terracotta)'));
     d3.select('#gm-stats').html(`
+      <div class="stat-card"><div class="lbl">级比检验</div><div class="val" style="font-size:0.9rem">${ratioOK ? '通过（仍需外推验证）' : '未通过：谨慎外推'}</div></div>
       <div class="stat-card"><div class="lbl">发展系数 â</div><div class="val">${a.toFixed(4)}</div></div>
       <div class="stat-card"><div class="lbl">灰色作用量 b̂</div><div class="val">${b.toFixed(3)}</div></div>
-      <div class="stat-card"><div class="lbl">MAPE</div><div class="val">${mape.toFixed(2)}%</div></div>
+      <div class="stat-card"><div class="lbl">训练拟合 MAPE</div><div class="val">${mape.toFixed(2)}%</div></div>
       <div class="stat-card"><div class="lbl">后验差比 C</div><div class="val">${C.toFixed(3)}</div></div>
       <div class="stat-card"><div class="lbl">小误差概率 P</div><div class="val">${P.toFixed(3)}</div></div>
-      <div class="stat-card"><div class="lbl">精度等级</div><div class="val" style="font-size:0.9rem;color:${gradeColor}">${grade}</div></div>
+      <div class="stat-card"><div class="lbl">训练拟合等级</div><div class="val" style="font-size:0.9rem;color:${gradeColor}">${grade}</div></div>
     `);
   }
 
@@ -389,7 +403,8 @@
       gmData[i] += (Math.random() - 0.5) * gmData[i] * 0.12;
       gmData[i] = Math.max(1, gmData[i]);
     }
-    updateGM();  generateGMData();
+    updateGM();
+  });
+  generateGMData();
   updateGM();
 })();
-});

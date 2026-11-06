@@ -124,3 +124,22 @@ class TestRegression:
         """Φ(1.96) ≈ 0.975"""
         cdf = js_eval('normalCDF(1.96)')
         assert abs(cdf - 0.975) < 0.001
+
+
+class TestStableTailsAndCorrelations:
+    @pytest.mark.parametrize("t,df", [(0,1), (2.2,10), (10,30), (100,10), (1e10,1), (2,10000)])
+    def test_t_tail(self, t, df):
+        expected = 2 * stats.t.sf(abs(t), df)
+        assert js_eval(f'tTestPValue({t}, {df})') == pytest.approx(expected, rel=1e-9, abs=1e-300)
+
+    @pytest.mark.parametrize("x,df", [(0,1), (3.841,1), (100,2), (200,10), (1000,1000), (10000,10000)])
+    def test_chi_tail(self, x, df):
+        assert js_eval(f'chiSquarePValue({x}, {df})') == pytest.approx(stats.chi2.sf(x,df), rel=1e-9, abs=1e-300)
+
+    @pytest.mark.parametrize("f,d1,d2", [(0,2,10), (1,1,1), (3.8852938346523933,2,12), (1000,5,50), (0.001,50,5), (2,100,1000)])
+    def test_f_tail(self, f, d1, d2):
+        assert js_eval(f'fSurvival({f}, {d1}, {d2})') == pytest.approx(stats.f.sf(f,d1,d2), rel=1e-9, abs=1e-300)
+
+    @pytest.mark.parametrize("x,y", [([1,1,2],[1,2,3]), ([3,1,1,2],[1,3,3,2]), ([0,0,1,1],[0,1,1,1])])
+    def test_spearman_ties(self, x, y):
+        assert js_eval(f'spearmanCorrelation({json.dumps(x)},{json.dumps(y)})') == pytest.approx(stats.spearmanr(x,y).statistic,abs=1e-12)

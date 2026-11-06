@@ -15,31 +15,38 @@ function updateHistogram() {
   document.getElementById('hist-bins-val').textContent = bins;
   const W=container.clientWidth||500, H=300, M={t:20,r:20,b:40,l:40};
   const xScale=d3.scaleLinear().domain([d3.min(data)*0.95,d3.max(data)*1.05]).range([M.l,W-M.r]);
-  const histogram=d3.bin().domain(xScale.domain()).thresholds(bins);
+  // Explicit equal-width thresholds keep the slider's bin count exact.
+  const [xLo,xHi]=xScale.domain();
+  const thresholds=Array.from({length:bins-1},(_,i)=>xLo+(i+1)*(xHi-xLo)/bins);
+  const histogram=d3.bin().domain(xScale.domain()).thresholds(thresholds);
   const bins_data=histogram(data);
-  const yMax=d3.max(bins_data,d=>d.length);
+  const binWidth=(xHi-xLo)/bins;
+  const yMax=d3.max(bins_data,d=>d.length/(data.length*binWidth));
   const yScale=d3.scaleLinear().domain([0,yMax*1.2]).range([H-M.b,M.t]);
 
   container.innerHTML='';
   const svg=d3.select(container).append('svg').attr('viewBox',`0 0 ${W} ${H}`).attr('width',W).attr('height',H);
 
   svg.selectAll('rect').data(bins_data).join('rect')
-    .attr('x',d=>xScale(d.x0)+1).attr('y',d=>yScale(d.length))
+    .attr('x',d=>xScale(d.x0)+1).attr('y',d=>yScale(d.length/(data.length*binWidth)))
     .attr('width',d=>Math.max(0,xScale(d.x1)-xScale(d.x0)-2))
-    .attr('height',d=>H-M.b-yScale(d.length))
+    .attr('height',d=>H-M.b-yScale(d.length/(data.length*binWidth)))
     .attr('fill','var(--terracotta)').attr('opacity',0.7);
 
   const bw = 0.9*Math.min(Math.sqrt(data.reduce((s,x)=>s+(x-mean(data))**2,0)/(data.length-1)), (quartile(data,0.75)-quartile(data,0.25))/1.34)*Math.pow(data.length,-0.2);
   function kde(x) { return data.reduce((s,xi)=>s+Math.exp(-(((x-xi)/bw)**2)/2),0)/(data.length*bw*Math.sqrt(2*Math.PI)); }
   const kdeData=[],pts=200;
   for(let i=0;i<=pts;i++){const x=xScale.domain()[0]+(xScale.domain()[1]-xScale.domain()[0])*i/pts; kdeData.push({x,y:kde(x)});}
-  const kdeMax=d3.max(kdeData,d=>d.y);
-  const yScaleKDE=d3.scaleLinear().domain([0,kdeMax]).range([H-M.b,M.t]);
-  const line=d3.line().x(d=>xScale(d.x)).y(d=>yScaleKDE(d.y)).curve(d3.curveBasis);
+  yScale.domain([0,Math.max(yMax,d3.max(kdeData,d=>d.y))*1.2]);
+  // Reuse the density axis for both bars and KDE, including after rescaling.
+  svg.selectAll('rect').attr('y',d=>yScale(d.length/(data.length*binWidth)))
+    .attr('height',d=>H-M.b-yScale(d.length/(data.length*binWidth)));
+  const line=d3.line().x(d=>xScale(d.x)).y(d=>yScale(d.y)).curve(d3.curveBasis);
   svg.append('path').datum(kdeData).attr('d',line).attr('fill','none').attr('stroke','var(--forest)').attr('stroke-width',2.5);
 
   svg.append('g').attr('transform',`translate(0,${H-M.b})`).call(d3.axisBottom(xScale).ticks(6));
-  svg.append('g').attr('transform',`translate(${M.l},0)`).call(d3.axisLeft(yScale).ticks(4).tickFormat(d3.format('d')));
+  svg.append('g').attr('transform',`translate(${M.l},0)`).call(d3.axisLeft(yScale).ticks(4));
+  svg.append('text').attr('x',M.l).attr('y',12).attr('font-size','0.7rem').text('概率密度');
   svg.selectAll('.axis text').attr('font-family','var(--mono)').attr('font-size','0.7rem').attr('fill','var(--slate)');
   svg.selectAll('.axis line,.axis path').attr('stroke','var(--stone)');
 }
@@ -49,7 +56,9 @@ function updateBoxplot() {
   const W=container.clientWidth||400, H=280, M={t:30,r:30,b:40,l:30};
   const sorted=[...data].sort((a,b)=>a-b);
   const q1=quartile(data,0.25), med=median(data), q3=quartile(data,0.75);
-  const iqr=q3-q1, lower=Math.max(d3.min(data),q1-1.5*iqr), upper=Math.min(d3.max(data),q3+1.5*iqr);
+  const iqr=q3-q1;
+  const inliers=sorted.filter(x=>x>=q1-1.5*iqr && x<=q3+1.5*iqr);
+  const lower=inliers[0], upper=inliers[inliers.length-1];
   const outliers=data.filter(x=>x<q1-1.5*iqr||x>q3+1.5*iqr);
   const xScale=d3.scaleLinear().domain([d3.min(data)-2,d3.max(data)+2]).range([M.l,W-M.r]);
   const boxW=50, cy=H/2;

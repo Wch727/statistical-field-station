@@ -13,6 +13,11 @@ const path = require('path');
 const BUILD = 'build';
 const ROOT = '.';
 
+// One editable glossary source, with an offline file:// compatible JS artifact.
+const glossaryData = JSON.parse(fs.readFileSync('assets/data/glossary.json', 'utf8'));
+fs.writeFileSync('assets/data/glossary.js', 'window.GLOSSARY_DATA=' + JSON.stringify(glossaryData) + ';\n');
+
+
 // ── Read templates ──
 const chapterTemplate = fs.readFileSync(path.join(BUILD, 'template.html'), 'utf8');
 const homeTemplate = fs.readFileSync(path.join(BUILD, 'home-template.html'), 'utf8');

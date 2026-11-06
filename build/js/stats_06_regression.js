@@ -15,11 +15,11 @@ function updateRegression(){
   const yHat=xs.map(x=>b0+b1*x);
   const ssRes=sum(ys.map((y,i)=>(y-yHat[i])**2));
   const ssTot=sum(ys.map(y=>(y-my)**2));
-  const r2=ssTot===0?0:1-ssRes/ssTot;
+  const r2=ssTot===0?null:1-ssRes/ssTot;
 
-  document.getElementById('reg-b0').textContent=b0.toFixed(3);
-  document.getElementById('reg-b1').textContent=b1.toFixed(3);
-  document.getElementById('reg-r2').textContent=r2.toFixed(4);
+  document.getElementById('reg-b0').textContent=den===0?'不可唯一识别':b0.toFixed(3);
+  document.getElementById('reg-b1').textContent=den===0?'不可唯一识别':b1.toFixed(3);
+  document.getElementById('reg-r2').textContent=r2===null?'未定义（Y 恒定）':r2.toFixed(4);
 
   const W=520,H=350,M={t:20,r:30,b:50,l:50};
   const xExt=[d3.min(xs)-5,d3.max(xs)+5],yExt=[d3.min(ys)-5,d3.max(ys)+5];

@@ -16,6 +16,7 @@ jobs:
         with:
           node-version: 22
       - run: node tests/run-statistics-tests.js
+      - run: npm run test:audit
 
   links:
     runs-on: ubuntu-latest

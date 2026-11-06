@@ -6,7 +6,7 @@
 <!-- ══════════════════════════════════════════════ -->
 <h2>0.1 Pandas 数据处理速查</h2>
 
-<p>Pandas 是数模竞赛<strong>最常用的工具之一</strong>。赛题数据几乎都是 Excel/CSV 格式，Pandas 是 Python 生态的核心入口（R、MATLAB 等也是可行选择）。以下 7 个操作覆盖了 80% 的竞赛数据处理需求。</p>
+<p>Pandas 是数模竞赛<strong>最常用的工具之一</strong>。赛题数据几乎都是 Excel/CSV 格式，Pandas 是 Python 生态的核心入口（R、MATLAB 等也是可行选择）。以下操作涵盖常见的数据处理任务。</p>
 
 <h3>0.1.1 读取数据</h3>
 
@@ -25,11 +25,11 @@ df = pd.<span class="fn">read_csv</span>(<span class="str">'data.csv'</span>, en
 <span class="cm"># 读完后第一件事：</span>
 df.<span class="fn">head</span>()       <span class="cm"># 前 5 行</span>
 df.<span class="fn">info</span>()       <span class="cm"># 列名 + 类型 + 缺失值</span>
-df.<span class="fn">describe</span>()   <span class="cm"># 数值列的五数概括</span>
+df.<span class="fn">describe</span>()   <span class="cm"># 数值列的计数、均值、标准差与分位数摘要</span>
 </div>
 
 <div class="warn-box">
-<strong>竞赛陷阱：</strong>中文 CSV 文件默认编码通常是 GBK，不是 UTF-8。如果 <code>read_csv</code> 报错 <code>UnicodeDecodeError</code>，先试 <code>encoding='gbk'</code>，再试 <code>'gb2312'</code>，最后试 <code>'latin-1'</code>（后者不会报错但中文会乱码，仅用于确认编码问题）。
+<strong>竞赛陷阱：</strong>CSV 本身不规定字符编码；中文文件可能使用 UTF-8、UTF-8 BOM 或 GBK。优先核对导出设置。如果 <code>read_csv</code> 报错 <code>UnicodeDecodeError</code>，先试 <code>encoding='gbk'</code>，再试 <code>'gb2312'</code>，最后试 <code>'latin-1'</code>（后者不会报错但中文会乱码，仅用于确认编码问题）。
 </div>
 
 <h3>0.1.2 数据合并</h3>
@@ -48,7 +48,7 @@ df = pd.<span class="fn">concat</span>([df1, df2], axis=<span class="num">1</spa
 </div>
 
 <div class="note-box">
-<strong>merge vs concat：</strong>merge 按「键」连接（需要共同的列），concat 按「位置」堆叠。赛题中多表关联用 merge，同一张表的分段数据用 concat。
+<strong>merge vs concat：</strong>merge 按「键」连接（需要共同的列），concat 沿指定轴拼接，并按另一轴的索引标签对齐。赛题中多表关联用 merge，同一张表的分段数据用 concat。
 </div>
 
 <h3>0.1.3 分组聚合</h3>
@@ -97,11 +97,11 @@ ct = pd.<span class="fn">crosstab</span>(df[<span class="str">'gender'</span>], 
 <span class="cm"># 缺失值处理 —— 竞赛数据几乎都有缺失</span>
 df.<span class="fn">isnull</span>().<span class="fn">sum</span>()                    <span class="cm"># 每列缺失值计数</span>
 df = df.<span class="fn">fillna</span>(<span class="num">0</span>)                      <span class="cm"># 填充为 0</span>
-df = df.<span class="fn">fillna</span>(df.<span class="fn">mean</span>())              <span class="cm"># 填充为列均值</span>
-df = df.<span class="fn">ffill</span>()                          <span class="cm"># 前向填充（时间序列常用；pandas 2.1+）</span>
+df = df.<span class="fn">fillna</span>(df.<span class="fn">mean</span>(numeric_only=<span class="kw">True</span>))              <span class="cm"># 填充为列均值</span>
+df = df.<span class="fn">ffill</span>()                          <span class="cm"># 前向填充（先按时间排序、分实体处理；不局限于 pandas 2.1+）</span>
 df = df.<span class="fn">bfill</span>()                          <span class="cm"># 后向填充</span>
 
-<span class="cm"># 插值（比简单填充更合理）</span>
+<span class="cm"># 插值（适用性取决于时间间隔、变量性质与可用信息）</span>
 df[<span class="str">'col'</span>] = df[<span class="str">'col'</span>].<span class="fn">interpolate</span>()  <span class="cm"># 线性插值</span>
 
 <span class="cm"># 去重</span>
@@ -115,7 +115,7 @@ df = df[(df[<span class="str">'col'</span>] > mean - <span class="num">3</span>*
 </div>
 
 <div class="warn-box">
-<strong>竞赛陷阱：</strong>缺失值处理没有固定优先级，应首先根据变量含义和缺失机制判断。未检出值（如仪器检测下限以下）填 0 或 LOD/√2 可能是正确操作；时间序列可用插值；随机缺失可用中位数/均值填充或多重插补；信息完全缺失只能删除。无论采用何种方法，论文中应说明理由并通过敏感性分析比较不同处理方式对结论的影响。
+<strong>竞赛陷阱：</strong>缺失值处理没有固定优先级，应首先根据变量含义和缺失机制判断。低于检测限的值属于左删失，不能无条件当成 0；LOD/√2 仅是在特定分布与删失比例下的近似，必要时使用删失模型。时间序列插值需满足时序与可用信息约束；一般缺失可考虑插补或在适用条件下删除，不能仅凭缺失率决定。无论采用何种方法，论文中应说明理由并通过敏感性分析比较不同处理方式对结论的影响。
 </div>
 
 <!-- ══════════════════════════════════════════════ -->
@@ -163,7 +163,7 @@ U, s, Vt = np.linalg.<span class="fn">svd</span>(A)   <span class="cm"># 奇异�
 <span class="cm"># 统计函数</span>
 x = np.<span class="fn">array</span>([<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>, <span class="num">4</span>, <span class="num">5</span>])
 y = np.<span class="fn">array</span>([<span class="num">2</span>, <span class="num">4</span>, <span class="num">5</span>, <span class="num">4</span>, <span class="num">5</span>])
-np.<span class="fn">mean</span>(x); np.<span class="fn">median</span>(x); np.<span class="fn">std</span>(x); np.<span class="fn">var</span>(x)
+np.<span class="fn">mean</span>(x); np.<span class="fn">median</span>(x); np.<span class="fn">std</span>(x, ddof=<span class="num">1</span>); np.<span class="fn">var</span>(x, ddof=<span class="num">1</span>)  <span class="cm"># 样本SD/方差；默认 ddof=0 是分母 n</span>
 np.<span class="fn">min</span>(x); np.<span class="fn">max</span>(x); np.<span class="fn">percentile</span>(x, <span class="num">25</span>)
 np.<span class="fn">corrcoef</span>(x, y)            <span class="cm"># 相关系数矩阵</span>
 np.<span class="fn">histogram</span>(x, bins=<span class="num">20</span>)    <span class="cm"># 直方图计数</span>
@@ -236,16 +236,16 @@ plt.<span class="fn">colorbar</span>()
 
 X_train, X_test, y_train, y_test = <span class="fn">train_test_split</span>(
     X, y, test_size=<span class="num">0.3</span>, random_state=<span class="num">42</span>,
-    stratify=y  <span class="cm"># 分类问题必加：保持训练/测试集的类别比例一致</span>
+    stratify=y  <span class="cm"># 独立同分布分类数据可分层；回归任务去掉 stratify</span>
 )
 <span class="cm"># 关键参数：</span>
 <span class="cm">#   test_size: 测试集比例（常用 0.2-0.3）</span>
 <span class="cm">#   random_state: 固定随机种子，保证可复现</span>
-<span class="cm">#   stratify=y: 分类问题保持类别比例（不平衡数据集必须使用）</span>
+<span class="cm">#   stratify=y: 分类问题尽量保持类别比例；类别过少时需调整划分</span>
 </div>
 
 <div class="warn-box">
-<strong>竞赛陷阱：</strong>数据量小时（n &lt; 200），单次划分的随机性很大——训练集和测试集的「运气」会影响结论。此时应该用交叉验证代替单次划分，或至少报告多次随机划分的平均结果。
+<strong>竞赛陷阱：</strong>数据量小时（n &lt; 200），单次划分的随机性很大——训练集和测试集的「运气」会影响结论。可用交叉验证评估不确定性；若同时调参，需要嵌套交叉验证或独立测试集。时间序列按时间切分，同一对象的重复记录按组切分。
 </div>
 
 <h3>0.4.2 误差指标</h3>
@@ -254,7 +254,7 @@ X_train, X_test, y_train, y_test = <span class="fn">train_test_split</span>(
 <tr><th>指标</th><th>公式</th><th>适用场景</th><th>特点</th></tr>
 <tr><td>MSE</td><td>\(\frac{1}{n}\sum (y_i-\hat{y}_i)^2\)</td><td>回归（通用）</td><td>对大误差敏感（平方惩罚）</td></tr>
 <tr><td>RMSE</td><td>\(\sqrt{\text{MSE}}\)</td><td>回归（通用）</td><td>与原数据同单位，更直观</td></tr>
-<tr><td>MAE</td><td>\(\frac{1}{n}\sum |y_i-\hat{y}_i|\)</td><td>回归（有离群值）</td><td>对异常值不敏感</td></tr>
+<tr><td>MAE</td><td>\(\frac{1}{n}\sum |y_i-\hat{y}_i|\)</td><td>回归（有离群值）</td><td>相比 MSE 对极端误差较不敏感，仍会受其影响</td></tr>
 <tr><td>MAPE</td><td>\(\frac{100\%}{n}\sum \left|\frac{y_i-\hat{y}_i}{y_i}\right|\)</td><td>回归（可解释性）</td><td>百分比误差；\(y_i\) 接近 0 时失效</td></tr>
 <tr><td>R²</td><td>\(1-\frac{\sum (y_i-\hat{y}_i)^2}{\sum (y_i-\bar{y})^2}\)</td><td>回归（拟合优度）</td><td>越接近 1 越好；可能为负</td></tr>
 <tr><td>Accuracy</td><td>\(\frac{\text{TP+TN}}{\text{Total}}\)</td><td>分类（均衡）</td><td>类别不均衡时不可靠</td></tr>
@@ -275,7 +275,7 @@ X_train, X_test, y_train, y_test = <span class="fn">train_test_split</span>(
 scores = <span class="fn">cross_val_score</span>(model, X, y, cv=<span class="num">5</span>, scoring=<span class="str">'neg_mean_squared_error'</span>)
 <span class="kw">print</span>(<span class="str">f'CV MSE: {-scores.mean():.4f} ± {scores.std():.4f}'</span>)
 
-<span class="cm"># KFold —— 自定义折数</span>
+<span class="cm"># KFold —— 此处 X、y 为 NumPy 数组；DataFrame 用 .iloc[train_idx]</span>
 kf = <span class="fn">KFold</span>(n_splits=<span class="num">5</span>, shuffle=<span class="kw">True</span>, random_state=<span class="num">42</span>)
 <span class="kw">for</span> train_idx, test_idx <span class="kw">in</span> kf.<span class="fn">split</span>(X):
     X_train, X_test = X[train_idx], X[test_idx]
@@ -287,7 +287,7 @@ skf = <span class="fn">StratifiedKFold</span>(n_splits=<span class="num">5</span
 
 <div class="derive-box">
 <h4>为什么用交叉验证而不是单次划分？</h4>
-<p>单次 train/test split 的评估结果依赖于随机种子的「运气」。5 折交叉验证给出 <strong>均值 ± 标准差</strong>，评委可以看到：① 模型平均表现如何；② 表现是否稳定（标准差小 = 稳定）。如果标准差很大，说明模型对数据划分敏感——这是需要讨论的问题，不是隐藏的 bug。</p>
+<p>单次 train/test split 的评估结果依赖于随机种子的「运气」。5 折交叉验证给出 <strong>均值 ± 标准差</strong>，评委可以看到：① 模型平均表现如何；② 不同折的表现差异。折间结果相关，折间标准差不是均值的标准误或置信区间。如果标准差很大，说明模型对数据划分敏感——这是需要讨论的问题，不是隐藏的 bug。</p>
 </div>
 
 <h3>0.4.4 残差分析</h3>
@@ -316,8 +316,8 @@ plt.<span class="fn">hist</span>(residuals, bins=<span class="num">30</span>, ed
 <tr><td>残差随拟合值增大而扩散（喇叭形）</td><td>异方差</td><td>对 y 取对数 / 加权最小二乘</td></tr>
 <tr><td>残差呈 U 形曲线</td><td>遗漏非线性项</td><td>加二次项 / 换非线性模型</td></tr>
 <tr><td>残差有趋势</td><td>遗漏重要变量</td><td>检查是否有未纳入的变量</td></tr>
-<tr><td>Q-Q 图严重偏离直线</td><td>残差非正态</td><td>考虑稳健回归 / 变换</td></tr>
-<tr><td>个别点残差异常大</td><td>离群值 / 杠杆点</td><td>检查数据来源，决定是否删除</td></tr>
+<tr><td>Q-Q 图严重偏离直线</td><td>残差可能非正态</td><td>检查模型与推断方法；稳健标准误、变换或合适分布模型</td></tr>
+<tr><td>个别点残差异常大</td><td>可能是离群值；杠杆点需检查自变量位置或 hat 值</td><td>检查数据来源，决定是否删除</td></tr>
 </table>
 </div>
 
@@ -386,7 +386,7 @@ score_noisy = model.<span class="fn">score</span>(X_noisy, y)
 
 <div class="toolkit-box">
 <h4>鲁棒性分析写作模板</h4>
-<p style="font-size:0.9rem">「为验证模型的鲁棒性，我们从以下三个维度进行了检验：(1) <strong>数据鲁棒性</strong>——通过 Bootstrap 重抽样，模型系数的变异系数均小于 10%，表明估计稳定；(2) <strong>噪声鲁棒性</strong>——在输入数据中加入 5% 的高斯噪声后，预测误差仅上升 3.2%，表明模型对测量误差不敏感；(3) <strong>方法鲁棒性</strong>——改用 Ridge 回归和 Lasso 回归后，关键变量的符号和显著性均保持一致，表明结论不依赖于特定模型形式。」</p>
+<p style="font-size:0.9rem">「为验证模型的鲁棒性，我们从以下三个维度进行了检验：(1) <strong>数据鲁棒性</strong>——通过 Bootstrap 重抽样，模型系数的变异系数均小于 10%，表明估计稳定；(2) <strong>噪声鲁棒性</strong>——在输入数据中加入 5% 的高斯噪声后，预测误差仅上升 3.2%，表明模型对测量误差不敏感；(3) <strong>方法鲁棒性</strong>——改用 Ridge 回归和 Lasso 回归后，关键变量的符号与预测表现基本一致（正则化估计不直接提供通常 OLS 显著性检验），表明结论不依赖于特定模型形式。」</p>
 </div>
 
 <!-- ══════════════════════════════════════════════ -->
@@ -429,7 +429,7 @@ score_noisy = model.<span class="fn">score</span>(X_noisy, y)
 
 <div class="competition-box">
 <h4>「局限性」写作建议</h4>
-<p>每个局限性 = <strong>一个具体问题 + 一个已做的缓解措施 + 一个未来的改进方向</strong>。不要只写「模型可能不够好」——这等于什么都没说。正确的写法是：「模型假设残差独立，但时间序列数据可能存在自相关（问题）。我们通过 Durbin-Watson 检验确认了残差独立性（缓解）。若 DW 统计量不理想，可采用 GLS 或引入滞后项（改进）。」</p>
+<p>每个局限性 = <strong>一个具体问题 + 一个已做的缓解措施 + 一个未来的改进方向</strong>。不要只写「模型可能不够好」——这等于什么都没说。正确的写法是：「模型假设残差独立，但时间序列数据可能存在自相关（问题）。我们用 Durbin-Watson 统计量及残差自相关图检查一阶自相关；未发现明显证据不能证明独立性（缓解）。若 DW 统计量不理想，可采用 GLS 或引入滞后项（改进）。」</p>
 </div>
 
 <!-- ══════════════════════════════════════════════ -->
@@ -437,7 +437,7 @@ score_noisy = model.<span class="fn">score</span>(X_noisy, y)
 
 <div class="panel">
 <div class="panel-label">Instrument 0A — Cross-Validation Visualizer</div>
-<p style="font-size:0.9rem;color:var(--slate);margin-bottom:12px">理解 K 折交叉验证的最直观方式：看到每一折的训练集（蓝色）和测试集（红色）是如何划分的。拖动滑块切换折数，点击「下一折」查看不同划分。</p>
+<p style="font-size:0.9rem;color:var(--slate);margin-bottom:12px">理解 K 折交叉验证的最直观方式：看到每一折的训练集（绿色）和测试集（红色）是如何划分的。拖动滑块切换折数，点击「下一折」查看不同划分。</p>
 
 <div class="slider-row">
   <label>K (折数)</label>
@@ -448,7 +448,7 @@ score_noisy = model.<span class="fn">score</span>(X_noisy, y)
 <div class="btn-group">
   <button class="btn" id="cv-prev">◀ 上一折</button>
   <button class="btn active" id="cv-next">下一折 ▶</button>
-  <button class="btn" id="cv-shuffle">🔀 重新打乱</button>
+  <button class="btn" id="cv-shuffle">🔀 重新生成数据</button>
 </div>
 
 <div class="stat-cards" id="cv-stats">
@@ -469,3 +469,5 @@ score_noisy = model.<span class="fn">score</span>(X_noisy, y)
 
 <p style="font-size:0.85rem;color:var(--slate);margin-top:12px">提示：观察测试 MSE 在各折之间的波动——波动大说明模型对数据划分敏感，可能需要更多数据或更简单的模型。</p>
 </div>
+
+<div class="note-box"><strong>验证边界：</strong>先划分数据，再在每个训练折内拟合填补、标准化、PCA 和特征筛选；推荐用 Pipeline 防止泄漏。预测时不能用未来值做后向填充或双向插值。测试集仅用于最终评估；换模型、调阈值应使用验证集或内层交叉验证。Bootstrap 示例假定观测独立同分布，时间序列或聚类样本需要区组或按组重抽样。仅设置 NumPy 种子不能控制所有库、并行实现与版本差异。</div>

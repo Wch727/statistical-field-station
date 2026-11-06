@@ -13,6 +13,8 @@
 
 // Log-Gamma function (Stirling / Lanczos approximation)
 function lgamma(x) {
+  if (x === Infinity) return Infinity;
+  if (!Number.isFinite(x) || x <= 0) return NaN;
   const g = 7;
   const c = [
     0.99999999999980993, 676.5203681218851, -1259.1392167224028,
@@ -28,8 +30,9 @@ function lgamma(x) {
 
 // Regularized incomplete beta I_x(a,b) — Lentz continued fraction + symmetry transform
 function regularizedIncompleteBeta(x, a, b) {
-  if (x <= 0) return 0;
-  if (x >= 1) return 1;
+  if (!Number.isFinite(a) || !Number.isFinite(b) || a <= 0 || b <= 0 || !Number.isFinite(x) || x < 0 || x > 1) return NaN;
+  if (x === 0) return 0;
+  if (x === 1) return 1;
   // Symmetry: if x is too close to 1, use the complement for numerical stability
   if (x > (a + 1) / (a + b + 2)) return 1 - regularizedIncompleteBeta(1 - x, b, a);
   const TINY = 1e-30, MAXIT = 200;
@@ -58,7 +61,10 @@ function regularizedIncompleteBeta(x, a, b) {
 // t CDF: P(T ≤ t).  Uses symmetry of the t-distribution for negative t.
 // tCDF(-t, df) = 1 - tCDF(t, df)  →  tail = 0.5·I_x(df/2, 1/2)
 function tCDF(t, df) {
-  if (!Number.isFinite(t) || df <= 0) return NaN;
+  if (Number.isNaN(t) || Number.isNaN(df) || df <= 0) return NaN;
+  if (t === Infinity) return 1;
+  if (t === -Infinity) return 0;
+  if (df === Infinity) return normalCDF(t);
   if (t === 0) return 0.5;
   const x = df / (df + t * t);
   const tail = 0.5 * regularizedIncompleteBeta(x, df / 2, 0.5);
@@ -77,12 +83,12 @@ function normalCDF(x) {
 
 // Regularized lower incomplete gamma P(a,x) = γ(a,x)/Γ(a) — series expansion
 function regularizedLowerIncompleteGamma(a, x) {
-  if (x < 0) return NaN;
+  if (!Number.isFinite(a) || a <= 0 || Number.isNaN(x) || x < 0) return NaN;
+  if (x === Infinity) return 1;
   if (x === 0) return 0;
-  if (a <= 0) return NaN;
   if (x > a + 1) return 1 - regularizedUpperIncompleteGamma(a, x);
   let ap = a, del = 1 / a, sum = del;
-  for (let n = 1; n <= 200; n++) {
+  for (let n = 1; n <= 10000; n++) {
     ap += 1; del *= x / ap; sum += del;
     if (Math.abs(del) < Math.abs(sum) * 1e-15) break;
   }
@@ -91,10 +97,13 @@ function regularizedLowerIncompleteGamma(a, x) {
 
 // Regularized upper incomplete gamma Q(a,x) = Γ(a,x)/Γ(a) — continued fraction
 function regularizedUpperIncompleteGamma(a, x) {
-  if (x <= 0) return 1;
+  if (!Number.isFinite(a) || a <= 0 || Number.isNaN(x) || x < 0) return NaN;
+  if (x === Infinity) return 0;
+  if (x === 0) return 1;
+  if (x < a + 1) return 1 - regularizedLowerIncompleteGamma(a, x);
   const TINY = 1e-30;
   let b = x + 1 - a, c = 1 / TINY, d = 1 / b, h = d;
-  for (let i = 1; i <= 200; i++) {
+  for (let i = 1; i <= 10000; i++) {
     const an = -i * (i - a);
     b += 2;
     d = an * d + b; if (Math.abs(d) < TINY) d = TINY;
@@ -108,18 +117,22 @@ function regularizedUpperIncompleteGamma(a, x) {
 
 // Chi-square CDF: P(χ² ≤ x) = γ(df/2, x/2) / Γ(df/2)
 function chiCDF(x, df) {
+  if (!Number.isFinite(df) || df <= 0 || Number.isNaN(x)) return NaN;
   if (x <= 0) return 0;
   return regularizedLowerIncompleteGamma(df / 2, x / 2);
 }
 
 // Two-sided p-value from Welch's t-test
 function tTestPValue(t, df) {
-  return 2 * (1 - tCDF(Math.abs(t), df));
+  if (Number.isNaN(t) || !Number.isFinite(df) || df <= 0) return NaN;
+  return regularizedIncompleteBeta(df / (df + t * t), df / 2, 0.5);
 }
 
 // Chi-square test p-value
 function chiSquarePValue(chi2, df) {
-  return 1 - chiCDF(chi2, df);
+  if (!Number.isFinite(df) || df <= 0 || Number.isNaN(chi2)) return NaN;
+  if (chi2 <= 0) return 1;
+  return regularizedUpperIncompleteGamma(df / 2, chi2 / 2);
 }
 // Average ranks for ties; ranks start at 1, as in scipy.stats.rankdata.
 function averageRanks(values) {
@@ -151,4 +164,11 @@ function pearsonCorrelation(xs, ys) {
 function spearmanCorrelation(xs, ys) {
   if (xs.length !== ys.length || xs.length < 2 || !xs.every(Number.isFinite) || !ys.every(Number.isFinite)) return NaN;
   return pearsonCorrelation(averageRanks(xs), averageRanks(ys));
+}
+
+// Upper tail directly avoids cancellation for very small F-test p-values.
+function fSurvival(f, df1, df2) {
+  if (!Number.isFinite(df1) || !Number.isFinite(df2) || df1 <= 0 || df2 <= 0 || Number.isNaN(f)) return NaN;
+  if (f <= 0) return 1;
+  return regularizedIncompleteBeta(df2 / (df2 + df1 * f), df2 / 2, df1 / 2);
 }

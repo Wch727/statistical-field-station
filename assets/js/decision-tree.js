@@ -30,7 +30,7 @@
             question: '你的分析目标是什么？',
             options: [
               {
-                label: '找出影响因素',
+                label: '分析关联因素',
                 icon: '🔍',
                 result: {
                   title: '相关分析 + 回归分析',
@@ -38,7 +38,7 @@
                     { num: '§III', file: 'stats_03_correlation.html', title: '相关分析', why: '先看哪些变量与目标相关（Pearson/Spearman/偏相关）' },
                     { num: '§VI', file: 'stats_06_regression.html', title: '线性回归', why: '建模变量与目标的定量关系（OLS/LASSO/Ridge）' }
                   ],
-                  desc: '先用相关分析筛选变量，再用回归建模。注意：相关≠因果，回归系数也不等于因果效应。'
+                  desc: '结合研究问题与领域知识确定变量，再用相关或回归描述关联；单变量不相关不代表多变量模型中无用。涉及筛选时必须在训练折内完成，回归系数不自动具有因果解释。'
                 }
               },
               {
@@ -50,7 +50,7 @@
                     { num: '§IV', file: 'stats_04_hypothesis.html', title: '假设检验', why: '两组比较用t检验/Mann-Whitney，多组比较用ANOVA' },
                     { num: '§V', file: 'stats_05_anova.html', title: '方差分析', why: '单因素/双因素/ANCOVA，含效应量和事后检验' }
                   ],
-                  desc: '两组用t检验，多组用ANOVA。注意检查方差齐性和正态性假设。'
+                  desc: '先区分独立或配对设计，再明确比较均值还是分布；均值比较可用Welch t或适当ANOVA，结合残差、方差结构和样本条件判断。'
                 }
               },
               {
@@ -63,7 +63,7 @@
                     { num: '§XI', file: 'stats_11_timeseries.html', title: '时间序列分析', why: '有时间维度的数据用ARIMA/SARIMA' },
                     { num: '§XII', file: 'stats_12_prediction.html', title: '预测问题专论', why: '预测评估、预测区间、GM(1,1)小样本预测' }
                   ],
-                  desc: '有时间戳用时间序列，没有用回归。预测时一定要区分预测区间和置信区间。'
+                  desc: '若观测有时间依赖，考虑时间序列模型或带滞后特征的回归，并按时间顺序验证；仅有日期字段不代表一定存在序列依赖。区分新观测的预测区间和均值响应置信区间。'
                 }
               }
             ]
@@ -83,7 +83,7 @@
                     { num: '§VII', file: 'stats_07_logistic.html', title: '逻辑回归', why: '二分类问题的经典方法，输出概率和OR' },
                     { num: '§VIII', file: 'stats_08_classification.html', title: '分类方法', why: '决策树/随机森林/XGBoost/SVM/KNN，多方法比较' }
                   ],
-                  desc: '先试逻辑回归（可解释性强），再用树模型提升精度。注意类别不平衡问题。'
+                  desc: '先试逻辑回归（可解释性强），再以树模型等候选方法比较验证集表现。注意类别不平衡问题。'
                 }
               },
               {
@@ -116,7 +116,7 @@
               chapters: [
                 { num: '§IX', file: 'stats_09_clustering.html', title: '聚类分析', why: 'K-Means/层次聚类/DBSCAN/GMM，无监督发现数据分组' }
               ],
-              desc: 'K-Means是最常用的起点，DBSCAN能处理非球形簇。用轮廓系数评估聚类质量。'
+              desc: '结合距离尺度和簇形状选择K-Means、DBSCAN等方法。轮廓系数只是评价之一，也需检查密度差异、噪声和领域意义。'
             }
           },
           {

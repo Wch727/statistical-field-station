@@ -29,14 +29,14 @@
 <header class="hero">
   <div class="num">§V</div>
   <h1>方差分析</h1>
-  <p class="deck">单因素与双因素 ANOVA、交互效应、ANCOVA（协方差分析）、MANOVA（多元方差分析）、Kruskal-Wallis 检验、事后检验、效应量。回答「某因素对结果有多大影响？」</p>
+  <p class="deck">单因素与双因素 ANOVA、交互效应、ANCOVA（协方差分析）、MANOVA（多元方差分析）、Kruskal-Wallis 检验、事后检验、效应量。回答「某因素与结果的关联有多大？」</p>
 </header>
 
 <main id="main-content">
 <!-- ═══════════ 竞赛场景 ═══════════ -->
 <div class="competition-box">
-<h4>竞赛真题场景</h4>
-<p><span class="q">Q：</span>某年全国大学生数学建模竞赛 A 题：三种不同工艺生产的材料，每种工艺各测试了 20 个样品的强度。问：三种工艺的强度是否有显著差异？如果显著，哪两种工艺之间差异最大？<br>
+<h4>竞赛应用场景（示例）</h4>
+<p><span class="q">Q：</span>材料工艺比较示例：三种不同工艺生产的材料，每种工艺各测试了 20 个样品的强度。问：三种工艺的强度是否有显著差异？如果显著，哪两种工艺之间差异最大？<br>
 <span class="q">Q：</span>美赛 MCM 中常见：不同地区的空气质量（4 个地区）、不同教学方法的效果（3 种方法）、不同施肥方案对作物产量的影响（5 种方案）。<br>
 <strong>→ ANOVA 是处理「多组比较」的标准方法。竞赛中，如果数据有 3 组以上，用 ANOVA 比用多次 t 检验更专业（也更正确）。</strong></p>
 </div>
@@ -45,22 +45,22 @@
 
 <div class="derive-box">
 <h4>ANOVA 模型：将总变异分解为组间 + 组内</h4>
-<p>\[ x_{ij} = \mu + \tau_j + \varepsilon_{ij}, \quad \varepsilon_{ij} \sim N(0, \sigma^2), \quad \sum_{j=1}^k n_j \tau_j = 0 \]</p>
+<p>\[ x_{ij} = \mu + \tau_j + \varepsilon_{ij}, \quad \varepsilon_{ij} \overset{\mathrm{iid}}{\sim} N(0, \sigma^2), \quad \sum_{j=1}^k n_j \tau_j = 0 \]</p>
 <p><strong>组间平方和 SSB：</strong>各组均值围绕总均值的变异——「信号」+「噪声」。<br>
 <strong>组内平方和 SSW：</strong>各组内部个体围绕该组均值的变异——纯「噪声」。<br>
-<strong>F = MSB / MSW：</strong>如果 H₀ 为真（无组间效应），F 应接近 1。F 远大于 1 → 拒绝 H₀。</p>
+<strong>F = MSB / MSW：</strong>如果 H₀ 为真（无组间效应），MSB 和 MSW 都估计同一 σ²，F 不系统地很大；它仍有抽样变异，且均值为 df_W/(df_W−2)（df_W > 2）。F 远大于 1 → 拒绝 H₀。</p>
 </div>
 
 <div class="math-block">
 \[ SS_{\text{between}} = \sum_{j=1}^k n_j(\bar{x}_j - \bar{x})^2 \qquad SS_{\text{within}} = \sum_{j=1}^k \sum_{i=1}^{n_j} (x_{ij} - \bar{x}_j)^2 \]
-\[ MS_{\text{between}} = \frac{SS_{\text{between}}}{k-1} \qquad MS_{\text{within}} = \frac{SS_{\text{within}}}{N-k} \qquad F = \frac{MS_{\text{between}}}{MS_{\text{within}}} \sim F_{k-1, N-k} \]
+\[ MS_{\text{between}} = \frac{SS_{\text{between}}}{k-1} \qquad MS_{\text{within}} = \frac{SS_{\text{within}}}{N-k} \qquad F = \frac{MS_{\text{between}}}{MS_{\text{within}}} \overset{H_0}{\sim} F_{k-1, N-k} \]
 </div>
 
 <div class="derive-box">
 <h4>ANOVA 的矩阵形式：与线性回归的统一视角</h4>
 <p>ANOVA 本质上就是线性回归的一个特例——用虚拟变量编码分组。以三组为例：</p>
 \[ \mathbf{Y} = \mathbf{X}\boldsymbol{\beta} + \boldsymbol{\varepsilon} \qquad \mathbf{X} = \begin{bmatrix} 1 & 0 & 0 \\ 1 & 0 & 0 \\ 1 & 1 & 0 \\ 1 & 1 & 0 \\ 1 & 0 & 1 \\ 1 & 0 & 1 \end{bmatrix} \qquad \boldsymbol{\beta} = \begin{bmatrix} \mu_1 \\ \mu_2 - \mu_1 \\ \mu_3 - \mu_1 \end{bmatrix} \]
-<p>β₀ = μ₁（组 1 均值），β₁ = μ₂−μ₁（组 2 效应），β₂ = μ₃−μ₁（组 3 效应）。ANOVA 的 F 检验等价于检验 β₁ = β₂ = 0。ANOVA 和线性回归在数学上是同一个模型，只是呈现方式不同。</p>
+<p>β₀ = x̄₁（组 1 均值），β₁ = x̄₂−x̄₁（组 2 效应），β₂ = x̄₃−x̄₁（组 3 效应）。ANOVA 的 F 检验等价于检验 β₁ = β₂ = 0。ANOVA 和线性回归在数学上是同一个模型，只是呈现方式不同。</p>
 </div>
 
 <h2>5.2 双因素 ANOVA 与交互效应</h2>
@@ -73,7 +73,7 @@
 </div>
 
 <div class="math-block">
-\[ SS_{\text{Total}} = SS_A + SS_B + SS_{AB} + SS_E \qquad F_A = \frac{MS_A}{MS_E} \quad F_B = \frac{MS_B}{MS_E} \quad F_{AB} = \frac{MS_{AB}}{MS_E} \]
+\[ SS_{\text{Total}} = SS_A + SS_B + SS_{AB} + SS_E \quad \text{（平衡、正交设计）} \qquad F_A = \frac{MS_A}{MS_E} \quad F_B = \frac{MS_B}{MS_E} \quad F_{AB} = \frac{MS_{AB}}{MS_E} \]
 </div>
 
 <h2>5.3 重复测量 ANOVA</h2>
@@ -92,8 +92,8 @@
 <h4>Tukey HSD：控制所有两两比较的 FWER</h4>
 <p>F 检验显著只告诉你「至少有一组不同」，但不说哪组。事后检验做所有两两比较，同时控制多重比较的错误率。</p>
 \[ \text{HSD}_{ij} = q_{\alpha, k, df_w} \cdot \sqrt{\frac{MS_W}{n}} \qquad \text{CI}_{95\%}: (\bar{x}_i - \bar{x}_j) \pm \text{HSD} \]
-<p><strong>Tukey HSD：</strong>最常用，适用于所有两两比较。假设各组样本量相等（不平衡时用 Tukey-Kramer 修正）。<br>
-<strong>Bonferroni：</strong>最保守（功效最低），但最灵活——任何对比都适用。<br>
+<p><strong>Tukey HSD：</strong>最常用，适用于所有两两比较。经典式针对相等样本量；不等样本量用 Tukey–Kramer，临界半宽 q×√[MSW(1/n_i+1/n_j)/2]。两者都基于独立、正态误差与方差齐性；方差不齐可考虑 Games–Howell。<br>
+<strong>Bonferroni：通常较保守（不必然是所有方法中功效最低），但最灵活——任何对比都适用。<br>
 <strong>Dunnett：</strong>只比较各组与对照组。适合有明确对照组的实验设计。</p>
 </div>
 
@@ -101,11 +101,11 @@
 
 <div class="concept-box">
 <h4>ANOVA 的非参数替代</h4>
-<p>当数据严重偏态或变量为有序等级时，Kruskal-Wallis 检验将所有数据合并排序，计算每组的平均秩次，检验各组秩次分布是否相同。事后检验用 Dunn 检验（而非 Tukey HSD）。<strong>注意：</strong>若研究目标仍是均值比较而仅是方差不齐，应优先考虑 Welch ANOVA 而非直接换用秩检验——Kruskal-Wallis 检验的是分布位置差异，并非均值差异。</p>
+<p>当数据严重偏态或变量为有序等级时，Kruskal-Wallis 检验将所有数据合并排序，计算每组的平均秩次，检验各组秩次分布是否相同。事后检验用 Dunn 检验（而非 Tukey HSD）。<strong>注意：</strong>若研究目标仍是均值比较而仅是方差不齐，应优先考虑 Welch ANOVA 而非直接换用秩检验——Kruskal-Wallis 针对秩的分布差异；只有各组形状、尺度相近的纯位置模型下才方便解释为中位数差异，并非均值检验。</p>
 </div>
 
 <div class="math-block">
-\[ H = \frac{12}{N(N+1)}\sum_{j=1}^{k} \frac{R_j^2}{n_j} - 3(N+1) \sim \chi^2_{k-1} \]
+\[ H_0 = \frac{12}{N(N+1)}\sum_{j=1}^{k} \frac{R_j^2}{n_j} - 3(N+1),\quad H=\frac{H_0}{1-\sum_l(t_l^3-t_l)/(N^3-N)} \overset{\text{近似}}{\sim} \chi^2_{k-1} \]
 </div>
 
 <!-- ═══════════ 5.5A 协方差分析 ANCOVA ═══════════ -->
@@ -124,17 +124,17 @@ y_{ij} = \mu + \tau_i + \beta(x_{ij} - \bar{x}) + \varepsilon_{ij}, \quad \varep
 \]
 </div>
 
-<p>其中 \(\tau_i\) 是第 \(i\) 组的效应（控制协变量后），\(\beta\) 是协变量的斜率，\(x_{ij}\) 是协变量值。<strong>关键假设：</strong>各组的回归斜率相同（平行性假设）——即协变量与因变量的关系在各组中一致。如果斜率不同，ANCOVA 不适用，需要使用带交互项的模型。</p>
+<p>其中 \(\tau_i\) 是第 \(i\) 组的效应（控制协变量后），\(\beta\) 是协变量的斜率，\(x_{ij}\) 是协变量值。<strong>关键假设：</strong>各组的回归斜率相同（平行性假设）——即协变量与因变量的关系在各组中一致。如果斜率不同，应在模型中加入组别×协变量交互并报告条件效应，而不能套用共同斜率式。</p>
 
 <div class="derive-box">
 <h4>ANCOVA 的方差分解</h4>
-<p>ANCOVA 先通过回归去除协变量的影响，再对校正后的因变量做 ANOVA：</p>
+<p>ANCOVA 在同一个线性模型中同时纳入分组和协变量，通过嵌套模型比较计算校正组效应；不能简单地仅将 Y 对协变量残差化再做普通 ANOVA（一般会用错自由度或效应）：</p>
 <div class="math-block">
 \[
-SS_{\text{total(adj)}} = SS_{\text{between(adj)}} + SS_{\text{within(adj)}}
+SS_{\text{group}\mid x}=RSS_{\text{仅协变量}}-RSS_{\text{分组+协变量}},\quad F=\frac{SS_{\text{group}\mid x}/(k-1)}{RSS_{\text{分组+协变量}}/(N-k-1)}
 \]
 </div>
-<p>这相当于问：「如果所有组的协变量都相同，组间差异还有多大？」</p>
+<p>上式针对一个协变量、k 组且设计矩阵满秩；比较约简模型 Y~x 与完整模型 Y~组别+x。这相当于问：「在协变量取共同值时，组间条件均值差异还有多大？」</p>
 </div>
 
 <div class="note-box">
@@ -151,15 +151,15 @@ SS_{\text{total(adj)}} = SS_{\text{between(adj)}} + SS_{\text{within(adj)}}
 
 <h3>MANOVA 的检验统计量</h3>
 
-<p>MANOVA 基于组间离差矩阵 \(H\) 和组内离差矩阵 \(E\) 的特征值 \(\lambda_i\)：</p>
+<p>MANOVA 基于组间离差矩阵 \(H\)、组内离差矩阵 \(E\) 构成的 \(E^{-1}H\) 的特征值 \(\lambda_i\)：</p>
 
 <table class="compact-table">
 <thead><tr><th>统计量</th><th>公式</th><th>特点</th></tr></thead>
 <tbody>
 <tr><td>Wilks' Lambda</td><td>\(\Lambda = \prod_i \frac{1}{1+\lambda_i}\)</td><td>最常用，竞赛首选</td></tr>
-<tr><td>Pillai's Trace</td><td>\(V = \sum_i \frac{\lambda_i}{1+\lambda_i}\)</td><td>对非正态最稳健</td></tr>
-<tr><td>Hotelling's Trace</td><td>\(T = \sum_i \lambda_i\)</td><td>两组时等价于 Hotelling's T²</td></tr>
-<tr><td>Roy's Largest Root</td><td>\(\theta = \max_i \lambda_i\)</td><td>功效最高但只在第一特征值占主导时</td></tr>
+<tr><td>Pillai's Trace</td><td>\(V = \sum_i \frac{\lambda_i}{1+\lambda_i}\)</td><td>常被视为相对稳健的选择，仍需检查设计与异常值</td></tr>
+<tr><td>Hotelling's Trace</td><td>\(T = \sum_i \lambda_i\)</td><td>两组时与 Hotelling's T² 成比例，可转换为等价检验</td></tr>
+<tr><td>Roy's Largest Root</td><td>\(\theta = \max_i \lambda_i\)</td><td>更集中于第一根；在效应主要集中于该方向时可能有较高功效</td></tr>
 </tbody>
 </table>
 
@@ -177,10 +177,10 @@ SS_{\text{total(adj)}} = SS_{\text{between(adj)}} + SS_{\text{within(adj)}}
 
 <div class="math-block">
 \[
-\text{Mauchly's } W = \frac{|\mathbf{C}^T\mathbf{S}\mathbf{C}|}{\left(\frac{1}{k-1}\text{tr}(\mathbf{C}^T\mathbf{S}\mathbf{C})\right)^{k-1}}
+\text{Mauchly's } W = \frac{|\mathbf{C}\mathbf{S}\mathbf{C}^T|}{\left(\frac{1}{k-1}\text{tr}(\mathbf{C}\mathbf{S}\mathbf{C}^T)\right)^{k-1}}
 \]
 </div>
-<p>其中 \(\mathbf{S}\) 是重复测量的样本协方差矩阵，\(\mathbf{C}\) 是 \((k-1) \times k\) 的正交对比矩阵。如果 Mauchly 检验显著 (p < 0.05) → 球形假设被违反。</p>
+<p>其中 \(\mathbf{S}\) 是重复测量的样本协方差矩阵，\(\mathbf{C}\) 是 \((k-1) \times k\) 的行正交单位对比矩阵（C Cᵀ=I，C1=0）。如果 Mauchly 检验显著 (p < 0.05) → 球形假设被违反。</p>
 
 <p><strong>修正方法：</strong>① Greenhouse-Geisser 校正（\(\hat{\varepsilon}\)）——较保守，当 \(\varepsilon < 0.75\) 时使用。② Huynh-Feldt 校正（\(\tilde{\varepsilon}\)）——较宽松，当 \(\varepsilon > 0.75\) 时使用。两种方法都是将自由度乘以 \(\varepsilon\)，使 F 检验更保守。</p>
 
@@ -203,18 +203,18 @@ SS_{\text{total(adj)}} = SS_{\text{between(adj)}} + SS_{\text{within(adj)}}
 
 <div class="concept-box">
 <h4>重复测量的非参数替代</h4>
-<p>当重复测量数据不满足正态性或球形假设时，Friedman 检验是重复测量 ANOVA 的非参数替代。它检验的是：<strong>各处理的中位数是否相同？</strong></p>
+<p>当重复测量数据不满足正态性或球形假设时，Friedman 检验是重复测量 ANOVA 的非参数替代。在每个受试者内部排序，检验各处理是否具有相同分布/系统性秩位置；不能在任意形状下直接解释成中位数检验。</p>
 </div>
 
 <div class="math-block">
 \[
-Q = \frac{12}{nk(k+1)} \sum_{j=1}^{k} R_j^2 - 3n(k+1) \sim \chi^2_{k-1}
+Q_0 = \frac{12}{nk(k+1)} \sum_{j=1}^{k} R_j^2 - 3n(k+1),\quad Q=\frac{Q_0}{1-\sum_{i,l}(t_{il}^3-t_{il})/[nk(k^2-1)]} \overset{\text{近似}}{\sim} \chi^2_{k-1}
 \]
 </div>
 <p>其中 \(n\) = 被试数，\(k\) = 处理数，\(R_j\) = 第 \(j\) 个处理的秩和。如果 Q 显著 → 至少有一个处理与其他不同。事后检验：Wilcoxon 符号秩检验 + Bonferroni 校正。</p>
 
 <div class="note-box">
-<strong>竞赛技巧：</strong>如果样本量很小（n < 15）且数据明显非正态，优先使用 Friedman 检验而非重复测量 ANOVA。论文中：「由于数据存在明显偏态且样本量有限，我们使用 Friedman 检验替代重复测量 ANOVA。结果显示各时间点的评分存在显著差异 (Q = 15.4, df = 3, p = 0.0015)。」
+<strong>竞赛技巧：</strong>Friedman 的 χ² 近似在样本很小或处理数少时可能不可靠；应考虑与区组设计一致的精确或置换 p 值。论文中：「由于数据存在明显偏态且样本量有限，我们使用 Friedman 检验替代重复测量 ANOVA。结果显示各时间点的评分存在显著差异 (Q = 15.4, df = 3, p = 0.0015)。」
 </div>
 
 <h2>5.6 效应量</h2>
@@ -225,7 +225,7 @@ Q = \frac{12}{nk(k+1)} \sum_{j=1}^{k} R_j^2 - 3n(k+1) \sim \chi^2_{k-1}
 <thead><tr><th>效应量</th><th>公式</th><th>小/中/大</th><th>适用场景</th></tr></thead>
 <tbody>
 <tr><td>η² (Eta-squared)</td><td>SSB / SST</td><td>0.01 / 0.06 / 0.14</td><td>ANOVA</td></tr>
-<tr><td>ω² (Omega-squared)</td><td>(SSB−(k−1)MSW)/(SST+MSW)</td><td>0.01 / 0.06 / 0.14</td><td>ANOVA (无偏估计)</td></tr>
+<tr><td>ω² (Omega-squared)</td><td>(SSB−(k−1)MSW)/(SST+MSW)</td><td>0.01 / 0.06 / 0.14</td><td>ANOVA（偏差较小的估计，并非严格无偏）</td></tr>
 <tr><td>Cohen's f</td><td>√(η²/(1−η²))</td><td>0.1 / 0.25 / 0.4</td><td>功效分析</td></tr>
 </tbody>
 </table>
@@ -237,29 +237,29 @@ Q = \frac{12}{nk(k+1)} \sum_{j=1}^{k} R_j^2 - 3n(k+1) \sim \chi^2_{k-1}
 </div>
 
 <h2>5.7 交互式 ANOVA 面板</h2>
-<p>三组对比。拖动滑块调整各组均值和组内标准差，观察 F 值的变化。尝试让三组均值接近，看 F 如何趋近 1。</p>
+<p>三组对比。拖动滑块调整各组样本均值和共同样本标准差，观察 F 值的变化。尝试让三组均值接近，看 F 如何趋近 0（面板固定的是观测均值，均值相等时 SSB=0）。</p>
 
 <div class="panel">
 <div class="panel-label">ONE-WAY ANOVA</div>
 <div class="panel-grid">
   <div>
     <h4>组 A</h4>
-    <div class="slider-row"><label>μ₁</label><input type="range" id="anova-m1" min="0" max="100" value="45" oninput="updateANOVA()"><span class="slider-val" id="anova-m1-val">45</span></div>
+    <div class="slider-row"><label>x̄₁</label><input type="range" id="anova-m1" min="0" max="100" value="45" oninput="updateANOVA()"><span class="slider-val" id="anova-m1-val">45</span></div>
     <div class="slider-row"><label>n₁</label><input type="range" id="anova-n1" min="5" max="50" value="20" oninput="updateANOVA()"><span class="slider-val" id="anova-n1-val">20</span></div>
   </div>
   <div>
     <h4>组 B</h4>
-    <div class="slider-row"><label>μ₂</label><input type="range" id="anova-m2" min="0" max="100" value="55" oninput="updateANOVA()"><span class="slider-val" id="anova-m2-val">55</span></div>
+    <div class="slider-row"><label>x̄₂</label><input type="range" id="anova-m2" min="0" max="100" value="55" oninput="updateANOVA()"><span class="slider-val" id="anova-m2-val">55</span></div>
     <div class="slider-row"><label>n₂</label><input type="range" id="anova-n2" min="5" max="50" value="20" oninput="updateANOVA()"><span class="slider-val" id="anova-n2-val">20</span></div>
   </div>
   <div>
     <h4>组 C</h4>
-    <div class="slider-row"><label>μ₃</label><input type="range" id="anova-m3" min="0" max="100" value="50" oninput="updateANOVA()"><span class="slider-val" id="anova-m3-val">50</span></div>
+    <div class="slider-row"><label>x̄₃</label><input type="range" id="anova-m3" min="0" max="100" value="50" oninput="updateANOVA()"><span class="slider-val" id="anova-m3-val">50</span></div>
     <div class="slider-row"><label>n₃</label><input type="range" id="anova-n3" min="5" max="50" value="20" oninput="updateANOVA()"><span class="slider-val" id="anova-n3-val">20</span></div>
   </div>
 </div>
 <div class="slider-row" style="margin-top:12px;">
-  <label>组内 σ</label>
+  <label>组内 s</label>
   <input type="range" id="anova-sigma" min="1" max="30" value="10" oninput="updateANOVA()">
   <span class="slider-val" id="anova-sigma-val">10</span>
 </div>
@@ -269,6 +269,8 @@ Q = \frac{12}{nk(k+1)} \sum_{j=1}^{k} R_j^2 - 3n(k+1) \sim \chi^2_{k-1}
 </table>
 <div class="chart-container" id="anova-plot" style="margin-top:16px;"></div>
 </div>
+
+<div class="note-box"><strong>公式与设计条件：</strong>普通 ANOVA 的经典 F 分布要求独立观测、各组正态误差与共同方差；只满足均值假设不够。不平衡双因素设计中需明确 Type I/II/III 平方和及对比编码，不能直接照用正交分解。Tukey 式的 q 为 studentized range 的 1−α 分位数。Kruskal–Wallis 的 t_l 是合并数据中第 l 个并列组大小；Friedman 的 t_il 是第 i 个受试者内的并列组大小，二者全并列时统计量未定义。Friedman 需独立区组与区组内可比较的处理；至少三个处理，事后检验还需相应的配对/对称性条件与多重校正。球形假设针对三个及以上重复水平，两水平时自动成立；只加随机截距会施加比球形更强的复合对称结构，重复测量也可用适当协方差的混合模型。MANOVA 的经典推断还需多元正态、独立样本、可逆误差矩阵；Box M 不显著不证明协方差相等，后续单变量分析应控制多重性。简单效应也需控制计划内比较的多重性，不能用一个显著、另一个不显著代替交互检验。</div>
 </main>
 
 
@@ -283,7 +285,7 @@ Q = \frac{12}{nk(k+1)} \sum_{j=1}^{k} R_j^2 - 3n(k+1) \sim \chi^2_{k-1}
   <div class="footer-meta">
     <span>版本 v1.2.0</span> <span>|</span>
     <span>持续更新中 · 欢迎反馈纠错</span> <span>|</span>
-    <span>最后更新: 2026-07</span>
+    <span>最后更新: 2026-11</span>
   </div>
   <p>Statistical Field Station &copy; 2026 · KaTeX + D3.js</p>
 </footer>
@@ -300,10 +302,6 @@ if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
 } else {
 
 
-function lgamma(x){const g=7,c=[0.99999999999980993,676.5203681218851,-1259.1392167224028,771.32342877765313,-176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];if(x<0.5)return Math.log(Math.PI/Math.sin(Math.PI*x))-lgamma(1-x);x-=1;let a=c[0],t=x+g+0.5;for(let i=1;i<c.length;i++)a+=c[i]/(x+i);return Math.log(Math.sqrt(2*Math.PI))+Math.log(a)-t+Math.log(t)*(x+0.5);}
-function regularizedIncompleteBeta(x,a,b){if(x===0)return 0;if(x===1)return 1;const MAX_IT=200,EPS=1e-15;const front=Math.exp(lgamma(a+b)-lgamma(a)-lgamma(b)+a*Math.log(x)+b*Math.log(1-x));let f=1,c=1,d=1-(a+b)*x/(a+1);if(Math.abs(d)<EPS)d=EPS;d=1/d;let h=d;for(let m=1;m<=MAX_IT;m++){const m2=2*m;let aa=m*(b-m)*x/((a+m2-1)*(a+m2));d=1+aa*d;if(Math.abs(d)<EPS)d=EPS;c=1+aa/c;if(Math.abs(c)<EPS)c=EPS;d=1/d;h*=d*c;aa=-(a+m)*(a+b+m)*x/((a+m2)*(a+m2+1));d=1+aa*d;if(Math.abs(d)<EPS)d=EPS;c=1+aa/c;if(Math.abs(c)<EPS)c=EPS;d=1/d;const del=d*c;h*=del;if(Math.abs(del-1)<EPS)break;}return front*(h-1)/a;}
-function fCDF(x,df1,df2){const y=df1*x/(df1*x+df2);return regularizedIncompleteBeta(y,df1/2,df2/2);}
-
 function updateANOVA(){
   const m1=+document.getElementById('anova-m1').value,n1=+document.getElementById('anova-n1').value;
   const m2=+document.getElementById('anova-m2').value,n2=+document.getElementById('anova-n2').value;
@@ -318,11 +316,11 @@ function updateANOVA(){
   const SSB=n1*(m1-grandMean)**2+n2*(m2-grandMean)**2+n3*(m3-grandMean)**2;
   const SSW=(n1-1)*sigma*sigma+(n2-1)*sigma*sigma+(n3-1)*sigma*sigma;
   const dfB=2,dfW=N-3,MSB=SSB/dfB,MSW=SSW/dfW;
-  const F=MSW===0?0:MSB/MSW,p=F===0?1:1-fCDF(F,dfB,dfW);
+  const F=MSW>0?MSB/MSW:(MSB>0?Infinity:NaN),p=fSurvival(F,dfB,dfW);
   const etaSq=SSB/(SSB+SSW),omegaSq=(SSB-dfB*MSW)/(SSB+SSW+MSW);
 
   document.getElementById('anova-tbody').innerHTML=`
-    <tr><td>组间 (Between)</td><td>${SSB.toFixed(2)}</td><td>${dfB}</td><td>${MSB.toFixed(2)}</td><td rowspan="2" style="font-weight:600;">${F.toFixed(3)}</td><td rowspan="2" class="${p<0.05?'sig':''}">${p.toFixed(4)}</td></tr>
+    <tr><td>组间 (Between)</td><td>${SSB.toFixed(2)}</td><td>${dfB}</td><td>${MSB.toFixed(2)}</td><td rowspan="2" style="font-weight:600;">${F.toFixed(3)}</td><td rowspan="2" class="${p<0.05?'sig':''}">${p>0 && p<0.0001?p.toExponential(3):p.toFixed(4)}</td></tr>
     <tr><td>组内 (Within)</td><td>${SSW.toFixed(2)}</td><td>${dfW}</td><td>${MSW.toFixed(2)}</td></tr>
     <tr style="border-top:2px solid var(--stone);"><td>总计 (Total)</td><td>${(SSB+SSW).toFixed(2)}</td><td>${N-1}</td><td></td><td></td><td></td></tr>
     <tr><td colspan="6" style="font-size:0.85rem;color:var(--slate);">η² = ${etaSq.toFixed(3)} &nbsp;|&nbsp; ω² = ${omegaSq.toFixed(3)} &nbsp;|&nbsp; Cohen's f = ${Math.sqrt(etaSq/(1-etaSq)).toFixed(3)}</td></tr>`;

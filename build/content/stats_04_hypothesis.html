@@ -1,8 +1,8 @@
 <!-- ═══════════ 竞赛场景 ═══════════ -->
 <div class="competition-box">
-<h4>竞赛真题场景</h4>
+<h4>竞赛应用场景（示例）</h4>
 <p><span class="q">Q：</span>某地区对 A、B 两种污水处理方案各采集了 30 个样本，测得处理后 COD 浓度如下。问：两种方案的处理效果是否存在显著差异？<br>
-<span class="q">Q：</span>调查了 500 名居民对三个政策的支持情况，数据整理成 3×2 列联表。问：不同政策之间的支持率是否有显著差异？<br>
+<span class="q">Q：</span>针对三个政策分别独立抽取居民，每名居民只评价一个政策，共 500 人，整理成 3×2 列联表。问：不同政策之间的支持率是否有显著差异？<br>
 <span class="q">Q：</span>某药物对 100 名患者进行临床试验，治疗组 50 人（有效 38 人），对照组 50 人（有效 22 人）。问：该药物是否有效？<br>
 <strong>→ 第一个用 t 检验，第二个用卡方检验，第三个用卡方检验或 Fisher 精确检验。本章教你如何选择。</strong></p>
 </div>
@@ -34,17 +34,17 @@
 
 <div class="derive-box">
 <h4>Power = 1 − β 由四个因素决定</h4>
-<p>① 效应量 Δ（越大 → 功效越高）② 样本量 n（越大 → 功效越高）③ 显著性水平 α（越大 → 功效越高）④ 检验类型（当总体分布假设成立时，参数检验比非参数检验功效更高）。<br>
+<p>① 效应量 Δ（越大 → 功效越高）② 样本量 n（越大 → 功效越高）③ 显著性水平 α（越大 → 功效越高）④ 检验类型与分布形态（没有一种检验在所有分布下功效都最高）。<br>
 <strong>先验功效分析：</strong>在实验前确定所需样本量。给定期望效应量 d、α=0.05、目标 Power=0.80，算出最小 n。</p>
 </div>
 
 <div class="math-block">
-\[ \text{Power} = \Phi\!\left(\frac{|\Delta|}{\sigma\sqrt{1/n_1 + 1/n_2}} - z_{\alpha/2}\right) \qquad n_{\text{per group}} \approx \frac{2(z_{\alpha/2} + z_\beta)^2}{d^2} \]
+\[ \text{Power} = \Phi(\delta-z_{1-\alpha/2})+\Phi(-\delta-z_{1-\alpha/2}),\quad \delta=\frac{|\Delta|}{\sigma\sqrt{1/n_1+1/n_2}} \qquad n_{\text{per group}} \approx \frac{2(z_{1-\alpha/2} + z_{1-\beta})^2}{d^2} \]
 \[ d = \frac{\bar{x}_1 - \bar{x}_2}{s_{\text{pooled}}} \qquad s_{\text{pooled}} = \sqrt{\frac{(n_1-1)s_1^2 + (n_2-1)s_2^2}{n_1+n_2-2}} \]
 </div>
 
 <div class="note-box">
-<strong>竞赛实用值：</strong>α=0.05, Power=0.80 → z_{α/2}=1.96, z_β=0.84。n ≈ 15.7/d²。若 d=0.5（中等效应），每组需要约 63 人。若 d=0.2（小效应），每组需要约 393 人。数模中如果样本量太小，Bootstrap 或非参数方法可作为辅助（但 Bootstrap 不会增加样本信息，只是更好地利用已有数据）。
+<strong>竞赛实用值：</strong>α=0.05, Power=0.80 → z_{1−α/2}=1.96, z_{1−β}=0.84（z_q 表示标准正态的 q 分位数；公式为已知共同 σ 的双侧 z 检验功效，样本量式为正态近似，t 检验宜用非中心 t 数值求解）。n ≈ 15.7/d²。若 d=0.5（中等效应），每组需要约 63 人。若 d=0.2（小效应），每组需要约 393 人。数模中如果样本量太小，Bootstrap 或非参数方法可作为辅助（但 Bootstrap 不会增加样本信息，只是更好地利用已有数据）。
 </div>
 
 <!-- ═══════════ 4.3 多重检验校正 ═══════════ -->
@@ -56,7 +56,7 @@
 \[ \text{FWER} = 1 - (1-\alpha)^k \qquad k=3 \rightarrow 14.3\% \quad k=10 \rightarrow 40.1\% \quad k=20 \rightarrow 64.2\% \]
 <p><strong>Bonferroni 校正：</strong>用 α/k 作为每次检验的显著性水平。等价于将 p 值乘以 k。非常保守（功效低），但简单。<br>
 <strong>Holm 校正：</strong>Bonferroni 的改进版。将 p 值排序，逐步拒绝。比 Bonferroni 功效更高，同时控制 FWER。<br>
-<strong>Benjamini-Hochberg (BH)：</strong>控制 FDR (False Discovery Rate) 而非 FWER。更宽松，适合探索性分析。</p>
+<strong>Benjamini-Hochberg (BH)：</strong>在独立或适当正相关依赖条件下控制 FDR (False Discovery Rate) 而非 FWER。更宽松，适合探索性分析。</p>
 </div>
 
 <div class="math-block">
@@ -83,7 +83,7 @@
 
 <div class="concept-box">
 <h4>卡方检验解决什么问题？</h4>
-<p>t 检验处理的是<strong>连续数据</strong>（如身高、成绩、COD 浓度）。但当数据是<strong>分类/计数</strong>形式时——如「性别 × 是否吸烟」「政策 × 支持/反对」——t 检验不适用。卡方检验比较<strong>观测频数</strong>和<strong>期望频数</strong>的差异。</p>
+<p>t 检验处理的是<strong>连续数据</strong>（如身高、成绩、COD 浓度）。但当数据是<strong>分类/计数</strong>形式时——如「性别 × 是否吸烟」「政策 × 支持/反对」——通常优先使用比例或列联表方法；0/1 均值也有比例含义。卡方检验比较<strong>观测频数</strong>和<strong>期望频数</strong>的差异。</p>
 </div>
 
 <h3>4.5.1 卡方拟合优度检验 (Goodness of Fit)</h3>
@@ -92,7 +92,7 @@
 <h4>检验观测分布是否符合理论分布</h4>
 <p>例：掷骰子 60 次，得到 1-6 点的频数分别为 [8, 12, 9, 11, 10, 10]。问：这个骰子是否公平？（H₀：每个面概率均为 1/6）</p>
 \[ \chi^2 = \sum_{i=1}^{k} \frac{(O_i - E_i)^2}{E_i} \sim \chi^2_{k-1} \qquad E_i = n \cdot p_i \]
-<p>若 H₀ 为真，每个格子的期望频数 E_i = 60 × 1/6 = 10。χ² = (8-10)²/10 + (12-10)²/10 + ... + (10-10)²/10 = 0.4+0.4+0.1+0.1+0+0 = 1.0。df = 6-1 = 5。p = P(χ²₅ ≥ 1.0) ≈ 0.96 → 不拒绝 H₀，骰子看起来是公平的。</p>
+<p>若 H₀ 为真，每个格子的期望频数 E_i = 60 × 1/6 = 10。χ² = (8-10)²/10 + (12-10)²/10 + ... + (10-10)²/10 = 0.4+0.4+0.1+0.1+0+0 = 1.0。df = 6-1 = 5（理论概率预先给定；若由样本估计参数，通常还需扣除相应参数自由度）。p = P(χ²₅ ≥ 1.0) ≈ 0.96 → 不拒绝 H₀，当前样本未提供偏离公平的充分证据，不能据此证明公平。</p>
 </div>
 
 <h3>4.5.2 卡方独立性检验 (Test of Independence)</h3>
@@ -109,8 +109,8 @@
 
 <div class="concept-box">
 <h4>卡方检验的适用条件</h4>
-<p>① 所有期望频数 E_{ij} ≥ 1。② 不超过 20% 的格子有 E_{ij} < 5。③ 若条件不满足，使用 <strong>Fisher 精确检验</strong>（尤其 2×2 表）。④ 卡方检验是双侧检验——它只检验「是否独立」，不检验方向。<br>
-<strong>Yates 连续性校正：</strong>对 2×2 表，χ² 可能高估 → 用 Yates 校正：χ²_{Yates} = Σ (|O-E| - 0.5)²/E。但现代统计更推荐直接用 Fisher 精确检验。</p>
+<p>① 所有期望频数 E_{ij} ≥ 1。② 不超过 20% 的格子有 E_{ij} < 5。③ 若条件不满足，使用 <strong>Fisher 精确检验</strong>（尤其 2×2 表）。④ 卡方统计量采用右尾拒绝域，但检验的是任意方向的独立性偏离，不能从 χ² 本身判断关联方向。<br>
+<strong>Yates 连续性校正：</strong>对 2×2 表，χ² 可能高估 → 用 Yates 校正：χ²_{Yates} = Σ max(|O−E|−0.5, 0)²/E。但现代统计更推荐直接用 Fisher 精确检验。</p>
 </div>
 
 <div class="math-block">
@@ -144,12 +144,12 @@
 
 <div class="derive-box">
 <h4>Bootstrap 置信区间：不需要正态假设</h4>
-<p>传统 CI 依赖正态近似（x̄ ± 1.96·SEM）。Bootstrap 绕过这个假设：① 从原始样本中有放回地抽取 n 个 → Bootstrap 样本 ② 计算统计量 ③ 重复 B=1000-10000 次 ④ 取百分位数 [α/2, 1-α/2] 作为 CI。</p>
+<p>传统 CI 依赖正态近似（x̄ ± 1.96·SEM）。Bootstrap 以经验分布近似抽样过程，不要求原数据正态，但仍需代表性、合适的重抽样结构与统计量的正则性：① 从原始样本中有放回地抽取 n 个 → Bootstrap 样本 ② 计算统计量 ③ 重复 B=1000-10000 次 ④ 取百分位数 [α/2, 1-α/2] 作为 CI。</p>
 </div>
 
 <div class="derive-box">
 <h4>置换检验：不依赖分布的假设检验</h4>
-<p>原理：如果 H₀ 为真（两组无差异），组标签可以任意打乱而不影响检验统计量。打乱标签 B 次，每次计算检验统计量，得到 H₀ 下的零分布。</p>
+<p>原理：在零假设下若观测可交换，重新分配组标签可构造检验统计量的零分布。均值相等但方差不同并不保证可交换；配对或分层设计需限制置换。打乱标签 B 次，每次计算检验统计量，得到 H₀ 下的零分布。</p>
 \[ p_{\text{perm}} = \frac{1 + \sum_{b=1}^{B} \mathbf{1}\{|T_b| \geq |T_{\text{obs}}|\}}{B + 1} \]
 </div>
 
@@ -171,7 +171,7 @@ t = \frac{\bar{d}}{s_d / \sqrt{n}}, \quad \text{df} = n-1
 \]
 </div>
 
-<p>这本质上是对差值做<strong>单样本 t 检验</strong>。配对 t 检验的功效通常高于独立样本 t 检验——因为去除了个体间变异。</p>
+<p>这本质上是对差值做<strong>单样本 t 检验</strong>。合理配对且配对内正相关较强时，差值方差可能更小、功效更高；并非所有配对都改善功效。</p>
 
 <h3>Wilcoxon 符号秩检验</h3>
 
@@ -193,7 +193,7 @@ t = \frac{\bar{d}}{s_d / \sqrt{n}}, \quad \text{df} = n-1
 <thead><tr><th>效应量</th><th>公式</th><th>适用检验</th><th>小/中/大阈值</th></tr></thead>
 <tbody>
 <tr><td>Cohen's d</td><td>\(d = \frac{\bar{x}_1 - \bar{x}_2}{s_{\text{pooled}}}\)</td><td>独立 t 检验</td><td>0.2 / 0.5 / 0.8</td></tr>
-<tr><td>Hedges' g</td><td>\(g = d \cdot (1 - \frac{3}{4n-9})\)</td><td>小样本修正</td><td>同 Cohen's d</td></tr>
+<tr><td>Hedges' g</td><td>\(g \approx d(1-\frac{3}{4\nu-1}),\;\nu=n_1+n_2-2\)</td><td>小样本修正</td><td>同 Cohen's d</td></tr>
 <tr><td>Cohen's d_z</td><td>\(d_z = \frac{\bar{d}}{s_d}\)</td><td>配对 t 检验</td><td>0.2 / 0.5 / 0.8</td></tr>
 <tr><td>η² (Eta-squared)</td><td>\(\eta^2 = \frac{SS_{\text{between}}}{SS_{\text{total}}}\)</td><td>ANOVA</td><td>0.01 / 0.06 / 0.14</td></tr>
 <tr><td>Cohen's f</td><td>\(f = \sqrt{\frac{\eta^2}{1-\eta^2}}\)</td><td>ANOVA</td><td>0.1 / 0.25 / 0.4</td></tr>
@@ -210,7 +210,7 @@ t = \frac{\bar{d}}{s_d / \sqrt{n}}, \quad \text{df} = n-1
 s_{\text{pooled}} = \sqrt{\frac{(n_1-1)s_1^2 + (n_2-1)s_2^2}{n_1 + n_2 - 2}}
 \]
 </div>
-<p>当两组方差相等时，这是总体标准差的最优无偏估计。如果方差不等，使用 Glass's Δ（以控制组的标准差为分母）。Hedges' g 对 Cohen's d 做小样本偏差修正（\(g = d \cdot J\)），仍基于合并标准差，并非使用每组各自的标准差。</p>
+<p>当两组方差相等时，合并方差 s²_pooled 是共同方差的无偏估计；开平方得到的 SD 本身并非无偏。如果方差不等且有明确对照组，可考虑 Glass's Δ（以控制组的标准差为分母）。Hedges' g 对 Cohen's d 做小样本偏差修正（\(g = d \cdot J\)），仍基于合并标准差，并非使用每组各自的标准差。</p>
 </div>
 
 <div class="note-box">
@@ -220,7 +220,7 @@ s_{\text{pooled}} = \sqrt{\frac{(n_1-1)s_1^2 + (n_2-1)s_2^2}{n_1 + n_2 - 2}}
 <!-- ═══════════ 4.7C 方差齐性检验 ═══════════ -->
 <h2>4.7C 方差齐性检验</h2>
 
-<p>许多参数检验（t 检验、ANOVA）假设各组方差相等。方差齐性检验用于验证这个假设：</p>
+<p>经典独立样本 Student t 检验和普通 ANOVA 假设方差齐性；Welch t 与 Welch ANOVA 不要求。方差齐性检验用于验证这个假设：</p>
 
 <table class="compact-table">
 <thead><tr><th>检验</th><th>适用场景</th><th>稳健性</th></tr></thead>
@@ -271,7 +271,7 @@ t = \frac{\bar{x} - \mu_0}{s / \sqrt{n}} \sim t_{n-1}
 <div class="derive-box">
 <h4>单侧的代价和收益</h4>
 <p>单侧检验将 α 全部放在一侧，同等效应量下更容易显著（统计功效更高）。但代价是<strong>如果真实效应在相反方向，无论效应多大，检验都无法检测到</strong>。</p>
-<p><strong>选择原则：</strong>① 只有在有<strong>强烈先验理由</strong>预期方向时才能用单侧（如「新药不可能比安慰剂差」）。② 竞赛中，<strong>默认使用双侧检验</strong>——评委不会质疑你「为什么用双侧」。③ 如果用了单侧检验，必须在论文中明确说明理由。④ 单侧检验的 p 值 = 双侧检验的 p 值 / 2（当效应方向与预期一致时）。</p>
+<p><strong>选择原则：</strong>① 只有在有<strong>强烈先验理由</strong>预期方向时才能用单侧（如研究问题在预先规定方向上定义优效性；不能假定新药不可能更差）。② 竞赛中，<strong>默认使用双侧检验</strong>——评委不会质疑你「为什么用双侧」。③ 如果用了单侧检验，必须在论文中明确说明理由。④ 对称连续统计量及常见等尾双侧检验，效应方向一致时单侧 p 为双侧的一半；离散检验或其他双侧定义未必成立。</p>
 </div>
 
 <div class="warn-box">
@@ -370,3 +370,5 @@ t = \frac{\bar{x} - \mu_0}{s / \sqrt{n}} \sim t_{n-1}
 </div>
 <div class="chart-container" id="chi-plot" style="margin-top:16px;"></div>
 </div>
+
+<div class="note-box"><strong>推断条件补充：</strong>单样本和配对 t 检验的经典精确分布要求观测或配对差值独立、正态；Welch 使用近似自由度，严重重尾或极小样本需额外评估。重复评价同一人的多个政策不能当独立列联表，可用 Cochran Q、配对方法或重复测量模型。Mann–Whitney 的标准化式在无并列且忽略连续性校正时成立；通常以某一组 U 计算双侧尾概率，小样本与并列需正确的精确或置换法。Bootstrap 百分位 CI 并不对所有统计量都有良好覆盖率；置换 p 的 (b+1)/(B+1) 式对应随机 Monte Carlo 置换，穷举时按完整置换空间计数。OR、d、V 的大小阈值均是情境依赖的经验参考，OR=1 为零效应，OR&lt;1 应按倒数或对数尺度解读。交互面板采用未经 Yates 校正的 Pearson χ²；小频数的近似 p 仅供参考。</div>

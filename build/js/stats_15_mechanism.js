@@ -44,7 +44,7 @@
     svg.append('text').attr('x',margin.left+4).attr('y',yScale(K)-6).text('K').style('font-family','var(--mono)').style('font-size','0.7rem').style('fill','var(--gold)');
 
     // Inflection point
-    if (tInf > 0 && tInf < tMax) {
+    if (tInf >= 0 && tInf < tMax) {
       svg.append('line').attr('x1',xScale(tInf)).attr('x2',xScale(tInf)).attr('y1',yScale(NInf)).attr('y2',yScale(0)).attr('stroke','var(--terracotta)').attr('stroke-width',1).attr('stroke-dasharray','4,4');
       svg.append('circle').attr('cx',xScale(tInf)).attr('cy',yScale(NInf)).attr('r',4).attr('fill','var(--terracotta)');
       svg.append('text').attr('x',xScale(tInf)+6).attr('y',yScale(NInf)-8).text('拐点').style('font-family','var(--mono)').style('font-size','0.65rem').style('fill','var(--terracotta)');
@@ -64,8 +64,8 @@
     // Stats
     d3.select('#logistic-stats').html(`
       <div class="stat-card"><div class="lbl">阶段</div><div class="val">${direction==='growth'?'增长':direction==='decay'?'衰减':'恒定'}</div></div>
-      <div class="stat-card"><div class="lbl">拐点时间 t*</div><div class="val">${tInf > 0 ? tInf.toFixed(2) : '—'}</div></div>
-      <div class="stat-card"><div class="lbl">拐点 N</div><div class="val">${tInf > 0 ? NInf.toFixed(0) : '—'}</div></div>
+      <div class="stat-card"><div class="lbl">拐点时间 t*</div><div class="val">${tInf >= 0 ? tInf.toFixed(2) : '—'}</div></div>
+      <div class="stat-card"><div class="lbl">拐点 N</div><div class="val">${tInf >= 0 ? NInf.toFixed(0) : '—'}</div></div>
       <div class="stat-card"><div class="lbl">终值 N(∞)</div><div class="val">${K}</div></div>
     `);
   }
@@ -84,18 +84,24 @@
 
   const svg = d3.select('#sir-chart').append('svg').attr('width',W).attr('height',H).attr('viewBox',`0 0 ${W} ${H}`);
 
-  function sirEuler(beta, gamma, N, I0, days, dt) {
+  function sirRK4(beta, gamma, N, I0, days, dt) {
     const steps = Math.floor(days / dt);
     let S = N - I0, I = I0, R = 0;
     const data = [];
     for (let i = 0; i <= steps; i++) {
       const t = i * dt;
       data.push({t, S, I, R});
-      const dS = -beta * S * I / N;
-      const dI = beta * S * I / N - gamma * I;
-      const dR = gamma * I;
-      S += dS * dt; I += dI * dt; R += dR * dt;
-      if (S < 0) S = 0; if (I < 0) I = 0;
+      // Classical RK4: no ad-hoc clipping that would break S+I+R conservation.
+      const rhs = ([s, infected, removed]) => {
+        const incidence = beta * s * infected / N;
+        return [-incidence, incidence - gamma * infected, gamma * infected];
+      };
+      const state = [S, I, R];
+      const k1 = rhs(state);
+      const k2 = rhs(state.map((v,j) => v + dt * k1[j] / 2));
+      const k3 = rhs(state.map((v,j) => v + dt * k2[j] / 2));
+      const k4 = rhs(state.map((v,j) => v + dt * k3[j]));
+      [S, I, R] = state.map((v,j) => v + dt * (k1[j] + 2*k2[j] + 2*k3[j] + k4[j]) / 6);
     }
     return data;
   }
@@ -107,7 +113,7 @@
     d3.select('#sir-gamma-val').text(gamma.toFixed(2));
 
     const N = 1000, I0 = 5, days = 80, dt = 0.2;
-    const data = sirEuler(beta, gamma, N, I0, days, dt);
+    const data = sirRK4(beta, gamma, N, I0, days, dt);
     const R0 = beta / gamma;
 
     const xScale = d3.scaleLinear().domain([0, days]).range([margin.left, margin.left+pw]);
@@ -143,12 +149,13 @@
     const peakI = d3.max(data, d => d.I);
     const peakT = data.find(d => d.I === peakI)?.t || 0;
     const finalR = data[data.length-1].R;
+    const cumulative = N - data[data.length-1].S;
 
     d3.select('#sir-stats').html(`
       <div class="stat-card"><div class="lbl">R₀ = β/γ</div><div class="val" style="color:${R0>1?'var(--terracotta)':'var(--forest)'}">${R0.toFixed(2)}</div></div>
-      <div class="stat-card"><div class="lbl">峰值感染</div><div class="val">${Math.round(peakI)} 人</div></div>
-      <div class="stat-card"><div class="lbl">峰值时间</div><div class="val">第 ${peakT.toFixed(0)} 天</div></div>
-      <div class="stat-card"><div class="lbl">最终感染</div><div class="val">${Math.round(finalR)} 人 (${(finalR/N*100).toFixed(1)}%)</div></div>
+      <div class="stat-card"><div class="lbl">80天内峰值感染</div><div class="val">${Math.round(peakI)} 人</div></div>
+      <div class="stat-card"><div class="lbl">80天内峰值时间</div><div class="val">第 ${peakT.toFixed(0)} 天</div></div>
+      <div class="stat-card"><div class="lbl">第80天累计感染（I+R）</div><div class="val">${Math.round(cumulative)} 人 (${(cumulative/N*100).toFixed(1)}%)</div></div>
     `);
   }
 
@@ -156,6 +163,6 @@
   d3.select('#sir-gamma').on('input', update);
   d3.select('#sir-preset1').on('click', () => { d3.select('#sir-beta').property('value',0.3); d3.select('#sir-gamma').property('value',0.1); update(); });
   d3.select('#sir-preset2').on('click', () => { d3.select('#sir-beta').property('value',0.15); d3.select('#sir-gamma').property('value',0.1); update(); });
-  d3.select('#sir-preset3').on('click', () => { d3.select('#sir-beta').property('value',0.5); d3.select('#sir-gamma').property('value',0.4); update(); });
+  d3.select('#sir-preset3').on('click', () => { d3.select('#sir-beta').property('value',0.15); d3.select('#sir-gamma').property('value',0.4); update(); });
   update();
 })();

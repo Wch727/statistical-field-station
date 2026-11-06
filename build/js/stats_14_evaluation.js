@@ -33,7 +33,7 @@
     const result = wnorm.map(d => {
       const sp = Math.sqrt((d.v1-ideal.v1)**2 + (d.v2-ideal.v2)**2);
       const sm = Math.sqrt((d.v1-anti.v1)**2 + (d.v2-anti.v2)**2);
-      const c = sm / (sp + sm);
+      const c = sp + sm > 0 ? sm / (sp + sm) : 0.5;
       return {name: d.name, v1: d.v1, v2: d.v2, sp, sm, c};
     });
     result.sort((a,b) => b.c - a.c);
@@ -41,8 +41,9 @@
   }
 
   function update() {
-    const w1 = +d3.select('#ts-w1').property('value');
-    const w2 = +d3.select('#ts-w2').property('value');
+    const raw1 = +d3.select('#ts-w1').property('value');
+    const raw2 = +d3.select('#ts-w2').property('value');
+    const w1 = raw1 / (raw1 + raw2), w2 = raw2 / (raw1 + raw2);
     d3.select('#ts-w1-val').text(w1.toFixed(2));
     d3.select('#ts-w2-val').text(w2.toFixed(2));
 
@@ -137,6 +138,30 @@
   });
   const wSvg = d3.select('#ahp-weight-chart').append('svg').attr('width',380).attr('height',160).attr('viewBox','0 0 380 160');
 
+  function ahpEigen(A) {
+    const n = A.length;
+    // Perron eigenvector, not the geometric-mean approximation.
+    let w = new Array(n).fill(1 / n);
+    for (let iteration = 0; iteration < 1000; iteration++) {
+      const next = A.map(row => row.reduce((s,v,j) => s + v * w[j], 0));
+      const sum = next.reduce((s,v) => s + v, 0);
+      const normalized = next.map(v => v / sum);
+      const error = Math.max(...normalized.map((v,i) => Math.abs(v - w[i])));
+      w = normalized;
+      if (error < 1e-13) break;
+    }
+
+    // lambda_max
+    const Aw = A.map(row => row.reduce((s,v,j)=>s+v*w[j], 0));
+    const lambdaMax = Aw.reduce((s,v,i) => s + v/w[i], 0) / n;
+
+    // Consistency
+    const CI = Math.max(0, (lambdaMax - n) / (n - 1));
+    const CR = CI / 0.90;
+
+    return {w, lambdaMax, CI, CR};
+  }
+
   function update() {
     // Get values
     const pairs = pairLabels.map((_,i) => {
@@ -154,18 +179,7 @@
       for (let j = i+1; j < n; j++)
         A[j][i] = 1 / A[i][j];
 
-    // Geometric mean weights
-    const gm = A.map(row => Math.pow(row.reduce((p,v)=>p*v,1), 1/n));
-    const gmSum = gm.reduce((s,v)=>s+v,0);
-    const w = gm.map(v => v / gmSum);
-
-    // lambda_max
-    const Aw = A.map(row => row.reduce((s,v,j)=>s+v*w[j], 0));
-    const lambdaMax = Aw.reduce((s,v,i) => s + v/w[i], 0) / n;
-
-    // Consistency
-    const CI = (lambdaMax - n) / (n - 1);
-    const CR = CI / RI[n];
+    const {w, lambdaMax, CI, CR} = ahpEigen(A);
 
     // Stats
     d3.select('#ahp-stats').html(`
@@ -176,7 +190,7 @@
     `);
 
     const verdict = CR < 0.1
-      ? '<span style="color:var(--forest)">✓ CR < 0.1，判断矩阵通过一致性检验。权重结果可信。</span>'
+      ? '<span style="color:var(--forest)">✓ CR < 0.1，判断矩阵通过一致性检验；仍需核实判断来源与权重合理性。</span>'
       : '<span style="color:var(--terracotta)">✗ CR ≥ 0.1，判断矩阵不一致！请调整两两比较，减少矛盾判断。</span>';
     d3.select('#ahp-verdict').html(verdict);
 

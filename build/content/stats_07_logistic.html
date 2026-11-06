@@ -1,6 +1,6 @@
 <div class="competition-box">
-<h4>竞赛真题场景</h4>
-<p><span class="q">Q：</span>某年全国大学生数学建模竞赛 C 题：根据 402 个样本的理化指标，判断样品属于哪一类（二分类问题）。一等奖论文使用逻辑回归作为基线模型，报告了 AUC、混淆矩阵和变量重要性（Odds Ratio）。<br>
+<h4>建模应用示例（非特定真题或获奖论文引用）</h4>
+<p><span class="q">Q：</span>应用示例：根据样本的理化指标判断类别（二分类），用逻辑回归作为基线，并报告 AUC、混淆矩阵与调整后的 Odds Ratio。<br>
 <span class="q">Q：</span>美赛 MCM 中常见：根据历史数据预测事件是否发生（如客户是否流失、贷款是否违约、疾病是否发生）。逻辑回归是最常用且最可解释的分类模型。<br>
 <strong>→ 竞赛中，逻辑回归不仅是分类工具，更是变量重要性分析工具——通过 Odds Ratio 解释每个因素如何影响事件发生的概率。</strong></p>
 </div>
@@ -9,7 +9,7 @@
 
 <div class="concept-box">
 <h4>线性回归对二分类数据的三个致命问题</h4>
-<p>① 预测的是无界值，但概率必须在 [0,1] 之间。② 线性回归假设误差方差恒定，但二分类数据的方差是 p(1-p)，随 X 变化。③ 线性回归假设误差正态，但 0/1 数据的误差只能是两个值。<br>
+<p>① 预测的是无界值，但概率必须在 [0,1] 之间。② 线性回归假设误差方差恒定，但二分类数据的方差是 p(1-p)，随 X 变化。③ 经典有限样本 t/F 推断常用正态误差，但 OLS 点估计本身不要求正态。0/1 响应的条件误差分布仅取两个值。线性概率模型可在某些任务配合稳健标准误使用，但不是保证合法概率的模型。<br>
 <strong>解决方案：</strong>不直接建模 p，而是建模 p 的 logit 变换：\(\ln(p/(1-p))\)。这被称为<strong>链接函数</strong>。</p>
 </div>
 
@@ -28,7 +28,7 @@
 </div>
 
 <div class="note-box">
-<strong>竞赛报告技巧：</strong>逻辑回归的系数 β 不能直接解读为「X 增加 1 单位，Y 增加 β」——这是线性回归的解读方式。正确解读是：<strong>X 每增加 1 单位，事件发生的几率 (odds) 变为原来的 e^{β} 倍</strong>。e^{β} > 1 → 促进事件发生；e^{β} < 1 → 抑制事件发生。
+<strong>竞赛报告技巧：</strong>逻辑回归的系数 β 不能直接解读为「X 增加 1 单位，Y 增加 β」——这是线性回归的解读方式。正确解读是：<strong>X 每增加 1 单位，事件发生的几率 (odds) 变为原来的 e^{β} 倍</strong>。e^{β} > 1 → 与较高 odds 相关；e^{β} &lt; 1 → 与较低 odds 相关。解释须保持其他协变量不变，存在交互时效应取决于交互变量；观察性关联不能直接称为因果作用。
 </div>
 
 <h2>7.3 MLE 数值求解</h2>
@@ -38,7 +38,7 @@
 <p>对于 n 个独立观测 (x_i, y_i)，y_i ∈ {0,1}，对数似然函数为：</p>
 \[ \ell(\boldsymbol{\beta}) = \sum_{i=1}^{n} \left[ y_i \ln p_i + (1-y_i) \ln(1-p_i) \right] \qquad p_i = \frac{1}{1 + e^{-(\beta_0 + \beta_1 x_i)}} \]
 <p>得分方程：\(\frac{\partial \ell}{\partial \beta_j} = \sum (y_i - p_i) x_{ij} = 0\)——这个方程<strong>没有闭式解</strong>，需要数值方法。<br>
-<strong>Newton-Raphson 迭代：</strong>β^{(t+1)} = β^{(t)} + I(β^{(t)})⁻¹·U(β^{(t)})，等价于迭代加权最小二乘 (IRLS)。通常 5-10 步收敛。如果发散 → 存在完全分离问题。</p>
+<strong>Newton-Raphson 迭代：</strong>β^{(t+1)} = β^{(t)} + I(β^{(t)})⁻¹·U(β^{(t)})，等价于迭代加权最小二乘 (IRLS)。收敛速度取决于数据与算法。发散可能来自完全/准完全分离、共线性、尺度或数值问题；应检查收敛信息，不能据此直接断定完全分离。此处 W 的对角元为 p_i(1-p_i)。</p>
 </div>
 
 <div class="math-block">
@@ -51,7 +51,7 @@
 <h4>ROC：遍历所有阈值的分类性能</h4>
 <p><strong>ROC 曲线：</strong>以 1-Specificity (FPR) 为 x 轴，Sensitivity (TPR) 为 y 轴，遍历所有可能的决策阈值。<br>
 <strong>AUC：</strong>ROC 曲线下的面积。AUC ∈ [0, 1]。AUC = 0.5 → 随机猜测；AUC < 0.5 → 排序方向系统性反向（取负后可得 AUC > 0.5）；AUC = 1 → 完美分类。<br>
-<strong>直观解读：</strong>AUC = 随机挑选一个正例和一个负例，模型对正例的预测概率高于负例的概率。<br>
+<strong>直观解读：</strong>AUC = 随机挑选一个正例和一个负例，模型给正例更高分数的概率，加上同分概率的一半；分数不必是校准概率。<br>
 <strong>常用阈值选择：</strong>Youden 指数最大化（J = Sensitivity + Specificity − 1）是一种常见方法；实际阈值还应考虑误判成本和任务目标。</p>
 </div>
 
@@ -65,7 +65,7 @@
 <div class="concept-box">
 <h4>逻辑回归中「R²」的含义不同</h4>
 <p>线性回归的 R² 有明确的「解释方差比例」含义，但逻辑回归中这个定义不适用。<br>
-<strong>McFadden R²：</strong>\[ R^2_{\text{McFadden}} = 1 - \frac{\ell(\hat{\boldsymbol{\beta}})}{\ell_{\text{null}}} \]值在 0.2-0.4 之间就算很好。与线性 R² 不能直接比较。<br>
+<strong>McFadden R²：</strong>\[ R^2_{\text{McFadden}} = 1 - \frac{\ell(\hat{\boldsymbol{\beta}})}{\ell_{\text{null}}} \]没有适用于所有任务的 0.2–0.4「良好」阈值，应结合数据、基线与外部验证解释。与线性 R² 不能直接比较。<br>
 <strong>Nagelkerke R²：</strong>将 Cox-Snell R² 缩放到 [0, 1]，更接近传统 R² 的直觉。</p>
 </div>
 
@@ -85,7 +85,7 @@
 
 <div class="derive-box">
 <h4>概率校准方法</h4>
-<p><strong>Platt Scaling：</strong>在逻辑回归的输出上再拟合一个 sigmoid：</p>
+<p><strong>Platt Scaling：</strong>在原模型的决策分数上拟合一个 sigmoid：</p>
 <div class="math-block">
 \[
 P(y=1 \mid x) = \frac{1}{1 + \exp(A \cdot f(x) + B)}
@@ -96,7 +96,7 @@ P(y=1 \mid x) = \frac{1}{1 + \exp(A \cdot f(x) + B)}
 </div>
 
 <div class="note-box">
-<strong>竞赛技巧：</strong>如果论文中报告了预测概率（如「客户流失概率为 73%」），就必须展示校准曲线。SVM 和朴素贝叶斯通常校准较差，需要用 Platt Scaling 或 Isotonic Regression 校正。随机森林的概率输出（类别比例）通常比 SVM 更校准。逻辑回归的 MLE 训练天然产生校准良好的概率。
+<strong>竞赛技巧：</strong>如果论文中报告了预测概率（如「客户流失概率为 73%」），就必须展示校准曲线。SVM 和朴素贝叶斯通常校准较差，需要用 Platt Scaling 或 Isotonic Regression 校正。不同模型的校准表现取决于数据与训练过程，不能用算法名称预先排序。逻辑回归在模型形式正确、样本充分和正则化适当时常有较好校准，但并非 MLE 的自动保证。应在独立数据/交叉验证预测上检查校准，校准器也只能在未用于拟合原模型的数据上训练；测试集仅用于最终评估。
 </div>
 
 <!-- ═══════════ 7.5B Hosmer-Lemeshow 检验 ═══════════ -->
@@ -110,10 +110,10 @@ P(y=1 \mid x) = \frac{1}{1 + \exp(A \cdot f(x) + B)}
 \]
 </div>
 
-<p>其中 \(O_k\) 是第 \(k\) 组中观测到的正类数，\(E_k\) 是期望正类数（预测概率之和），\(n_k\) 是组内样本数。如果 p > 0.05，说明模型拟合良好；如果 p < 0.05，说明模型拟合不佳——考虑增加交互项、非线性项或使用更复杂的模型。</p>
+<p>其中 \(O_k\) 是第 \(k\) 组中观测到的正类数，\(E_k\) 是期望正类数（预测概率之和），\(n_k\) 是组内样本数。在适当的大样本与分组条件下，统计量近似服从上述卡方分布。p &gt; 0.05 仅表示未拒绝该检验的拟合假设，并不证明拟合良好；p &lt; 0.05 提示分组校准偏离——考虑增加交互项、非线性项或使用更复杂的模型。</p>
 
 <div class="warn-box">
-<strong>HL 检验的局限：</strong>① 对分组数量 \(g\) 敏感。② 在大样本时几乎总是显著（检测到微小的拟合偏差）。③ 不提供改进方向——只告诉你有问题，不告诉你怎么修。建议结合校准曲线和残差图一起使用。
+<strong>HL 检验的局限：</strong>① 对分组数量 \(g\) 敏感。② 大样本下可能对微小拟合偏差也显著，小样本下又可能检验功效不足。③ 不提供改进方向——只告诉你有问题，不告诉你怎么修。建议结合校准曲线和残差图一起使用。
 </div>
 
 <!-- ═══════════ 7.5C 惩罚逻辑回归 ═══════════ -->
@@ -131,19 +131,19 @@ P(y=1 \mid x) = \frac{1}{1 + \exp(A \cdot f(x) + B)}
 </div>
 
 <p><strong>L1 (LASSO) 惩罚：</strong>将不重要的系数精确压缩到 0 → 自动特征选择。适合高维数据（如基因表达数据，p=10000, n=100）。<br>
-<strong>L2 (Ridge) 惩罚：</strong>将系数向 0 缩小但不精确到 0 → 处理共线性。适合特征之间高度相关时。<br>
+<strong>L2 (Ridge) 惩罚：</strong>整体收缩系数，通常不产生稀疏解（不专门把系数置零） → 处理共线性。适合特征之间高度相关时。<br>
 <strong>Elastic Net：</strong>\(\lambda(\alpha\sum|\beta_j| + (1-\alpha)\sum\beta_j^2)\) → 结合两者优点。</p>
 
 <div class="note-box">
-<strong>竞赛技巧：</strong>当竞赛数据有大量候选特征（如 >30 个问卷题目）但样本量有限（如 n=200）时，惩罚逻辑回归比逐步回归更可靠——它通过交叉验证选择 λ，避免了逐步回归的过拟合和选择偏差。论文中：「我们使用 LASSO 逻辑回归进行特征选择，通过 10 折交叉验证确定最优 λ = 0.023，最终从 50 个候选特征中筛选出 12 个显著预测因子。」
+<strong>竞赛技巧：</strong>当竞赛数据有大量候选特征（如 >30 个问卷题目）但样本量有限（如 n=200）时，惩罚逻辑回归比逐步回归更可靠——它通过交叉验证选择 λ，通常比逐步回归更稳定，但不能保证消除过拟合或选择偏差；标准化和 λ 选择均须在训练折内完成，并用外部测试集或嵌套 CV 评估。论文中：「我们使用 LASSO 逻辑回归进行特征选择，通过 10 折交叉验证确定最优 λ = 0.023，最终从 50 个候选特征中筛选出 12 个非零系数的候选特征（入选不等于统计显著）。」
 </div>
 
 <h2>7.6 类别不平衡</h2>
 
 <div class="toolkit-box">
 <h4>建模工具箱：类别不平衡的四种策略</h4>
-<p>当正例占比极低（如违约率 1%），逻辑回归倾向于把所有样本预测为多数类。<br>
-① <strong>调整阈值：</strong>不默认用 0.5，根据 ROC 选择最优阈值。② <strong>重新加权：</strong>给少数类更高权重。③ <strong>SMOTE 重采样：</strong>在特征空间中插值生成合成少数类样本。④ <strong>使用 AUC 或 F1 而非 Accuracy 评估模型。</strong>⑤ <strong>竞赛中：</strong>如果正例占比 < 10%，报告 Accuracy 没有意义——一个「永远预测多数类」的模型也有 90% 的 Accuracy。必须报告 F1、AUC 或 Precision-Recall 曲线。</p>
+<p>正类占比极低时（如违约率 1%），默认 0.5 阈值可能使多数样本被判为多数类；这不等于模型未学习到区分信号。<br>
+① <strong>调整阈值：</strong>不默认用 0.5，在验证数据上结合误判成本与 PR/ROC 选择阈值。② <strong>重新加权：</strong>给少数类更高权重。③ <strong>SMOTE 重采样：</strong>仅在各 CV 训练折内生成合成少数类，验证/测试集保持原比例；重采样与加权后的概率需重新检验校准。④ <strong>使用 AUC 或 F1 而非 Accuracy 评估模型。</strong>⑤ <strong>竞赛中：</strong>正类占比很低时，单独报告 Accuracy 不足以说明少数类效果——正类占比 1% 时，「永远预测多数类」的 Accuracy 为 99%。必须报告 F1、AUC 或 Precision-Recall 曲线。</p>
 </div>
 
 <h2>7.7 多分类逻辑回归与 GLM 框架</h2>
@@ -151,7 +151,7 @@ P(y=1 \mid x) = \frac{1}{1 + \exp(A \cdot f(x) + B)}
 <div class="derive-box">
 <h4>GLM：所有回归模型的统一视角</h4>
 <p>逻辑回归属于<strong>广义线性模型 (GLM)</strong>：g(E[Y]) = Xβ。线性回归：g(μ)=μ；逻辑回归：g(p)=ln(p/(1-p))；Poisson 回归：g(λ)=ln(λ)。<br>
-<strong>多分类逻辑回归：</strong>对于 K 类问题，用 K-1 个 binary logit 模型：</p>
+<strong>多分类逻辑回归：</strong>对于 K 类问题，以第 K 类为参照，联合拟合 K-1 组对数几率方程（并非分别拟合 K-1 个独立二分类器）：</p>
 \[ \ln\frac{P(Y = j)}{P(Y = K)} = \beta_{0j} + \beta_{1j} X \quad (j=1,\ldots,K-1) \]
 <p><strong>有序逻辑回归：</strong>当 Y 是有序分类（如差/中/良/优），用累积 logit 模型：</p>
 \[ \ln\frac{P(Y \leq j)}{P(Y > j)} = \alpha_j - \mathbf{X}\boldsymbol{\beta} \]
@@ -179,7 +179,7 @@ P(y=1 \mid x) = \frac{1}{1 + \exp(A \cdot f(x) + B)}
 </div>
 
 <h2>7.8 交互式逻辑回归面板</h2>
-<p>调整 β₀ 和 β₁ 系数，观察 Sigmoid 决策边界如何移动。β₁ 越大，S 形越陡（分类越确定）；β₀ 控制边界位置。</p>
+<p>调整 β₀ 和 β₁ 系数，观察 Sigmoid 决策边界如何移动。|β₁| 越大，S 形越陡；β₁ 的符号决定升降，不能据此断定拟合质量。β₀、β₁ 共同决定边界；β₁=0 时概率恒定。面板使用固定的示例样本，曲线随参数改变。</p>
 
 <div class="panel">
 <div class="panel-label">LOGISTIC CLASSIFIER</div>
@@ -203,3 +203,5 @@ P(y=1 \mid x) = \frac{1}{1 + \exp(A \cdot f(x) + B)}
 </div>
 <div class="chart-container" id="logistic-plot"></div>
 </div>
+
+<div class="note-box"><strong>延伸核对：</strong><a href="https://scikit-learn.org/stable/modules/calibration.html" target="_blank" rel="noopener noreferrer">scikit-learn 概率校准</a>；<a href="https://www.statsmodels.org/stable/pitfalls.html" target="_blank" rel="noopener noreferrer">statsmodels 拟合陷阱与完全分离</a>。公式使用条件与库默认值应一并阅读。</div>

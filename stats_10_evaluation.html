@@ -36,16 +36,16 @@
 
 <main id="main-content">
 <div class="competition-box">
-<h4>竞赛真题场景</h4>
+<h4>建模应用示例</h4>
 <p><span class="q">Q：</span>几乎所有竞赛论文都需要报告模型评估指标。评委最常问的问题：「你的模型准确率是 95%，但数据集正负样本比例是 95:5——如果全预测为正类，准确率也是 95%。你的模型真的有用吗？」<br>
-<span class="q">Q：</span>国赛常考：200 个样本，30 个特征，如何筛选最重要的特征？需要用 PCA 降维 + 特征选择。<br>
-<span class="q">Q：</span>美赛评审标准明确要求「Sensitivity Analysis」——模型对参数变化的敏感度分析。交叉验证用于评估模型的泛化稳定性；敏感性分析用于研究输入、参数或假设变化对结果的影响。二者都属于模型验证，但解决的问题不同。<br>
+<span class="q">Q：</span>应用示例：200 个样本、30 个特征时，可比较正则化、特征选择与 PCA 后建模；PCA 是特征提取，不能直接等同于选出最重要的原变量。<br>
+<span class="q">Q：</span>敏感性分析（Sensitivity Analysis）研究模型对输入、参数或假设变化的响应。交叉验证用于评估模型的泛化稳定性；敏感性分析用于研究输入、参数或假设变化对结果的影响。二者都属于模型验证，但解决的问题不同。<br>
 <strong>→ 模型评估不是跑完代码后补的几行数字，而是整个建模过程中持续进行的质量保证。</strong></p>
 </div>
 
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 <h2>10.1 混淆矩阵与分类评估指标</h2>
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 
 <div class="concept-box">
 <h4>混淆矩阵 (Confusion Matrix)</h4>
@@ -105,15 +105,15 @@ F_\beta = (1+\beta^2)\frac{P \cdot R}{\beta^2 P + R}
 \]
 </div>
 
-<p>AUC = 1：完美分类器；AUC = 0.5：随机猜测；AUC &lt; 0.5：排序方向系统性反向（将分数取负后新 AUC = 1 − 原 AUC）；AUC 的统计解释：<strong>随机选一个正样本和一个负样本，分类器给正样本更高分数的概率</strong>。</p>
+<p>AUC = 1：完美分类器；AUC = 0.5：随机猜测；AUC &lt; 0.5：排序方向系统性反向（将分数取负后新 AUC = 1 − 原 AUC）；AUC 的统计解释：<strong>随机选一个正样本和一个负样本，分类器给正样本更高分数的概率，加上同分概率的一半</strong>。</p>
 
 <div class="note-box">
-<strong>竞赛技巧：</strong>在类别不平衡的情况下，<strong>不要报告准确率</strong>——报告精确率、召回率、F1 和 AUC。如果正类只占 5%，模型把所有样本都预测为负类，准确率仍有 95%，但正类召回率为 0，正类 F1 也为 0。ROC-AUC 对类别比例的直接变化相对不敏感，但在严重类别不平衡问题中可能显得过于乐观，此时应同时报告 PR-AUC、Precision、Recall 和 F1。
+<strong>竞赛技巧：</strong>在类别不平衡的情况下，<strong>不要只报告准确率</strong>——报告精确率、召回率、F1 和 AUC。如果正类只占 5%，模型把所有样本都预测为负类，准确率仍有 95%，但正类召回率为 0，正类 F1 也为 0。ROC-AUC 对类别比例的直接变化相对不敏感，但在严重类别不平衡问题中可能显得过于乐观，此时应同时报告 PR-AUC、Precision、Recall 和 F1。
 </div>
 
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 <h2>10.2 交叉验证</h2>
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 
 <div class="concept-box">
 <h4>核心思想</h4>
@@ -122,7 +122,7 @@ F_\beta = (1+\beta^2)\frac{P \cdot R}{\beta^2 P + R}
 
 <h3>10.2.1 K 折交叉验证</h3>
 
-<p>将数据集随机分为 \(K\) 个等大的折（fold）。每次用 \(K-1\) 折训练，1 折验证，重复 \(K\) 次：</p>
+<p>对适合随机划分的独立同分布数据，将样本分为 \(K\) 个尽量等大的折（fold）。每次用 \(K-1\) 折训练，1 折验证，重复 \(K\) 次：</p>
 
 <div class="math-block">
 \[
@@ -133,31 +133,31 @@ F_\beta = (1+\beta^2)\frac{P \cdot R}{\beta^2 P + R}
 <table class="compact-table">
 <thead><tr><th>K 值</th><th>偏差</th><th>方差</th><th>计算量</th><th>适用场景</th></tr></thead>
 <tbody>
-<tr><td>K = 5</td><td>低</td><td>中</td><td>中</td><td>通用，竞赛首选</td></tr>
-<tr><td>K = 10</td><td>较低</td><td>较低</td><td>较高</td><td>样本量适中时</td></tr>
-<tr><td>K = n (LOOCV)</td><td>最低</td><td>最高</td><td>极高</td><td>极小样本时</td></tr>
+<tr><td>K = 5</td><td>通常有训练规模差异</td><td>取决于数据和算法</td><td>中</td><td>通用，竞赛首选</td></tr>
+<tr><td>K = 10</td><td>训练规模偏差通常更小</td><td>取决于数据和算法</td><td>较高</td><td>样本量适中时</td></tr>
+<tr><td>K = n (LOOCV)</td><td>训练规模偏差通常较小</td><td>不保证最大或最小</td><td>极高</td><td>极小样本时</td></tr>
 </tbody>
 </table>
 
 <div class="derive-box">
 <h4>偏差-方差视角下的 K 选择</h4>
-<p>交叉验证的误差估计是一个<strong>有偏估计</strong>——训练集比全数据集小，模型性能被低估。K 越小，训练集越小，偏差越大。但 K 越大，训练集之间的重叠越多，模型之间的相关性越高，方差越大。</p>
-<p>5 折和 10 折是经验上偏差-方差平衡最好的选择。留一法（LOOCV）偏差最小但方差最大，且计算量为 \(O(n)\) 倍——在大数据上不实用。</p>
+<p>K 折 CV 评估的是用约 (K−1)n/K 个样本训练的学习流程，和全数据训练目标存在训练规模差异，常造成偏悲观误差估计，但方向并非永远确定。折间误差相关，K 与方差的关系取决于数据和算法，不能仅凭训练集重叠断言单调增加。</p>
+<p>5 折或 10 折是常用起点；LOOCV 需拟合 n 次，通常计算较贵，也不保证具有最小偏差或最大方差。</p>
 </div>
 
 <h3>10.2.2 分层抽样与重复 CV</h3>
 
-<p><strong>分层 K 折 (Stratified K-Fold)：</strong>保持每折中各类别的比例与原始数据一致。对于分类问题，分层几乎是必须的——否则某些折可能完全没有某一类。</p>
+<p><strong>分层 K 折 (Stratified K-Fold)：</strong>保持每折中各类别的比例与原始数据一致。独立样本分类常用分层以避免某折缺类；折数应不超过最少类别样本数。分组/重复测量或时间依赖数据应优先保持组与时间边界，不能为分层破坏结构。</p>
 
-<p><strong>重复 K 折 (Repeated K-Fold)：</strong>将 K 折交叉验证重复多次（每次重新随机划分），取所有结果的平均。这进一步降低了方差，代价是计算量增加。竞赛中常用 5×2 或 10×5 的重复 CV。</p>
+<p><strong>重复 K 折 (Repeated K-Fold)：</strong>将 K 折交叉验证重复多次（每次重新随机划分），取所有结果的平均。重复可以降低对某次随机划分的依赖，但各折和各次重复并非独立样本，不能直接据此构造独立样本置信区间；计算量也会增加。竞赛中常用 5×2 或 10×5 的重复 CV。</p>
 
 <div class="warn-box">
 <strong>竞赛常见错误：</strong>① 先用全数据做特征选择，再交叉验证——这会导致数据泄漏（data leakage）。所有预处理（标准化、特征选择、PCA）必须在交叉验证的<strong>每一折内部</strong>独立进行。② 用同一组交叉验证结果选模型或调参，再把最优 CV 分数当作无偏的泛化性能——这会产生选择带来的乐观偏差，应使用独立测试集或嵌套交叉验证。③ 时间序列数据用随机 K 折——时间结构被破坏，应该用时间序列交叉验证（TimeSeriesSplit）。
 </div>
 
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 <h2>10.3 主成分分析 (PCA)</h2>
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 
 <div class="concept-box">
 <h4>核心思想</h4>
@@ -208,17 +208,17 @@ w_1 = \arg\max_{\|w\|=1} \text{Var}(Xw) = \arg\max_{\|w\|=1} w^T S w
 <h4>竞赛工具箱：PCA 使用指南</h4>
 <p><strong>根据量纲与目的决定是否标准化：</strong>PCA 寻找方差最大的方向。特征单位不同或尺度差异很大时，通常先做 Z-score 标准化，避免数值尺度主导结果；若同量纲下的原始方差本身有研究意义，也可以只中心化。标准化会改变分析目标，并非始终必需。<br>
 <strong>可解释性：</strong>每个主成分是原始特征的线性组合，可以看载荷（loading）来解释每个主成分的含义。例如「PC1 ≈ 0.8×身高 + 0.6×体重」→ PC1 代表「体型」。<br>
-<strong>非线性：</strong>PCA 只能捕捉线性结构。对于非线性流形，考虑 t-SNE 或 UMAP（但这些都是可视化工具，不适合作为特征工程步骤）。<br>
+<strong>非线性：</strong>PCA 只能捕捉线性结构。对于非线性流形，考虑 t-SNE 或 UMAP（t-SNE 主要用于可视化；UMAP 等也可作特征工程候选，但须在训练折拟合并验证样本外变换及预测效果）。<br>
 <strong>竞赛中 PCA 的三大用途：</strong>① 降维后可视化（2D/3D 散点图）。② 去除多重共线性（PCA 后的主成分互相正交）。③ 作为其他模型的特征输入（如 PCA → K-Means 聚类）。</p>
 </div>
 
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 <h2>10.3A 偏最小二乘 (PLS)</h2>
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 
 <div class="concept-box">
 <h4>PCA 的竞赛替代方案</h4>
-<p>PCA 寻找的是<strong>X 空间中方差最大的方向</strong>——完全不考虑 Y。但竞赛中，我们真正关心的是与 Y 相关的方向。PLS（Partial Least Squares）同时分解 X 和 Y，寻找<strong>最能解释 Y 的 X 的线性组合</strong>。当 \(p \gg n\)（特征数远超样本数）时，PLS 通常优于 PCA。</p>
+<p>PCA 寻找的是<strong>X 空间中方差最大的方向</strong>——完全不考虑 Y。但竞赛中，我们真正关心的是与 Y 相关的方向。PLS（Partial Least Squares）同时分解 X 和 Y，寻找<strong>最能解释 Y 的 X 的线性组合</strong>。在高维监督任务中，PLS 可利用 Y 信息，但是否优于 PCA 后回归等基线须用 CV 检验；PLS 及成分数选择都须在训练折内进行。</p>
 </div>
 
 <h3>PLS 的数学原理</h3>
@@ -231,7 +231,7 @@ w_1 = \arg\max_{\|w\|=1} \text{Var}(Xw) = \arg\max_{\|w\|=1} w^T S w
 \max_{w,c} \text{Cov}(Xw, Yc)^2 \quad \text{s.t.} \quad \|w\| = \|c\| = 1
 \]
 </div>
-<p>这等价于对交叉协方差矩阵 \(X^T Y\) 做 SVD 分解。第一个 PLS 方向就是 \(X^T Y\) 的第一个左奇异向量。数学上，PLS 的得分向量是 X 的列空间与 Y 的列空间之间的「桥梁」。</p>
+<p>X、Y 均需先中心化（是否缩放也影响结果）。在此前提下，这等价于对交叉协方差矩阵 \(X^T Y\) 做 SVD 分解。第一个 PLS 方向就是 \(X^T Y\) 的第一个左奇异向量。以上刻画第一对方向；后续成分依赖所用 PLS 算法的去除已解释部分（deflation）规则，不能直接取原矩阵所有奇异向量代替完整 PLS 回归。</p>
 </div>
 
 <h3>PCA vs PLS 选择指南</h3>
@@ -240,9 +240,9 @@ w_1 = \arg\max_{\|w\|=1} \text{Var}(Xw) = \arg\max_{\|w\|=1} w^T S w
 <thead><tr><th>条件</th><th>推荐</th><th>理由</th></tr></thead>
 <tbody>
 <tr><td>无监督（只有 X）</td><td>PCA</td><td>PLS 需要 Y</td></tr>
-<tr><td>有 Y，特征数远大于样本数</td><td>PLS</td><td>PLS 利用 Y 的信息，降维更有效</td></tr>
-<tr><td>有 Y，X 的噪声维度多</td><td>PLS</td><td>PLS 忽略与 Y 无关的方差方向</td></tr>
-<tr><td>需要可视化、无特定 Y</td><td>PCA</td><td>PCA 是探索性数据分析的标准工具</td></tr>
+<tr><td>有 Y，特征数远大于样本数</td><td>PLS 利用 Y 的信息，降维更有效</td></tr>
+<tr><td>有 Y，X 的噪声维度多</td><td>PLS 忽略与 Y 无关的方差方向</td></tr>
+<tr><td>需要可视化、无特定 Y</td><td>PCA 是探索性数据分析的标准工具</td></tr>
 </tbody>
 </table>
 
@@ -250,18 +250,18 @@ w_1 = \arg\max_{\|w\|=1} \text{Var}(Xw) = \arg\max_{\|w\|=1} w^T S w
 <strong>竞赛技巧：</strong>PLS 是竞赛中处理高维小样本问题的利器。特别是在化学计量学（近红外光谱）、基因组学（基因表达数据）等竞赛中，PLS 几乎是标准配置。在论文中，PLS 的得分图（score plot）和载荷图（loading plot）是必做的可视化。
 </div>
 
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 <h2>10.3B 偏差-方差权衡</h2>
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 
 <div class="concept-box">
 <h4>理解模型误差的根本来源</h4>
-<p>任何模型的预测误差都可以分解为三个不可约的部分——偏差（Bias）、方差（Variance）和噪声。理解这个分解是选择模型复杂度的理论基础。</p>
+<p>在下述平方损失回归条件下，期望预测误差可分为偏差平方、方差和不可约噪声三部分；只有噪声是不可约的。理解这个分解是选择模型复杂度的理论基础。</p>
 </div>
 
 <div class="derive-box">
 <h4>推导：偏差-方差分解</h4>
-<p>对于平方损失，期望预测误差可以分解为：</p>
+<p>设 Y=f(x)+ε，f(x)=E[Y|x]，E[ε|x]=0，测试误差独立于训练样本，期望对训练样本与新测试误差取平均，则平方损失下有（噪声方差可随 x 变化）：</p>
 <div class="math-block">
 \[
 \begin{aligned}
@@ -280,9 +280,9 @@ w_1 = \arg\max_{\|w\|=1} \text{Var}(Xw) = \arg\max_{\|w\|=1} w^T S w
 <strong>竞赛启示：</strong>Bagging 与随机森林通常通过平均及降低基模型相关性来减少方差，但不保证偏差完全不变。Boosting（如 XGBoost）逐步拟合损失的改进方向，常能降低偏差，其方差与过拟合风险仍受模型复杂度、学习率和正则化影响。不能把所有集成方法概括为「不增加偏差，只降低方差」。也解释了为什么交叉验证是模型选择的必要工具——它估计的是泛化误差，而非训练误差。
 </div>
 
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 <h2>10.3C 嵌套交叉验证</h2>
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 
 <div class="concept-box">
 <h4>模型选择 ≠ 模型评估——不能混用同一份数据</h4>
@@ -293,7 +293,7 @@ w_1 = \arg\max_{\|w\|=1} \text{Var}(Xw) = \arg\max_{\|w\|=1} w^T S w
 <h4>嵌套 CV 的结构</h4>
 <p><strong>外层循环（K_outer 折）：</strong>评估最终模型的泛化性能。<br>
 <strong>内层循环（K_inner 折）：</strong>在训练折上做超参数选择。</p>
-<p>例如 5×2 嵌套 CV：外层 5 折，每折的训练数据再做内层 2 折来选超参数。最终报告的是<strong>外层 5 折的平均性能</strong>——这些数据从未参与超参数选择，因此性能估计是无偏的。</p>
+<p>例如 5×2 嵌套 CV：外层 5 折，每折的训练数据再做内层 2 折来选超参数。最终报告的是<strong>外层 5 折的平均性能</strong>——这些数据从未参与超参数选择，因此可减少调参选择造成的乐观偏差，但不是有限样本下严格无偏的保证。</p>
 <div class="math-block">
 \[
 \text{CV Error}_{\text{nested}} = \frac{1}{K_{\text{outer}}} \sum_{k=1}^{K_{\text{outer}}} \text{Error}(\text{model selected by inner CV on fold } k)
@@ -302,12 +302,12 @@ w_1 = \arg\max_{\|w\|=1} \text{Var}(Xw) = \arg\max_{\|w\|=1} w^T S w
 </div>
 
 <div class="warn-box">
-<strong>竞赛陷阱：</strong>最常见的错误——用全部数据做 5 折 CV 选 K=7，然后报告 K=7 的 CV 分数 0.92。实际上这个 0.92 是乐观的——因为 K=7 就是选了让 CV 分数最高的 K。嵌套 CV 可能给出 0.87——这才是真实的泛化性能。如果数据量足够（n > 500），用简单的 train/validation/test 划分替代嵌套 CV 更简单。
+<strong>竞赛陷阱：</strong>最常见的错误——用全部数据做 5 折 CV 选 K=7，然后报告 K=7 的 CV 分数 0.92。实际上这个 0.92 是乐观的——因为 K=7 就是选了让 CV 分数最高的 K。嵌套 CV 可能给出 0.87——这是对整个选择流程的另一份样本外估计，并非已知的真实风险。如果独立测试样本足以支持所需精度，用简单的 train/validation/test 划分替代嵌套 CV 更简单。
 </div>
 
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 <h2>10.3D 超参数优化</h2>
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 
 <div class="concept-box">
 <h4>从手动试错到自动搜索</h4>
@@ -319,7 +319,7 @@ w_1 = \arg\max_{\|w\|=1} \text{Var}(Xw) = \arg\max_{\|w\|=1} w^T S w
 <tbody>
 <tr><td><strong>Grid Search</strong></td><td>穷举所有候选值的组合</td><td>简单、可并行</td><td>维度诅咒——3 个参数各 10 个值 = 1000 种组合</td></tr>
 <tr><td><strong>Random Search</strong></td><td>从分布中随机采样 N 组</td><td>同预算下比 Grid 更高效</td><td>可能遗漏最优组合</td></tr>
-<tr><td><strong>Bayesian Opt</strong></td><td>用高斯过程建模超参数→性能</td><td>最少评估找到最优</td><td>实现复杂、序贯执行难并行</td></tr>
+<tr><td><strong>Bayesian Opt</strong></td><td>用高斯过程建模超参数→性能</td><td>常能减少昂贵评估次数，无全局最优保证</td><td>实现复杂、序贯执行难并行</td></tr>
 <tr><td><strong>Optuna / Hyperopt</strong></td><td>TPE (Tree-structured Parzen Estimator)</td><td>自动、高效、支持剪枝</td><td>需要额外安装库</td></tr>
 </tbody>
 </table>
@@ -328,9 +328,9 @@ w_1 = \arg\max_{\|w\|=1} \text{Var}(Xw) = \arg\max_{\|w\|=1} w^T S w
 <strong>竞赛技巧：</strong>论文中写：「我们使用 5 折网格搜索对随机森林的超参数进行调优，搜索范围：n_estimators ∈ {100, 200, 300, 500}，max_depth ∈ {3, 5, 7, 10, None}，max_features ∈ {sqrt, log2, None}。最优参数组合为 n_estimators=300, max_depth=7, max_features=sqrt，在验证集上达到 F1=0.86。」——这种描述展示了完整的调参流程。
 </div>
 
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 <h2>10.3E 模型解释 (SHAP)</h2>
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 
 <div class="concept-box">
 <h4>从「预测了什么」到「为什么这么预测」</h4>
@@ -350,9 +350,9 @@ w_1 = \arg\max_{\|w\|=1} \text{Var}(Xw) = \arg\max_{\|w\|=1} w^T S w
 <strong>注意：</strong>SHAP 计算量大（O(2^p)），实际使用 KernelSHAP（模型无关）或 TreeSHAP（树模型专用，O(TL²)）。竞赛中如果不用 SHAP，至少用<strong>排列重要性 (Permutation Importance)</strong>——随机打乱某个特征，看性能下降多少。
 </div>
 
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 <h2>10.3F 多分类评估指标</h2>
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 
 <div class="concept-box">
 <h4>从二分类到多分类——指标如何聚合？</h4>
@@ -376,9 +376,9 @@ w_1 = \arg\max_{\|w\|=1} \text{Var}(Xw) = \arg\max_{\|w\|=1} w^T S w
 <strong>竞赛推荐：</strong>同时报告 Macro 和 Weighted F1，说明「我们关注所有类别的均衡表现，因此主要参考 Macro F1」。另附<strong>混淆矩阵</strong>——让评委看到每个类别的具体表现。</p>
 </div>
 
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 <h2>10.4 特征选择</h2>
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 
 <p>特征选择有三种范式：</p>
 
@@ -399,34 +399,34 @@ w_1 = \arg\max_{\|w\|=1} \text{Var}(Xw) = \arg\max_{\|w\|=1} w^T S w
 \hat{\beta}_{\text{LASSO}} = \arg\min_{\beta} \left\{ \sum_{i=1}^{n} (y_i - x_i^T\beta)^2 + \lambda \sum_{j=1}^{p} |\beta_j| \right\}
 \]
 </div>
-<p>L1 惩罚的几何特性（菱形约束区域）使得某些 \(\beta_j\) 恰好为 0——实际上就是在做特征选择。\(\lambda\) 越大，被选中的特征越少。通过交叉验证选择最优 \(\lambda\)。</p>
+<p>L1 惩罚的几何特性（菱形约束区域）使得某些 \(\beta_j\) 恰好为 0——实际上就是在做特征选择。增大 \(\lambda\) 通常使解更稀疏，但相关特征下活跃集不一定随 λ 严格嵌套。通过交叉验证选择最优 \(\lambda\)。</p>
 </div>
 
 <div class="note-box">
 <strong>竞赛技巧：</strong>特征选择的黄金组合 = <strong>在每个交叉验证训练折内进行 Filter 初筛和 Embedded 精筛，再在对应验证折评估；用 Pipeline 将特征选择与模型训练绑定</strong>。在论文中，不要只说「我们选了 8 个特征」，要说明为什么选这 8 个——报告每个特征的重要性得分和选择依据。
 </div>
 
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 <h2>10.5 数据标准化</h2>
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 
 <table class="compact-table">
 <thead><tr><th>方法</th><th>公式</th><th>适用场景</th></tr></thead>
 <tbody>
 <tr><td>Z-score 标准化</td><td>\(x' = \frac{x - \mu}{\sigma}\)</td><td><strong>竞赛默认首选</strong>。PCA、SVM、K-Means、逻辑回归</td></tr>
-<tr><td>Min-Max 归一化</td><td>\(x' = \frac{x - x_{\min}}{x_{\max} - x_{\min}}\)</td><td>需要固定范围 [0,1]（如神经网络输入层）</td></tr>
+<tr><td>Min-Max 归一化（常数列需单独处理）</td><td>\(x' = \frac{x - x_{\min}}{x_{\max} - x_{\min}}\)</td><td>训练集映射至 [0,1]；新样本可超出范围，是否裁剪需明示</td></tr>
 <tr><td>Robust Scaling</td><td>\(x' = \frac{x - \text{median}}{\text{IQR}}\)</td><td>有异常值时（使用中位数和 IQR 替代均值和标准差）</td></tr>
 <tr><td>Quantile Transform</td><td>映射到均匀或正态分布</td><td>特征分布高度偏斜时</td></tr>
 </tbody>
 </table>
 
 <div class="warn-box">
-<strong>关键提醒：</strong>标准化参数（均值、标准差、最小值、最大值）必须<strong>从训练集计算，然后应用于验证集/测试集</strong>。在交叉验证中，每一折都要用训练折的参数来标准化验证折。用全数据集计算标准化参数再交叉验证 = 数据泄露。
+<strong>关键提醒：</strong>标准化参数（均值、标准差、最小值、最大值）必须<strong>从训练集计算，然后应用于验证集/测试集</strong>。在交叉验证中，每一折都要用训练折的参数来标准化验证折。用全数据集计算标准化参数再交叉验证 = 数据泄露。σ=0、IQR=0 或极差为 0 的列不能直接套除法公式，需删除常数列或采用库的零尺度处理规则。
 </div>
 
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 <!-- INSTRUMENT No.10A: 交互式混淆矩阵 -->
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 <h2>仪器 No.10A — 交互式混淆矩阵与阈值调节</h2>
 <div class="panel">
 <div class="panel-label">INSTRUMENT No.10A · Confusion Matrix & Threshold Tuning</div>
@@ -454,13 +454,13 @@ w_1 = \arg\max_{\|w\|=1} \text{Var}(Xw) = \arg\max_{\|w\|=1} w^T S w
 </div>
 </div>
 
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 <!-- INSTRUMENT No.10B: PCA 可视化 -->
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 <h2>仪器 No.10B — PCA 降维可视化</h2>
 <div class="panel">
 <div class="panel-label">INSTRUMENT No.10B · PCA Projection & Scree Plot</div>
-<p style="font-size:0.9rem;color:var(--slate);margin-bottom:12px">3D 数据（三个相关变量）通过 PCA 投影到 2D。左图：原始 3D 数据的 2D 投影（散点图）。右图：碎石图（特征值 + 累积方差解释率）。观察 PCA 如何找到方差最大的方向。</p>
+<p style="font-size:0.9rem;color:var(--slate);margin-bottom:12px">三个同量纲相关变量在中心化后做协方差 PCA（此演示不额外标准化），再投影到 2D。左图：原始 3D 数据的 2D 投影（散点图）。右图：各主成分方差解释率 + 累积解释率图（特征值另列于卡片）。观察 PCA 如何找到方差最大的方向。</p>
 <div class="btn-group">
   <button class="btn" id="pca-reshuffle">重新生成数据</button>
   <button class="btn" id="pca-rotate">旋转数据</button>
@@ -472,20 +472,22 @@ w_1 = \arg\max_{\|w\|=1} \text{Var}(Xw) = \arg\max_{\|w\|=1} w^T S w
 <div class="stat-cards" id="pca-stats"></div>
 </div>
 
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 <h2>10.6 竞赛实战流程</h2>
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 
 <div class="toolkit-box">
 <h4>模型评估与特征工程竞赛流程</h4>
-<p><strong>Step 1：</strong>数据标准化（Z-score），从训练集计算参数，应用于所有数据。<br>
+<p><strong>Step 1：</strong>先保留最终测试集；根据特征和模型决定缩放，预处理参数只从相应训练集/训练折估计。<br>
 <strong>Step 2：</strong>特征初筛——去除方差极低（常数特征）、相关性极高（>0.95）的特征。<br>
 <strong>Step 3：</strong>PCA 分析——看前几个主成分的累积方差解释率，判断是否需要降维。<br>
 <strong>Step 4：</strong>特征选择——LASSO 或随机森林特征重要性，选出 top-K 特征。<br>
-<strong>Step 5：</strong>模型训练 + 5 折交叉验证——报告 CV 分数的均值 ± 标准差。<br>
+<strong>Step 5：</strong>用 Pipeline 在 CV 训练折内依次完成初筛、PCA/特征选择与训练；选模后用独立测试集或外层 CV 评估。折分数均值±标准差仅表示折间波动，不是置信区间。<br>
 <strong>Step 6：</strong>混淆矩阵分析——不只是准确率，报告精确率、召回率、F1、AUC。<br>
 <strong>Step 7：</strong>敏感性分析——改变关键参数（如 K、阈值），观察性能变化。</p>
 </div>
+
+<div class="note-box"><strong>延伸核对：</strong><a href="https://scikit-learn.org/stable/modules/cross_validation.html" target="_blank" rel="noopener noreferrer">scikit-learn 交叉验证</a>；<a href="https://scikit-learn.org/stable/modules/decomposition.html#pca" target="_blank" rel="noopener noreferrer">scikit-learn PCA</a>；<a href="https://scikit-learn.org/stable/modules/generated/sklearn.metrics.roc_curve.html" target="_blank" rel="noopener noreferrer">scikit-learn ROC 实现约定</a>。公式使用条件与库默认值应一并阅读。</div>
 </main>
 
 
@@ -500,7 +502,7 @@ w_1 = \arg\max_{\|w\|=1} \text{Var}(Xw) = \arg\max_{\|w\|=1} w^T S w
   <div class="footer-meta">
     <span>版本 v1.2.0</span> <span>|</span>
     <span>持续更新中 · 欢迎反馈纠错</span> <span>|</span>
-    <span>最后更新: 2026-07</span>
+    <span>最后更新: 2026-11</span>
   </div>
   <p>Statistical Field Station &copy; 2026 · KaTeX + D3.js</p>
 </footer>
@@ -516,6 +518,35 @@ if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
     '⚠ 交互资源加载失败。请确认 assets 目录完整，并检查文件路径后刷新页面。</div>');
 } else {
 
+
+// Symmetric 3x3 eigensystem; eigenvectors are columns accumulated by rotations.
+function symmetricEigen3(matrix) {
+  const a=matrix.map(row => [...row]);
+  const v=[[1,0,0],[0,1,0],[0,0,1]];
+  const scale=Math.max(...a.flat().map(Math.abs));
+  for(let iter=0;iter<100;iter++) {
+    let p=0,q=1;
+    for(let i=0;i<3;i++) for(let j=i+1;j<3;j++)
+      if(Math.abs(a[i][j])>Math.abs(a[p][q])) { p=i; q=j; }
+    if(Math.abs(a[p][q])<=Number.EPSILON*scale*16) break;
+    const angle=0.5*Math.atan2(2*a[p][q],a[q][q]-a[p][p]);
+    const c=Math.cos(angle),s=Math.sin(angle), app=a[p][p],aqq=a[q][q],apq=a[p][q];
+    for(let k=0;k<3;k++) if(k!==p && k!==q) {
+      const akp=a[k][p],akq=a[k][q];
+      a[k][p]=a[p][k]=c*akp-s*akq;
+      a[k][q]=a[q][k]=s*akp+c*akq;
+    }
+    a[p][p]=c*c*app-2*c*s*apq+s*s*aqq;
+    a[q][q]=s*s*app+2*c*s*apq+c*c*aqq;
+    a[p][q]=a[q][p]=0;
+    for(let k=0;k<3;k++) {
+      const vkp=v[k][p],vkq=v[k][q];
+      v[k][p]=c*vkp-s*vkq; v[k][q]=s*vkp+c*vkq;
+    }
+  }
+  const order=[0,1,2].sort((i,j)=>a[j][j]-a[i][i]);
+  return {values:order.map(i=>a[i][i]),vectors:order.map(i=>v.map(row=>row[i]))};
+}
 
 // ============ INSTRUMENT No.10A: Confusion Matrix ============
 (function() {
@@ -556,25 +587,25 @@ if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
   }
 
   function computeROCPoints() {
-    const points = [];
-    for (let t = 0; t <= 1.01; t += 0.02) {
-      const tp = scoresPos.filter(s => s >= t).length;
-      const fn = scoresPos.length - tp;
-      const fp = scoresNeg.filter(s => s >= t).length;
-      const tn = scoresNeg.length - fp;
-      const tpr = tp/(tp+fn) || 0;
-      const fpr = fp/(fp+tn) || 0;
-      points.push({fpr, tpr, thresh: t});
+    const rows = [...scoresPos.map(score => ({score, positive:true})),
+      ...scoresNeg.map(score => ({score, positive:false}))].sort((a,b) => b.score-a.score);
+    const points = [{fpr:0, tpr:0, thresh:Infinity}];
+    let tp=0, fp=0;
+    for (let i=0; i<rows.length;) {
+      const threshold=rows[i].score;
+      do { if(rows[i].positive) tp++; else fp++; i++; }
+      while(i<rows.length && rows[i].score===threshold);
+      points.push({fpr:fp/scoresNeg.length, tpr:tp/scoresPos.length, thresh:threshold});
     }
     return points;
   }
 
   function computeAUC() {
-    const pts = computeROCPoints().sort((a, b) => a.fpr - b.fpr);
-    let auc = 0;
-    for (let i = 1; i < pts.length; i++) {
-      auc += (pts[i].fpr - pts[i-1].fpr) * (pts[i].tpr + pts[i-1].tpr) / 2;
-    }
+    if (!scoresPos.length || !scoresNeg.length) return NaN;
+    const pts = computeROCPoints();
+    let auc=0;
+    for(let i=1;i<pts.length;i++)
+      auc += (pts[i].fpr-pts[i-1].fpr)*(pts[i].tpr+pts[i-1].tpr)/2;
     return auc;
   }
 
@@ -675,7 +706,7 @@ if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
       .attr('fill','none').attr('stroke','var(--terracotta)').attr('stroke-width',2);
 
     // AUC fill
-    const areaPts = [...rocPts, {fpr:1,tpr:0}];
+    const areaPts = rocPts;
     const area = d3.area().x(d => rx(d.fpr)).y0(ry(0)).y1(d => ry(d.tpr));
     rSvg.append('path').datum(areaPts).attr('d',area)
       .attr('fill','rgba(199,81,70,0.1)');
@@ -744,58 +775,10 @@ if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
         cov[i][j] = s / (n-1);
       }
     }
-    // Power iteration for eigenvalues/vectors (simplified for 3x3)
-    // Use characteristic polynomial for 3x3
-    const a = cov[0][0], b = cov[0][1], c = cov[0][2];
-    const d = cov[1][0], e = cov[1][1], f = cov[1][2];
-    const g = cov[2][0], h = cov[2][1], i = cov[2][2];
-
-    // Trace, determinant, and sum of principal minors
-    const tr = a + e + i;
-    const det = a*(e*i-f*h) - b*(d*i-f*g) + c*(d*h-e*g);
-    const m2 = (a*e-b*d) + (a*i-c*g) + (e*i-f*h);
-
-    // Characteristic: λ³ - tr·λ² + m2·λ - det = 0
-    // Use numerical approach for eigenvalues
-    function charPoly(lam) { return lam*lam*lam - tr*lam*lam + m2*lam - det; }
-    // Find roots via simple search
-    const roots = [];
-    for (let lam = -5; lam <= 5; lam += 0.001) {
-      const v = charPoly(lam);
-      if (Math.abs(v) < 0.01 && (roots.length === 0 || Math.abs(lam - roots[roots.length-1]) > 0.05)) {
-        roots.push(lam);
-      }
-    }
-    evals = roots.sort((a,b) => b-a).slice(0,3);
-    if (evals.length < 3) evals = [1, 0.5, 0.2]; // fallback
-
-    // Compute eigenvectors (simplified: use inverse iteration)
-    // For simplicity, approximate PC1, PC2 by projecting
-    // Actually, let's compute eigenvectors properly
-    function computeEigenvector(lambda) {
-      const M = [[a-lambda, b, c], [d, e-lambda, f], [g, h, i-lambda]];
-      // Solve M·v = 0 using cross product of two rows
-      // Pick two independent rows
-      let v = [0,0,0];
-      // Cross product of row 0 and row 1
-      v[0] = M[0][1]*M[1][2] - M[0][2]*M[1][1];
-      v[1] = M[0][2]*M[1][0] - M[0][0]*M[1][2];
-      v[2] = M[0][0]*M[1][1] - M[0][1]*M[1][0];
-      const norm = Math.sqrt(v[0]*v[0]+v[1]*v[1]+v[2]*v[2]);
-      if (norm < 1e-10) {
-        // Use row 0 and row 2
-        v[0] = M[0][1]*M[2][2] - M[0][2]*M[2][1];
-        v[1] = M[0][2]*M[2][0] - M[0][0]*M[2][2];
-        v[2] = M[0][0]*M[2][1] - M[0][1]*M[2][0];
-        const n2 = Math.sqrt(v[0]*v[0]+v[1]*v[1]+v[2]*v[2]);
-        if (n2 < 1e-10) return [1,0,0];
-        return [v[0]/n2, v[1]/n2, v[2]/n2];
-      }
-      return [v[0]/norm, v[1]/norm, v[2]/norm];
-    }
-
-    const ev1 = computeEigenvector(evals[0]);
-    const ev2 = computeEigenvector(evals[1]);
+    // Jacobi rotations diagonalize the real symmetric covariance matrix.
+    const decomposition = symmetricEigen3(cov);
+    evals = decomposition.values.map(v => Math.max(0,v));
+    const ev1 = decomposition.vectors[0], ev2 = decomposition.vectors[1];
 
     // Project to PC1, PC2
     pc1 = X.map(x => x[0]*ev1[0] + x[1]*ev1[1] + x[2]*ev1[2]);
@@ -885,7 +868,11 @@ if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
   }
 
   d3.select('#pca-reshuffle').on('click', () => { generateData(); update(); });
-  d3.select('#pca-rotate').on('click', () => { generateData(); update(); });
+  d3.select('#pca-rotate').on('click', () => {
+    const angle=Math.PI/6, c=Math.cos(angle), s=Math.sin(angle);
+    data3D=data3D.map(d => ({x1:c*d.x1-s*d.x2, x2:s*d.x1+c*d.x2, x3:d.x3}));
+    update();
+  });
 
   generateData();
   update();

@@ -1,8 +1,8 @@
 # Statistical Field Station
 
-**面向数学建模竞赛的交互式统计教程** — 18 个独立 HTML 页面，涵盖从描述统计到图论仿真的完整知识体系。
+**面向数学建模竞赛的交互式统计教程** — 18 个独立 HTML 页面，涵盖描述统计、统计推断、预测、优化与仿真的学习主题。
 
-每个章节包含：完整的 KaTeX 公式推导 + D3.js 交互式可视化 + 建模工具箱 + 竞赛实战指南。所有计算在浏览器端完成，所有资源（KaTeX、D3.js、字体）已随仓库本地提供，**完全离线可用**。
+章节结合 KaTeX 公式说明、D3.js 交互示例、建模工具箱和竞赛场景。页面内交互计算在浏览器端完成；Python 示例需在独立 Python 环境运行，所有资源（KaTeX、D3.js、字体）已随仓库本地提供，**完全离线可用**。
 
 **[🌐 在线体验](https://wch727.github.io/statistical-field-station/)** — GitHub Pages 托管，无需下载即可浏览全部章节。
 
@@ -81,8 +81,8 @@ xdg-open stats_tutorial.html    # Linux
 
 ## 写作原则
 
-- **推导优先**：每个公式都有完整的数学推导，不跳过步骤
-- **代码可运行**：所有 Python 代码示例可直接复制使用
+- **说明适用条件**：核心公式配合推导或解释，明确假设与局限
+- **区分示例与完整程序**：Python 示例需准备相应依赖和输入数据
 - **竞赛导向**：每个章节包含竞赛真题场景、常见陷阱、写作模板
 - **六问框架**：每个模型必须回答「为什么用 / 输入输出 / 假设 / 变量含义 / 可信度 / 缺点」
 
@@ -99,11 +99,11 @@ xdg-open stats_tutorial.html    # Linux
 npm ci                       # 安装依赖（需 Node.js 22+）
 npx playwright install chromium  # 安装冒烟测试浏览器
 
-npm test                     # 统计函数 + 链接 + 资源检查
+npm test                     # 统计函数 + 全章数值回归 + 链接 + 资源检查
 npm run test:all             # 包含全部页面的浏览器冒烟测试
 ```
 
-CI 在 push / PR 时并行运行四个 job：统计计算、内部链接、本地资源完整性、Playwright 浏览器冒烟。
+CI 在 push / PR 时运行统计计算与全章数值回归、SciPy 交叉校验、内部链接、资源完整性、构建一致性和浏览器检查；全部通过后发布 Pages。
 
 ## 许可
 
@@ -111,4 +111,4 @@ MIT License — 自由使用、修改和分发。
 
 ---
 
-**Statistical Field Station** · 2026 · 所有计算在浏览器端完成 · KaTeX + D3.js
+**Statistical Field Station** · 2026 · 网页交互在浏览器端运行 · KaTeX + D3.js

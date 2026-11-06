@@ -98,6 +98,18 @@
   assert('Mismatched lengths undefined', Number.isNaN(pearsonCorrelation([1,2],[1])) ? 1 : 0, 1, 0);
   assert('Nonfinite values undefined', Number.isNaN(spearmanCorrelation([1,Infinity],[1,2])) ? 1 : 0, 1, 0);
 
+  assert('t CDF +infinity', tCDF(Infinity, 10), 1, 0);
+  assert('t CDF -infinity', tCDF(-Infinity, 10), 0, 0);
+  assert('Chi CDF infinity', chiCDF(Infinity, 5), 1, 0);
+  assert('Chi invalid df at zero', Number.isNaN(chiCDF(0, 0)), true, 0);
+  assert('Gamma invalid shape at zero', Number.isNaN(regularizedLowerIncompleteGamma(0, 0)), true, 0);
+  assert('Gamma upper at infinity', regularizedUpperIncompleteGamma(2, Infinity), 0, 0);
+  assert('Chi df2 small tail relative error', chiSquarePValue(100, 2) / Math.exp(-50), 1, 1e-12);
+  assert('t df1 stable extreme tail', tTestPValue(1e10, 1) / (2 / (Math.PI * 1e10)), 1, 1e-12);
+  assert('F critical value', fSurvival(3.8852938346523933, 2, 12), 0.05, 1e-12);
+  assert('F zero', fSurvival(0, 2, 12), 1, 0);
+  assert('F infinity', fSurvival(Infinity, 2, 12), 0, 0);
+
   // ─── Summary ───
   console.log('─── Results ───');
   console.log(passed + ' passed, ' + failed + ' failed, ' + (passed + failed) + ' total');

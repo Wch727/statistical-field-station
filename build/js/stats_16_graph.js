@@ -15,7 +15,9 @@
   nodes.forEach(n => adj[n.id] = []);
   edges.forEach(e => {
     adj[e.from].push({to:e.to, w:e.w});
-    adj[e.to].push({to:e.from, w:e.w});  let selectedStart = null, selectedEnd = null;
+    adj[e.to].push({to:e.from, w:e.w});
+  });
+  let selectedStart = null, selectedEnd = null;
 
   const svg = d3.select('#sp-chart').append('svg').attr('width',W).attr('height',H).attr('viewBox',`0 0 ${W} ${H}`);
 
@@ -176,11 +178,14 @@
   function updateStats() {
     const piEst = total > 0 ? 4 * inside / total : 0;
     const err = total > 0 ? Math.abs(piEst - Math.PI) : 0;
+    const p = total > 0 ? inside / total : 0;
+    const se = total > 0 ? 4 * Math.sqrt(p * (1-p) / total) : NaN;
     d3.select('#mc-stats').html(`
       <div class="stat-card"><div class="lbl">总点数</div><div class="val">${total}</div></div>
       <div class="stat-card"><div class="lbl">圆内点数</div><div class="val">${inside}</div></div>
       <div class="stat-card"><div class="lbl">π 估计值</div><div class="val" style="color:var(--terracotta)">${piEst.toFixed(6)}</div></div>
       <div class="stat-card"><div class="lbl">误差</div><div class="val">${err.toFixed(6)}</div></div>
+      <div class="stat-card"><div class="lbl">蒙特卡洛标准误</div><div class="val">${total > 0 ? se.toFixed(6) : '—'}</div></div>
       <div class="stat-card"><div class="lbl">真值 π</div><div class="val">${Math.PI.toFixed(6)}</div></div>
     `);
   }
@@ -191,7 +196,7 @@
   d3.select('#mc-reset').on('click', () => {
     total = 0; inside = 0;
     svg.selectAll('circle').remove();
-    updateStats();  addPoints(200);
-})();
-})();
+    updateStats();
   });
+  addPoints(200);
+})();

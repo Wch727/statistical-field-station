@@ -6,11 +6,11 @@ function updateTTest(){
 
   const se=Math.sqrt(s1*s1/n1+s2*s2/n2),t=(m1-m2)/se;
   const df_num=(s1*s1/n1+s2*s2/n2)**2,df_den=(s1*s1/n1)**2/(n1-1)+(s2*s2/n2)**2/(n2-1);
-  const df=df_den===0?1:df_num/df_den,p=2*(1-tCDF(Math.abs(t),df));
+  const df=df_den===0?1:df_num/df_den,p=tTestPValue(t,df);
   const sp=Math.sqrt(((n1-1)*s1*s1+(n2-1)*s2*s2)/(n1+n2-2)),d=(m1-m2)/sp;
 
   document.getElementById('ttest-results').innerHTML='<div class="stat-cards">'+[
-    {l:'t',v:t.toFixed(4)},{l:'df',v:df.toFixed(1)},{l:'p',v:p.toFixed(4)},
+    {l:'t',v:t.toFixed(4)},{l:'df',v:df.toFixed(1)},{l:'p',v:p>0 && p<0.0001?p.toExponential(3):p.toFixed(4)},
     {l:"Cohen's d (pooled SD)",v:d.toFixed(3)},{l:'Significant',v:p<0.05?'YES (p<0.05)':'NO'}
   ].map(s=>`<div class="stat-card"><div class="lbl">${s.l}</div><div class="val" style="color:${s.l==='Significant'&&p<0.05?'var(--terracotta)':'var(--forest)'}">${s.v}</div></div>`).join('')+'</div>'+
   `<p style="font-size:0.7rem;color:var(--slate);margin-top:4px;">本面板采用 Welch t 检验；效应量展示 pooled Cohen's d。小样本时可使用 Hedges' g 进行偏差修正；方差明显不齐且存在明确对照组时，可考虑 Glass's Δ。</p>`;
@@ -77,7 +77,7 @@ function updateChiSquare(){
   const e11=r1*c1/N,e12=r1*c2/N,e21=r2*c1/N,e22=r2*c2/N;
   const expected=[e11,e12,e21,e22];
   const chi2 = (o11-e11)**2/e11 + (o12-e12)**2/e12 + (o21-e21)**2/e21 + (o22-e22)**2/e22;
-  const df=1,p=1-chiCDF(chi2,df);
+  const df=1,p=chiSquarePValue(chi2,df);
   const cramersV=Math.sqrt(chi2/(N*1));
 
   // Fisher warning when expected frequencies are small
@@ -99,7 +99,7 @@ function updateChiSquare(){
   };
 
   document.getElementById('chi-results').innerHTML='<div class="stat-cards">'+[
-    {l:'χ²',v:chi2.toFixed(4)},{l:'df',v:df},{l:'p',v:p.toFixed(4)},
+    {l:'χ²',v:chi2.toFixed(4)},{l:'df',v:df},{l:'p',v:p>0 && p<0.0001?p.toExponential(3):p.toFixed(4)},
     {l:"Cramér's V",v:cramersV.toFixed(4)},
     {l:'Significant',v:significance}
   ].map(s=>`<div class="stat-card"><div class="lbl">${s.l}</div><div class="val" style="color:${cardColor(s)}">${s.v}</div></div>`).join('')+'</div>'+
@@ -135,6 +135,7 @@ function updateChiSquare(){
     svg.append('rect').attr('x',xScale(g)+xSub('Observed')).attr('y',yScale(obs[i])).attr('width',xSub.bandwidth()).attr('height',H-MM.b-yScale(obs[i])).attr('fill','var(--terracotta)').attr('opacity',0.7);
     svg.append('rect').attr('x',xScale(g)+xSub('Expected')).attr('y',yScale(exp[i])).attr('width',xSub.bandwidth()).attr('height',H-MM.b-yScale(exp[i])).attr('fill','var(--forest)').attr('opacity',0.5);
     });
+}
 
 function resetChiSquare(){
   document.getElementById('chi-o11').textContent='38';document.getElementById('chi-o12').textContent='12';
@@ -151,4 +152,4 @@ function randomChiSquare(){
 
 // ═══════════ Init ═══════════
 updateTTest();updateChiSquare();
-window.addEventListener('resize',()=>{clearTimeout(window._rt);window._rt=setTimeout(()=>{updateTTest();updateChiSquare();},250)});}
+window.addEventListener('resize',()=>{clearTimeout(window._rt);window._rt=setTimeout(()=>{updateTTest();updateChiSquare();},250)});

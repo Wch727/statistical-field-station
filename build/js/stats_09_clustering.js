@@ -20,7 +20,7 @@ const clusterColors = ['#C75146','#2D6BA0','#5B8C3E','#8B6914','#9B59B6','#E67E2
   let K = 3, converged = false;
 
   function initCentroids() {
-    if (points.length < K) return;
+    if (points.length < K) { centroids = []; assignments = []; converged = false; return; }
     // K-Means++ style initialization
     centroids = [points[Math.floor(Math.random()*points.length)]];
     for (let k = 1; k < K; k++) {
@@ -51,7 +51,7 @@ const clusterColors = ['#C75146','#2D6BA0','#5B8C3E','#8B6914','#9B59B6','#E67E2
       });
       return best;
     });
-    return oldAssignments.every((a,i) => a === assignments[i]);
+    return oldAssignments.length === assignments.length && oldAssignments.every((a,i) => a === assignments[i]);
   }
 
   function updateCentroids() {
@@ -75,6 +75,7 @@ const clusterColors = ['#C75146','#2D6BA0','#5B8C3E','#8B6914','#9B59B6','#E67E2
     let sum = 0;
     points.forEach((p, i) => {
       const c = centroids[assignments[i]];
+      if (!c) return;
       sum += (p.x-c.x)**2 + (p.y-c.y)**2;
     });
     return sum;
@@ -125,8 +126,8 @@ const clusterColors = ['#C75146','#2D6BA0','#5B8C3E','#8B6914','#9B59B6','#E67E2
     const w = wcss();
     d3.select('#km-stats').html(`
       <div class="stat-card"><div class="lbl">样本数</div><div class="val">${points.length}</div></div>
-      <div class="stat-card"><div class="lbl">WCSS</div><div class="val">${w.toFixed(4)}</div></div>
-      <div class="stat-card"><div class="lbl">迭代状态</div><div class="val" style="font-size:0.9rem">${converged ? '已收敛 ✓' : '进行中'}</div></div>
+      <div class="stat-card"><div class="lbl">WCSS</div><div class="val">${centroids.length ? w.toFixed(4) : "—（样本数不足 K）"}</div></div>
+      <div class="stat-card"><div class="lbl">迭代状态</div><div class="val" style="font-size:0.9rem">${points.length < K ? '等待至少 K 个点' : (converged ? '已收敛 ✓' : '进行中')}</div></div>
       ${centroids.map((c,i) => `
         <div class="stat-card"><div class="lbl" style="color:${clusterColors[i]}">簇 ${i+1} 质心</div><div class="val" style="font-size:0.8rem">(${c.x.toFixed(2)},${c.y.toFixed(2)})</div></div>
       `).join('')}
@@ -153,7 +154,7 @@ const clusterColors = ['#C75146','#2D6BA0','#5B8C3E','#8B6914','#9B59B6','#E67E2
     points.push({x, y});
     converged = false;
     if (points.length >= K && centroids.length === 0) initCentroids();
-    else { assignPoints(); updateCentroids(); assignPoints(); }
+    else if (centroids.length === K) { assignPoints(); updateCentroids(); assignPoints(); }
     redraw();
     updateStats();
   });
@@ -176,7 +177,7 @@ const clusterColors = ['#C75146','#2D6BA0','#5B8C3E','#8B6914','#9B59B6','#E67E2
     if (autoTimer) { clearInterval(autoTimer); autoTimer = null; d3.select(this).text('自动迭代 (Auto)'); return; }
     d3.select(this).text('停止');
     autoTimer = setInterval(function() {
-      if (converged) { clearInterval(autoTimer); autoTimer = null; d3.select('#km-auto').text('自动迭代 (Auto)'); return; }
+      if (converged || points.length < K) { clearInterval(autoTimer); autoTimer = null; d3.select('#km-auto').text('自动迭代 (Auto)'); return; }
       doStep();
     }, 500);
   });
@@ -228,10 +229,10 @@ const clusterColors = ['#C75146','#2D6BA0','#5B8C3E','#8B6914','#9B59B6','#E67E2
   const dbSvg = makeSvg('#db-chart');
   const kmSvg = makeSvg('#km-comp-chart');
 
-  let data = [];
+  let data = [], comparisonLabels = null;
 
   function generateMoons() {
-    data = [];
+    data = []; comparisonLabels = null;
     const n = 150;
     for (let i = 0; i < n; i++) {
       const t = Math.PI * 0.8 * i / n;
@@ -244,7 +245,7 @@ const clusterColors = ['#C75146','#2D6BA0','#5B8C3E','#8B6914','#9B59B6','#E67E2
   }
 
   function generateCircles() {
-    data = [];
+    data = []; comparisonLabels = null;
     for (let i = 0; i < 120; i++) {
       const a = Math.random()*2*Math.PI;
       const r = 0.15 + (Math.random()-0.5)*0.05;
@@ -258,7 +259,7 @@ const clusterColors = ['#C75146','#2D6BA0','#5B8C3E','#8B6914','#9B59B6','#E67E2
   }
 
   function generateBlobs() {
-    data = [];
+    data = []; comparisonLabels = null;
     const centers = [[0.3,0.3],[0.7,0.3],[0.5,0.7]];
     centers.forEach(([cx,cy]) => {
       for (let i = 0; i < 80; i++) {
@@ -276,7 +277,7 @@ const clusterColors = ['#C75146','#2D6BA0','#5B8C3E','#8B6914','#9B59B6','#E67E2
       const neighbors = [];
       for (let j = 0; j < data.length; j++) {
         const d = Math.sqrt((data[i].x-data[j].x)**2 + (data[i].y-data[j].y)**2);
-        if (d < eps) neighbors.push(j);
+        if (d <= eps) neighbors.push(j);
       }
       if (neighbors.length < minPts) {
         labels[i] = -2; // noise (temporary)
@@ -294,7 +295,7 @@ const clusterColors = ['#C75146','#2D6BA0','#5B8C3E','#8B6914','#9B59B6','#E67E2
         const nbrs = [];
         for (let k = 0; k < data.length; k++) {
           const d = Math.sqrt((data[j].x-data[k].x)**2 + (data[j].y-data[k].y)**2);
-          if (d < eps) nbrs.push(k);
+          if (d <= eps) nbrs.push(k);
         }
         if (nbrs.length >= minPts) {
           for (const n of nbrs) {
@@ -320,7 +321,7 @@ const clusterColors = ['#C75146','#2D6BA0','#5B8C3E','#8B6914','#9B59B6','#E67E2
       const ri = idx.splice(Math.floor(Math.random()*idx.length),1)[0];
       centroids.push({x: data[ri].x, y: data[ri].y});
     }
-    let labels = new Array(data.length).fill(0);
+    let labels = new Array(data.length).fill(-1);
     for (let iter = 0; iter < 20; iter++) {
       let changed = false;
       for (let i = 0; i < data.length; i++) {
@@ -359,7 +360,8 @@ const clusterColors = ['#C75146','#2D6BA0','#5B8C3E','#8B6914','#9B59B6','#E67E2
     d3.select('#db-mp-val').text(minPts);
 
     const dbResult = dbscan(eps, minPts);
-    const kmLabels = kmeans(data, 3);
+    if (!comparisonLabels) comparisonLabels = kmeans(data, 3);
+    const kmLabels = comparisonLabels;
 
     drawPoints(dbSvg, dbResult.labels, dbResult.nClusters);
     drawPoints(kmSvg, kmLabels, 3);

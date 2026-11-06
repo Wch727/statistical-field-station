@@ -1,8 +1,8 @@
 <div class="competition-box">
-<h4>竞赛真题场景</h4>
+<h4>竞赛建模示例（改编场景，非原题题面）</h4>
 <p><span class="q">Q：</span>国赛常考：根据历史数据预测未来趋势——如城市人口增长、污染物浓度变化、交通流量预测。<br>
-<span class="q">Q：</span>美赛 MCM A 题：利用时间序列分析海洋温度变化趋势，预测未来气候变化。<br>
-<span class="q">Q：</span>华中赛/电工杯：电力负荷预测、股票价格走势分析——ARIMA + 季节分解是标准答案。<br>
+<span class="q">Q：</span>建模场景：利用时间序列分析海洋温度变化趋势，预测未来气候变化。<br>
+<span class="q">Q：</span>华中赛/电工杯：电力负荷预测、股票价格走势分析——ARIMA、ETS 与朴素预测是可比较的候选方法。<br>
 <strong>→ 竞赛中，时间序列分析的核心不只是预测，更是「趋势+季节性+随机波动」的分解与解释。</strong></p>
 </div>
 
@@ -18,7 +18,7 @@ y_t = T_t + S_t + C_t + R_t
 </div>
 <p>其中 \(T_t\) = 趋势（长期方向），\(S_t\) = 季节性（固定周期的波动），\(C_t\) = 循环（非固定周期的波动，经济学中常与趋势合并），\(R_t\) = 残差（随机噪声）。</p>
 <p><strong>加法模型：</strong>\(y_t = T_t + S_t + R_t\)（波动的幅度不随趋势变化）<br>
-<strong>乘法模型：</strong>\(y_t = T_t \times S_t \times R_t\)（波动的幅度随趋势增大，取对数可转为加法）</p>
+<strong>乘法模型：</strong>\(y_t = T_t \times S_t \times R_t\)（严格正值序列中，波动的幅度随水平增大，取对数可转为加法）</p>
 </div>
 
 <h3>11.1.1 移动平均平滑</h3>
@@ -29,7 +29,7 @@ y_t = T_t + S_t + C_t + R_t
 \hat{T}_t = \frac{1}{2m+1} \sum_{j=-m}^{m} y_{t+j}
 \]
 </div>
-<p>对于季节性数据，使用等权重的 \(m\) 期移动平均（\(m\) = 季节周期长度）。</p>
+<p>上述中心平滑使用未来观测，不能直接用于实时预测。季节周期为偶数时，需要对两次移动平均再居中（如 2×12 项移动平均）。对于季节性数据，常使用 \(m\) 期移动平均（\(m\) = 季节周期长度）。</p>
 
 <h2>11.2 平稳性</h2>
 
@@ -53,13 +53,13 @@ y_t = T_t + S_t + C_t + R_t
 \]
 </div>
 
-<p>原假设 \(H_0: \gamma = 0\)（存在单位根，非平稳）vs 备择假设 \(H_1: \gamma < 0\)（平稳）。如果 p-value < 0.05，拒绝 \(H_0\)，序列是平稳的。</p>
+<p>原假设 \(H_0: \gamma = 0\)（存在单位根，非平稳）vs 备择假设 \(H_1: \gamma < 0\)（平稳）。若 p-value < 0.05，拒绝单位根原假设；备择是围绕所选确定项的平稳性。含时间趋势时可能是趋势平稳，不能直接声称原序列均值恒定。应事先合理选择常数/趋势项与滞后阶数。</p>
 
 <div class="derive-box">
 <h4>推导：为什么单位根意味着非平稳？</h4>
-<p>考虑最简单的 AR(1) 过程：\(y_t = \phi y_{t-1} + \varepsilon_t\)，其中 \(\varepsilon_t \sim N(0,\sigma^2)\)。</p>
+<p>考虑最简单的 AR(1) 过程：\(y_t = \phi y_{t-1} + \varepsilon_t\)，其中创新为独立同分布、均值为零、方差为 \(\sigma^2\) 的噪声。</p>
 <p>迭代展开：\(y_t = \phi^t y_0 + \sum_{j=0}^{t-1} \phi^j \varepsilon_{t-j}\)。</p>
-<p>当 \(|\phi| < 1\)：\(\phi^t \to 0\)，\(\text{Var}(y_t) = \frac{\sigma^2}{1-\phi^2}\) 有限且恒定 → <strong>平稳</strong>。<br>
+<p>当 \(|\phi| < 1\)，存在方差为 \(\sigma^2/(1-\phi^2)\) 的平稳解。若固定 \(y_0\) 启动，则 \(\text{Var}(y_t)=\sigma^2(1-\phi^{2t})/(1-\phi^2)\)，仅渐近趋于该方差；从平稳分布初始化才严格保持弱平稳。<br>
 当 \(\phi = 1\)（单位根）：\(y_t = y_0 + \sum_{j=1}^{t} \varepsilon_j\)，\(\text{Var}(y_t) = t\sigma^2 \to \infty\) → <strong>非平稳</strong>。<br>
 当 \(|\phi| > 1\)：方差指数增长 → <strong>爆炸性非平稳</strong>。</p>
 <p>因此 ADF 检验中 \(\gamma = \phi - 1\)，检验 \(\gamma = 0\) 就是检验 \(\phi = 1\)（单位根）。</p>
@@ -76,7 +76,7 @@ y_t = T_t + S_t + C_t + R_t
 \]
 </div>
 
-<p>大多数经济时间序列经过一次差分后变为平稳，称为 I(1)（一阶单整）。ARIMA 中的「I」就是差分阶数。</p>
+<p>若某序列非平稳而一次差分后平稳，称为 I(1)（一阶单整）。ARIMA 中的「I」就是差分阶数。</p>
 
 <h2>11.3 自相关与偏自相关</h2>
 
@@ -84,7 +84,7 @@ y_t = T_t + S_t + C_t + R_t
 
 <div class="math-block">
 \[
-\rho_k = \frac{\text{Cov}(y_t, y_{t-k})}{\text{Var}(y_t)} = \frac{\sum_{t=k+1}^{n} (y_t - \bar{y})(y_{t-k} - \bar{y})}{\sum_{t=1}^{n} (y_t - \bar{y})^2}
+\rho_k = \frac{\text{Cov}(y_t, y_{t-k})}{\text{Var}(y_t)} \qquad \hat\rho_k = \frac{\sum_{t=k+1}^{n} (y_t - \bar{y})(y_{t-k} - \bar{y})}{\sum_{t=1}^{n} (y_t - \bar{y})^2}
 \]
 </div>
 
@@ -99,7 +99,7 @@ y_t = T_t + S_t + C_t + R_t
 <strong>AR(p) 过程：</strong>ACF 呈指数衰减或正弦波衰减（拖尾），PACF 在滞后 \(p\) 后截尾（变为 0）。<br>
 <strong>MA(q) 过程：</strong>ACF 在滞后 \(q\) 后截尾，PACF 呈指数衰减（拖尾）。<br>
 <strong>ARMA(p,q)：</strong>ACF 和 PACF 都拖尾。<br>
-这是 Box-Jenkins 建模方法的核心——通过 ACF/PACF 图选 p 和 q。
+这些是平稳、可识别模型的总体模式；有限样本不会精确截尾，需结合区间、信息准则与滚动验证选阶。
 </div>
 
 <h2>11.4 ARIMA 模型</h2>
@@ -122,7 +122,7 @@ y_t = \mu + \varepsilon_t + \theta_1 \varepsilon_{t-1} + \theta_2 \varepsilon_{t
 \]
 </div>
 
-<p>MA(q) 总是平稳的。MA(1) 模型 \(y_t = \mu + \varepsilon_t + \theta \varepsilon_{t-1}\) 中，\(\theta\) 捕捉了冲击的持续影响。</p>
+<p>若创新是方差有限的白噪声，有限阶 MA(q) 为弱平稳；可逆性是另一项需单独检查的条件。MA(1) 模型 \(y_t = \mu + \varepsilon_t + \theta \varepsilon_{t-1}\) 中，\(\theta\) 捕捉了冲击的持续影响。</p>
 
 <h3>11.4.3 ARIMA(p,d,q) 完整模型</h3>
 
@@ -169,7 +169,7 @@ y_t = \mu + \varepsilon_t + \theta_1 \varepsilon_{t-1} + \theta_2 \varepsilon_{t
 <strong>Step 2：</strong>ADF 检验 → 确定差分阶数 \(d\)（通常 \(d=0\) 或 \(d=1\)）。<br>
 <strong>Step 3：</strong>画 ACF/PACF 图 → 初步确定 \(p\) 和 \(q\) 的范围。<br>
 <strong>Step 4：</strong>网格搜索 \(p,q \in \{0,1,2,3\}\)，用 AICc 选择最优模型。<br>
-<strong>Step 5：</strong>残差诊断——残差应为白噪声（Ljung-Box 检验 p > 0.05）。<br>
+<strong>Step 5：</strong>残差诊断——检查残差的自相关（Ljung-Box 检验应扣除已估计的 AR/MA 自由度；p > 0.05 仅表示未检出相应滞后内的自相关）。<br>
 <strong>Step 6：</strong>预测 + 预测区间（95% 预测区间）。<br>
 <strong>竞赛技巧：</strong>如果数据有明显的季节性，优先考虑 SARIMA 而非简单 ARIMA。另外，对数变换可以稳定方差（乘法模型 → 加法模型）。</p>
 </div>
@@ -195,19 +195,20 @@ y_t = \mu + \varepsilon_t + \theta_1 \varepsilon_{t-1} + \theta_2 \varepsilon_{t
 <div class="math-block">
 \[
 \begin{aligned}
-\text{水平：} & \ell_t = \alpha y_t + (1-\alpha)(\ell_{t-1} + b_{t-1}) \\
+\text{水平：} & \ell_t = \alpha (y_t-s_{t-m}) + (1-\alpha)(\ell_{t-1} + b_{t-1}) \\
 \text{趋势：} & b_t = \beta(\ell_t - \ell_{t-1}) + (1-\beta)b_{t-1} \\
-\text{季节：} & s_t = \gamma(y_t - \ell_{t-1} - b_{t-1}) + (1-\gamma)s_{t-m}
+\text{季节：} & s_t = \gamma(y_t - \ell_t) + (1-\gamma)s_{t-m}
 \end{aligned}
 \]
 </div>
 
 <!-- ═══════════ 11.5A VAR (向量自回归) ═══════════ -->
+<p>上式为加法 Holt-Winters 的一种参数化，m 为季节周期；预测为 \(\hat y_{t+h}=\ell_t+h b_t+s_{t+h-m(\lfloor(h-1)/m\rfloor+1)}\)。乘法季节需要不同更新式且要求数据为正。</p>
 <h2>11.5A VAR：向量自回归</h2>
 
 <div class="concept-box">
 <h4>当多个时间序列互相影响时</h4>
-<p>ARIMA 只能建模<strong>单个</strong>时间序列。但竞赛中经常遇到多个相关的序列——例如 GDP、利率、通胀三者互相影响。VAR (Vector AutoRegression) 是 AR 模型的多变量推广：每个变量不仅依赖自己的过去值，还依赖<strong>其他变量的过去值</strong>。</p>
+<p>基本单变量 ARIMA 建模<strong>单个</strong>时间序列（ARIMAX/SARIMAX 可加入外生变量）。但竞赛中经常遇到多个相关的序列——例如 GDP、利率、通胀三者互相影响。VAR (Vector AutoRegression) 是 AR 模型的多变量推广：每个变量不仅依赖自己的过去值，还依赖<strong>其他变量的过去值</strong>。</p>
 </div>
 
 <div class="math-block">
@@ -222,7 +223,7 @@ y_t = \mu + \varepsilon_t + \theta_1 \varepsilon_{t-1} + \theta_2 \varepsilon_{t
 <h4>VAR 的关键分析工具</h4>
 <p><strong>脉冲响应函数 (IRF)：</strong>给变量 j 一个单位冲击 → 观察变量 i 在后续各期的响应。IRF 揭示了变量之间的动态传导机制。<br>
 <strong>方差分解 (FEVD)：</strong>变量 i 的预测误差方差中，有多大比例来自变量 j 的冲击？——量化了各变量之间的「解释力」。<br>
-<strong>滞后阶数选择：</strong>用 AIC、BIC、HQ 选择最优 p。VAR(p) 的参数量 = \(k + k^2 \times p\)——随 k 和 p 增长极快，需要足够的样本量。</p>
+<strong>滞后阶数选择：</strong>用 AIC、BIC、HQ 选择最优 p。含截距的 VAR(p) 均值方程系数数目 = \(k + k^2 \times p\)——随 k 和 p 增长极快，需要足够的样本量。</p>
 </div>
 
 <div class="note-box">
@@ -247,7 +248,7 @@ y_t = \mu + \varepsilon_t + \theta_1 \varepsilon_{t-1} + \theta_2 \varepsilon_{t
 \Delta y_t = \alpha (y_{t-1} - \beta_0 - \beta_1 x_{t-1}) + \gamma \Delta x_t + \varepsilon_t
 \]
 </div>
-<p>其中 \(\alpha\) 是<strong>误差修正系数</strong>。由平稳性条件 \(|1+\alpha| < 1\) 得 \(-2 < \alpha < 0\)。其中 \(-1 < \alpha < 0\) 对应单调回归均衡，\(-2 < \alpha < -1\) 对应振荡式回归均衡。\(y_{t-1} - \beta_0 - \beta_1 x_{t-1}\) 是<strong>误差修正项</strong>——上一期的偏离量。在多变量 VECM 中不能给出统一的单个区间，具体稳定性应根据系统特征根判断。</p>
+<p>其中 \(\alpha\) 是<strong>误差修正系数</strong>。仅在该简化单方程、误差修正偏离服从 AR(1) 的条件下，由 \(|1+\alpha| < 1\) 得 \(-2 < \alpha < 0\)。其中 \(-1 < \alpha < 0\) 对应单调回归均衡，\(-2 < \alpha < -1\) 对应振荡式回归均衡。\(y_{t-1} - \beta_0 - \beta_1 x_{t-1}\) 是<strong>误差修正项</strong>——上一期的偏离量。在多变量 VECM 中不能给出统一的单个区间，具体稳定性应根据系统特征根判断。</p>
 </div>
 
 <div class="note-box">
@@ -295,7 +296,7 @@ y_t = \mu + \varepsilon_t + \theta_1 \varepsilon_{t-1} + \theta_2 \varepsilon_{t
 \]
 </div>
 
-<p>GARCH(1,1) 的解释：\(\omega\) = 方差方程截距（常数项），\(\alpha\) = 昨日冲击对今日波动的影响（ARCH 效应），\(\beta\) = 昨日波动对今日波动的影响（GARCH 效应）。当 \(\alpha + \beta < 1\) 时过程平稳，无条件长期方差为 \(\sigma^2 = \omega/(1 - \alpha - \beta)\)。\(\alpha + \beta\) 越接近 1 → 波动持续越久。</p>
+<p>GARCH(1,1) 的解释：\(\omega\) = 方差方程截距（常数项），\(\alpha\) = 昨日冲击对今日波动的影响（ARCH 效应），\(\beta\) = 昨日波动对今日波动的影响（GARCH 效应）。在 \(\omega>0,\alpha,\beta\ge0\)、标准化创新方差为1等条件下，\(\alpha + \beta < 1\) 保证有限二阶矩的弱平稳，无条件长期方差为 \(\sigma^2 = \omega/(1 - \alpha - \beta)\)。\(\alpha + \beta\) 越接近 1 → 波动持续越久。</p>
 
 <div class="note-box">
 <strong>竞赛技巧：</strong>GARCH 在金融建模竞赛中几乎是标配——股票收益率、汇率、比特币价格等的波动率预测。论文中：「Ljung-Box 检验显示收益率序列的平方存在显著自相关 (Q(20)=87.3, p&lt;0.001)，表明存在 ARCH 效应。我们拟合 GARCH(1,1) 模型，α=0.12 (p=0.003)，β=0.83 (p&lt;0.001)，α+β=0.95——表明波动冲击具有高度持续性，半衰期约为 ln(0.5)/ln(0.95) ≈ 13.5 天。」
@@ -306,7 +307,7 @@ y_t = \mu + \varepsilon_t + \theta_1 \varepsilon_{t-1} + \theta_2 \varepsilon_{t
 
 <div class="concept-box">
 <h4>ADF 的互补检验——双重确认平稳性</h4>
-<p>ADF 检验的原假设是「存在单位根（非平稳）」，备择假设是「平稳」。但 ADF 的检验功效较低——当数据接近单位根（φ ≈ 0.95）时，ADF 经常无法拒绝原假设。KPSS (Kwiatkowski-Phillips-Schmidt-Shin) 检验<strong>反转了原假设</strong>——H₀ 是「平稳」，H₁ 是「存在单位根」。</p>
+<p>ADF 检验的原假设是「存在单位根（非平稳）」，备择假设是「平稳」。但 ADF 的检验功效较低——当数据接近单位根（φ ≈ 0.95）时，ADF 经常无法拒绝原假设。KPSS (Kwiatkowski-Phillips-Schmidt-Shin) 检验<strong>反转了原假设</strong>——H₀ 是「水平平稳或趋势平稳」（取决于确定项设置），H₁ 是「非平稳」；拒绝 H₀ 不能单独证明存在单位根。</p>
 </div>
 
 <div class="derive-box">
@@ -315,16 +316,16 @@ y_t = \mu + \varepsilon_t + \theta_1 \varepsilon_{t-1} + \theta_2 \varepsilon_{t
 <table class="compact-table">
 <thead><tr><th>ADF 结果</th><th>KPSS 结果</th><th>结论</th></tr></thead>
 <tbody>
-<tr><td>拒绝 H₀（平稳）</td><td>不拒绝 H₀（平稳）</td><td><strong>序列平稳 ✓</strong></td></tr>
-<tr><td>不拒绝 H₀</td><td>拒绝 H₀</td><td><strong>序列非平稳 → 差分</strong></td></tr>
-<tr><td>拒绝 H₀</td><td>拒绝 H₀</td><td>可能趋势平稳 → 去趋势</td></tr>
-<tr><td>不拒绝 H₀</td><td>不拒绝 H₀</td><td>样本量不足，无法判断</td></tr>
+<tr><td>拒绝 H₀（平稳）</td><td>不拒绝 H₀（平稳）</td><td><strong>结果支持所选确定项下的平稳性</strong></td></tr>
+<tr><td>不拒绝 H₀</td><td>拒绝 H₀</td><td><strong>结果支持非平稳，进一步诊断趋势/单位根与变点</strong></td></tr>
+<tr><td>拒绝 H₀</td><td>拒绝 H₀</td><td>结论冲突：检查确定项、滞后、结构突变与检验功效</td></tr>
+<tr><td>不拒绝 H₀</td><td>不拒绝 H₀</td><td>证据不足：可能功效低或接近单位根，不能确认平稳</td></tr>
 </tbody>
 </table>
 </div>
 
 <div class="note-box">
-<strong>竞赛技巧：</strong>竞赛论文中同时报告 ADF 和 KPSS 结果，体现严谨性。句式：「ADF 检验在 5% 显著性水平下无法拒绝单位根假设 (p = 0.23)，而 KPSS 检验在 5% 水平下拒绝平稳性假设 (p = 0.01)。两种检验一致表明序列是非平稳的，需要一阶差分。」这种双重确认在评审中会得到高度评价。
+<strong>竞赛技巧：</strong>竞赛论文中同时报告 ADF 和 KPSS 结果，体现严谨性。句式：「ADF 检验在 5% 显著性水平下无法拒绝单位根假设 (p = 0.23)，而 KPSS 检验在 5% 水平下拒绝平稳性假设 (p = 0.01)。两种检验结果支持非平稳；结合差分后检验与图形确定处理方式。」这种双重确认在评审中会得到高度评价。
 </div>
 
 <!-- ═══════════ 11.5F 变点检测 ═══════════ -->
@@ -343,7 +344,7 @@ y_t = \mu + \varepsilon_t + \theta_1 \varepsilon_{t-1} + \theta_2 \varepsilon_{t
 F = \frac{(\text{RSS}_{\text{pooled}} - (\text{RSS}_1 + \text{RSS}_2)) / k}{(\text{RSS}_1 + \text{RSS}_2) / (n_1 + n_2 - 2k)} \sim F_{k, n_1+n_2-2k}
 \]
 </div>
-<p>其中 RSS_pooled 是全部数据拟合一个模型的残差，RSS₁ 和 RSS₂ 是分段拟合的残差。如果 F 显著 → 存在结构性断点。</p>
+<p>其中 RSS_pooled 是全部数据拟合一个模型的残差平方和，RSS₁ 和 RSS₂ 是分段拟合的残差平方和，k 为每段回归参数个数（含截距）。F 分布结论要求两段误差同方差、独立正态，且设计满秩、样本量足够；时序自相关/异方差时需相应稳健方法。如果 F 显著 → 存在结构性断点。</p>
 
 <h4>Bai-Perron 检验</h4>
 <p>当变点<strong>未知</strong>时，Bai-Perron 方法在所有可能的位置搜索多个变点，使用 BIC 或序贯检验确定最优变点数量和位置。</p>
@@ -356,7 +357,7 @@ F = \frac{(\text{RSS}_{\text{pooled}} - (\text{RSS}_1 + \text{RSS}_2)) / k}{(\te
 
 <div class="panel">
 <div class="panel-label">INSTRUMENT No.11 · Time Series Decomposition & ACF/PACF</div>
-<p style="font-size:0.9rem;color:var(--slate);margin-bottom:12px">上排：原始序列 + 趋势 + 季节分量 + 残差。下排：ACF 和 PACF 图。观察不同模式下的自相关结构。</p>
+<p style="font-size:0.9rem;color:var(--slate);margin-bottom:12px">上排左：原始序列；右：趋势+季节模式的生成真值分量（非估计分解），其余模式显示原序列。下排：样本 ACF/PACF；虚线 ±1.96/√n 是白噪声零假设下的逐滞后近似参考界，不能作为任意序列的统一置信区间或平稳性检验。</p>
 <div class="btn-group">
   <button class="btn active" id="ts-trend-seas">趋势+季节</button>
   <button class="btn" id="ts-random-walk">随机游走</button>
@@ -385,6 +386,10 @@ F = \frac{(\text{RSS}_{\text{pooled}} - (\text{RSS}_1 + \text{RSS}_2)) / k}{(\te
 <strong>Step 4：</strong>ACF/PACF → 初步确定 p, q, P, Q 的范围。<br>
 <strong>Step 5：</strong>网格搜索 + AICc → 选择最优模型。<br>
 <strong>Step 6：</strong>残差诊断 → Ljung-Box 检验（白噪声）、Q-Q 图（正态性）。<br>
-<strong>Step 7：</strong>预测 + 95% 置信区间 → 论文中最关键的图。<br>
+<strong>Step 7：</strong>预测 + 95% 预测区间 → 论文中最关键的图。<br>
 <strong>Step 8：</strong>模型对比 → 也可以跑一个 ETS 或朴素预测作为基线。</p>
 </div>
+
+<div class="note-box"><strong>适用条件与边界：</strong>信息准则只应比较相同响应数据、可比似然与样本范围；AICc需n>k+1。AR/MA识别不要求高斯创新，高斯性主要用于特定似然和区间推断。VAR脉冲响应的结构解释还依赖冲击识别和变量排序，不能据此宣称因果。格兰杰常规F检验需正确设定且平稳的模型，协整时应考虑VECM。</div>
+
+<p class="source-note">核对资料：<a href="https://www.statsmodels.org/stable/generated/statsmodels.tsa.stattools.kpss.html">statsmodels ADF/KPSS</a>；<a href="https://otexts.com/fpp3/holt-winters.html">Holt-Winters加法递推</a></p>

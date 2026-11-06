@@ -1,50 +1,290 @@
 [
-  {"term":"p值","en":"p-value","def":"在原假设为真的条件下，观察到当前统计量或更极端统计量的概率。p值小意味着数据与原假设不一致，但不直接量化效应的实际大小。","see":"§IV"},
-  {"term":"置信区间","en":"confidence interval","def":"由样本数据构造的参数区间估计，以一定置信水平（通常95%）包含真参数。若重复抽样100次构造100个95%CI，约95个包含真值。不做区间估计只给点估计，评委认为你不懂统计。","see":"§IV, §VI"},
-  {"term":"效应量","en":"effect size","def":"量化处理效应或变量间关系大小的标准化度量，不受样本量影响。常见的有Cohen's d（均值差）、Hedges' g（小样本校正）、η²/ω²（方差分析）、Cramér's V（列联表）。报告p值不报告效应量，是数模论文常见硬伤。","see":"§IV, §V"},
-  {"term":"第一类错误","en":"Type I error","def":"原假设为真时错误拒绝。概率=α（显著性水平，通常0.05）。p<α时拒绝H₀，但这不表示H₀有95%概率为假。","see":"§IV"},
-  {"term":"第二类错误","en":"Type II error","def":"原假设为假时未能拒绝。概率=β。统计功效=1−β。样本量越大，功效越高，越容易检测到真实效应。","see":"§IV"},
-  {"term":"统计功效","en":"statistical power","def":"当备择假设为真时正确拒绝原假设的概率=1−β。受效应量、样本量和α共同影响。功效分析用于确定所需样本量；事后功效分析意义有限。","see":"§IV"},
-  {"term":"Bessel校正","en":"Bessel's correction","def":"样本方差计算中用n−1代替n作为分母，使样本方差成为总体方差的无偏估计量：E[s²]=σ²。自由度损失1是因为用样本均值估计总体均值消耗了一个自由度。","see":"§I"},
-  {"term":"中心极限定理","en":"Central Limit Theorem, CLT","def":"无论总体分布如何，当样本量足够大（通常n≥30），样本均值的抽样分布趋近正态分布。这是许多参数检验的理论基础。但严重偏态或重尾分布需要更大样本。","see":"§I, §IV"},
-  {"term":"决定系数","en":"R², coefficient of determination","def":"回归模型中，由自变量解释的因变量变异比例。R²=1−SSres/SStot∈[0,1]。值越接近1拟合越好，但高R²不等于模型正确（可能过拟合）。调整R²惩罚变量数量。","see":"§VI"},
-  {"term":"AIC/BIC","en":"Akaike/Bayesian Information Criterion","def":"模型选择准则：AIC=−2logL+2k，BIC=−2logL+k·log(n)。值越小越好。AIC关注预测精度，BIC对复杂模型惩罚更重。不能跨不同误差结构比较。","see":"§VI"},
-  {"term":"多重共线性","en":"multicollinearity","def":"回归中自变量之间高度相关，导致回归系数估计不稳定（标准误膨胀）。诊断用VIF（方差膨胀因子）：VIF>10通常认为严重。LASSO/Ridge是应对方法。","see":"§VI"},
-  {"term":"LASSO/Ridge","en":"LASSO/Ridge regression","def":"正则化回归方法。Ridge(L2)：min Σ(y−Xβ)²+λΣβ²，收缩但不稀疏。LASSO(L1)：min Σ(y−Xβ)²+λΣ|β|，可做变量选择（系数精确为零）。弹性网络结合两者。","see":"§VI"},
-  {"term":"异方差","en":"heteroscedasticity","def":"回归误差方差不是常数（如残差随拟合值增大而扩散）。违背OLS假设，导致标准误偏误、检验不可靠。诊断：Breusch-Pagan检验、残差图。应对：WLS、异方差稳健标准误。","see":"§VI"},
-  {"term":"Logit变换","en":"logit transformation","def":"逻辑回归的核心：logit(p)=ln(p/(1−p))=β₀+β₁X。将概率p∈(0,1)映射到实数轴(−∞,+∞)。回归系数解释为对数优势比。","see":"§VII"},
-  {"term":"优势比","en":"Odds Ratio, OR","def":"逻辑回归中exp(β₁)的解释：X每增加1单位，事件发生优势（odds）变为原来的exp(β₁)倍。OR=1表示无关联，OR>1增加发生概率，OR<1降低。OR不是相对风险。","see":"§VII"},
-  {"term":"ROC/AUC","en":"ROC curve / AUC","def":"ROC曲线以1−特异度为横轴、灵敏度为纵轴画分类器性能。AUC∈[0,1]为曲线下面积：0.5=随机猜测，1=完美分类。AUC<0.5意味着模型把正负标签颠倒了。","see":"§VII, §VIII, §X"},
-  {"term":"混淆矩阵","en":"confusion matrix","def":"分类结果的2×2表格：TP（真阳性）、FP（假阳性）、FN（假阴性）、TN（真阴性）。从中计算精确率=TP/(TP+FP)、召回率=TP/(TP+FN)、F1=2PR/(P+R)。","see":"§VIII, §X"},
-  {"term":"K折交叉验证","en":"K-fold cross-validation","def":"将数据分为K份，每次用K−1份训练、1份验证，重复K次取平均评估指标。K=5或10常用。留一法(K=n)方差大但偏差小。嵌套CV用于模型选择+评估。","see":"§X"},
-  {"term":"PCA","en":"Principal Component Analysis","def":"线性降维方法：找方差最大的正交方向（主成分），用少数PC解释大部分方差。得分用特征向量权重w_pj计算，非载荷l_pj=w_pj·√λ_p。基于协方差矩阵或相关矩阵（标准化后）。","see":"§X, §XIV"},
-  {"term":"偏差-方差权衡","en":"bias-variance tradeoff","def":"模型总误差=MSE=偏差²+方差+不可约误差。简单模型高偏差低方差（欠拟合），复杂模型低偏差高方差（过拟合）。正则化、交叉验证、集成学习都旨在平衡两者。","see":"§X"},
-  {"term":"平稳性","en":"stationarity","def":"时间序列的统计特性（均值、方差、自相关）不随时间变化。ARIMA模型的前提。ADF检验常用：p<0.05拒绝单位根原假设，认为序列平稳。差分是处理非平稳的主要方法。","see":"§XI"},
-  {"term":"ACF/PACF","en":"Autocorrelation / Partial Autocorrelation Function","def":"ACF=序列与自身滞后值的相关性。PACF=扣除中间滞后影响后的直接相关性。AR(p)的PACF在p阶后截尾；MA(q)的ACF在q阶后截尾。ARIMA定阶的重要工具。","see":"§XI"},
-  {"term":"影子价格","en":"shadow price","def":"线性规划中，约束条件的对偶变量值。表示该约束放宽1单位，目标函数能改善的量。如饲料LP中蛋白质约束影子价格=1.39，意味着每多1单位蛋白质要求，成本增加1.39。","see":"§XIII"},
-  {"term":"Pareto最优","en":"Pareto optimality","def":"多目标优化中，不存在另一个方案在所有目标上不差且至少一个目标严格更好。Pareto前沿是所有Pareto最优解的集合。TOPSIS等方法在Pareto前沿上进一步选择。","see":"§XIII, §XIV"},
-  {"term":"动态规划","en":"Dynamic Programming, DP","def":"将复杂问题分解为重叠子问题，存储子问题解避免重复计算。Bellman最优性原理：最优策略的子策略也是最优的。适用于背包、最短路径、资源分配等。状态定义和转移方程是核心。","see":"§XIII"},
-  {"term":"TOPSIS","en":"Technique for Order Preference by Similarity to Ideal Solution","def":"综合评价方法：构造正理想解和负理想解，按方案距正理想解近、离负理想解远的原则排序。需外部权重（来自熵权法、AHP、CRITIC或专家判断），非无权重方法。","see":"§XIV"},
-  {"term":"熵权法","en":"Entropy Weight Method","def":"客观赋权方法：指标变异越大→信息熵越小→权重越大。纯数据驱动，不依赖主观判断。但要求指标间独立、样本量充分，且权重反映的是变异程度而非重要性。","see":"§XIV"},
-  {"term":"AHP","en":"Analytic Hierarchy Process","def":"主观赋权方法：通过两两比较构造判断矩阵，计算特征向量得权重。必须做一致性检验（CR<0.1）。Saaty标度1-9。适合指标不多（≤7个）且有领域知识支持的情况。","see":"§XIV"},
-  {"term":"SIR模型","en":"Susceptible-Infected-Recovered model","def":"传染病传播的经典ODE模型。dS/dt=−βSI/N,dI/dt=βSI/N−γI,dR/dt=γI。基本再生数R₀=β/γ。峰值为dI/dt=0即S=γ/β处。最终规模由超越方程给出。","see":"§XV"},
-  {"term":"Logistic增长","en":"Logistic growth","def":"有限资源下的种群增长模型：dP/dt=rP(1−P/K)，解为S形曲线。r=内禀增长率，K=环境容量。拐点P=K/2处增长最快。广泛用于人口预测、创新扩散、市场渗透。","see":"§XV"},
-  {"term":"蒙特卡洛模拟","en":"Monte Carlo simulation","def":"用大量随机抽样近似求解确定性或随机性问题。收敛速度O(1/√n)，不依赖维度。应用：积分近似、风险分析、Bootstrap、MCMC。关键是正确建模随机性和足够的样本量。","see":"§XVI"},
-  {"term":"Dijkstra算法","en":"Dijkstra's algorithm","def":"单源最短路径算法：贪心+优先队列，每次扩展当前距离最小的未访问节点。O((V+E)logV)。仅适用于非负权重图。负权边需用Bellman-Ford。","see":"§XVI"},
-  {"term":"Cramér's V","en":"Cramér's V","def":"列联表关联强度度量，基于卡方统计量：V=√(χ²/(n·min(r−1,c−1)))∈[0,1]。V=|φ|（2×2表时）。0=无关联，1=完全关联。适用于名义变量。所有基于卡方的度量只测关联强度不测方向。","see":"§III"},
-  {"term":"Spearman秩相关","en":"Spearman's rank correlation","def":"Pearson相关的非参数版本：对数据排名后计算Pearson r。ρ∈[−1,1]。测单调关系（不只是线性），对异常值比Pearson稳健。适用于有序变量和非正态连续变量。","see":"§III"},
-  {"term":"Kruskal-Wallis检验","en":"Kruskal-Wallis test","def":"单因素ANOVA的非参数替代：比较k个独立样本的分布是否相同。基于秩，不假设正态性。但K-W也假设各组分布形状相同（方差齐性的秩版本）。若K-W显著，需事后Dunn检验定位差异。","see":"§V"},
-  {"term":"ANCOVA","en":"Analysis of Covariance","def":"方差分析与回归的结合：在比较组间均值时，用连续协变量（如基线值、年龄）控制混杂。提高检验功效，但ANCOVA≠因果推断——仍有未测量混杂的可能。","see":"§V"},
-  {"term":"Welch t检验","en":"Welch's t-test","def":"不假设两组方差相等的t检验，使用Satterthwaite近似自由度。竞赛建议默认使用Welch而非Student t——它更稳健，且方差异质时控制I类错误更好。","see":"§IV"},
-  {"term":"Mann-Whitney U检验","en":"Mann-Whitney U test","def":"两独立样本的非参数检验，检验两组分布是否随机占优（非中位数是否相等）。基于秩和。U₁=R₁−n₁(n₁+1)/2，U₁+U₂=n₁n₂。有结点时需校正。注意：在小样本下使用精确p值而非渐近正态近似。","see":"§IV"},
-  {"term":"Bootstrap","en":"Bootstrap","def":"重抽样方法：从样本中有放回地抽取n个观测值，重复B次（≥1000），计算每次的统计量，用其经验分布构建置信区间或做假设检验。非参数Bootstrap不假设分布形式。","see":"§IV"},
-  {"term":"Shapiro-Wilk检验","en":"Shapiro-Wilk test","def":"正态性检验：H₀=数据来自正态分布。p<0.05拒绝正态性。对大样本（n>200）过于敏感（微小偏离也显著）。建议配合Q-Q图目视检查。","see":"§I"},
-  {"term":"GARCH模型","en":"Generalized AutoRegressive Conditional Heteroscedasticity","def":"金融时间序列的波动率模型：σ²_t=ω+α·ε²_{t-1}+β·σ²_{t-1}（GARCH(1,1)）。ω是方差方程截距而非长期均值。无条件方差=ω/(1−α−β)。要求α+β<1保证平稳。","see":"§XI"},
-  {"term":"误差修正模型","en":"Error Correction Model, ECM","def":"协整变量的短期动态模型：ΔY_t=α·(Y_{t-1}−βX_{t-1})+…。α∈(−2,0)为误差修正速度。α∈(−1,0)时单调回均衡，α∈(−2,−1)时振荡回均衡。α>0为爆炸过程。","see":"§XI"},
-  {"term":"Hedges' g","en":"Hedges' g","def":"Cohen's d的小样本校正版本：分母用合并标准差s_pooled（非各组独立标准差），乘以校正因子J。J=1−3/(4·df−1)，当df小时校正明显。","see":"§IV"},
-  {"term":"距离相关","en":"distance correlation, dCor","def":"测任意维度两随机向量间的统计依赖性。dCor=0当且仅当变量独立。dCor=1是严格的特例（等距变换），不等于“任意确定性函数关系”。基于特征函数，比Pearson更普适但计算代价更高。","see":"§III"},
-  {"term":"预测区间","en":"prediction interval","def":"对单个新观测值的区间估计，宽度大于置信区间（后者是参数均值的不确定性）。95%预测区间有95%概率包含下一个随机抽取的观测值。数模论文中经常混淆预测区间和置信区间。","see":"§XII, §VI"},
-  {"term":"灰色预测GM(1,1)","en":"Grey Model GM(1,1)","def":"一阶单变量灰色预测模型。对小样本（n≥4）和贫信息场景有理论优势。需验证级比条件σ(k)∈(e^{-2/(n+1)},e^{2/(n+1)})。输出原始尺度需逆一次累加。竞赛常用但预测不稳定，建议与ARIMA等比较。","see":"§XII"},
-  {"term":"轮廓系数","en":"Silhouette score","def":"聚类质量指标：s=(b−a)/max(a,b)，a=样本与同簇平均距离，b=样本与最近异簇平均距离。∈[−1,1]，越接近1越好。用于选择K和评估聚类结果。","see":"§IX"},
-  {"term":"DBSCAN","en":"Density-Based Spatial Clustering of Applications with Noise","def":"基于密度的聚类算法。两个参数：ε（邻域半径）和minPts（最小点数）。能发现任意形状簇、自动识别噪声点、不需预设簇数。不适合密度差异大的数据和高维数据。","see":"§IX"}
+  {
+    "term": "p值",
+    "en": "p-value",
+    "def": "在原假设为真的条件下，观察到当前统计量或更极端统计量的概率。p值小意味着数据与原假设不一致，但不直接量化效应的实际大小。",
+    "see": "§IV"
+  },
+  {
+    "term": "置信区间",
+    "en": "confidence interval",
+    "def": "在模型与抽样假设成立时，由重复抽样构造的区间以标称频率覆盖固定真参数。95%表示构造程序的长期覆盖率，不是已得到的这个区间包含固定参数的后验概率；近似区间的实际覆盖率可能偏离95%。",
+    "see": "§IV, §VI"
+  },
+  {
+    "term": "效应量",
+    "en": "effect size",
+    "def": "量化均值差或变量关联大小的度量，既有原单位指标，也有标准化指标。效应量不等于显著性；其样本估计、偏差与不确定性仍受样本量影响。常见指标包括均值差、Cohen d、Hedges g、η²及Cramér V。",
+    "see": "§IV, §V"
+  },
+  {
+    "term": "第一类错误",
+    "en": "Type I error",
+    "def": "零假设成立时错误拒绝它。检验设计通常控制这类错误概率不超过显著性水平α；离散检验的实际概率可能小于α。p<α不表示H₀有1−α的概率为假。",
+    "see": "§IV"
+  },
+  {
+    "term": "第二类错误",
+    "en": "Type II error",
+    "def": "在某个具体备择分布成立时未能拒绝零假设，概率记为β；功效为1−β。β依赖效应大小、样本量、检验及显著性水平，不能只说H₀为假就赋予一个统一β。",
+    "see": "§IV"
+  },
+  {
+    "term": "统计功效",
+    "en": "statistical power",
+    "def": "在给定备择分布下正确拒绝零假设的概率1−β。受效应大小、样本量、变异、设计和显著性水平影响。基于预期有意义效应的事前分析可规划样本量；用观察到的效应计算事后功效通常不能提供独立于p值的新证据。",
+    "see": "§IV"
+  },
+  {
+    "term": "Bessel校正",
+    "en": "Bessel's correction",
+    "def": "对独立同分布且有限方差的样本，使用s²=Σ(xᵢ−x̄)²/(n−1)可无偏估计总体方差。需n≥2；样本标准差s本身通常并非总体标准差的无偏估计。",
+    "see": "§I"
+  },
+  {
+    "term": "中心极限定理",
+    "en": "Central Limit Theorem, CLT",
+    "def": "经典独立同分布情形下，若总体均值有限且方差有限、非零，标准化样本均值随样本量增大依分布趋于标准正态。n≥30不是普遍保证；重尾、依赖或无限方差需要另行分析。",
+    "see": "§I, §IV"
+  },
+  {
+    "term": "决定系数",
+    "en": "R², coefficient of determination",
+    "def": "通常定义为R²=1−SSE/SST（响应非恒定）。含截距的一元或多元OLS在训练样本上有R²∈[0,1]；测试集、无截距模型或其他预测器的R²可以为负。高R²不代表因果关系，也不排除过拟合。",
+    "see": "§VI"
+  },
+  {
+    "term": "AIC/BIC",
+    "en": "Akaike/Bayesian Information Criterion",
+    "def": "AIC=−2logL+2k，BIC=−2logL+k·log(n)，其中L为极大化似然，k为估计参数数目。用于同一观测数据、响应定义及可比较似然尺度下的候选模型比较，值越小越好；不能把不同数据或未经校正的响应变换直接比较。BIC的复杂度惩罚在n>e²时大于AIC。",
+    "see": "§VI"
+  },
+  {
+    "term": "多重共线性",
+    "en": "multicollinearity",
+    "def": "回归中自变量之间高度相关，导致回归系数估计不稳定（标准误膨胀）。诊断用VIF（方差膨胀因子）：VIF>10通常认为严重。LASSO/Ridge是应对方法。",
+    "see": "§VI"
+  },
+  {
+    "term": "LASSO/Ridge",
+    "en": "LASSO/Ridge regression",
+    "def": "正则化回归方法。Ridge(L2)：min Σ(y−Xβ)²+λΣβ²，收缩但不稀疏。LASSO(L1)：min Σ(y−Xβ)²+λΣ|β|，可做变量选择（系数精确为零）。弹性网络结合两者。",
+    "see": "§VI"
+  },
+  {
+    "term": "异方差",
+    "en": "heteroscedasticity",
+    "def": "回归误差方差不是常数（如残差随拟合值增大而扩散）。违背OLS假设，导致标准误偏误、检验不可靠。诊断：Breusch-Pagan检验、残差图。应对：WLS、异方差稳健标准误。",
+    "see": "§VI"
+  },
+  {
+    "term": "Logit变换",
+    "en": "logit transformation",
+    "def": "逻辑回归的核心：logit(p)=ln(p/(1−p))=β₀+β₁X。将概率p∈(0,1)映射到实数轴(−∞,+∞)。回归系数解释为对数优势比。",
+    "see": "§VII"
+  },
+  {
+    "term": "优势比",
+    "en": "Odds Ratio, OR",
+    "def": "逻辑回归中exp(β₁)的解释：X每增加1单位，事件发生优势（odds）变为原来的exp(β₁)倍。OR=1表示无关联，OR>1增加发生概率，OR<1降低。OR不是相对风险。",
+    "see": "§VII"
+  },
+  {
+    "term": "ROC/AUC",
+    "en": "ROC curve / AUC",
+    "def": "ROC以假阳性率为横轴、真阳性率为纵轴。AUC=P(正样本得分>负样本得分)+0.5P(两者同分)。AUC<0.5说明排序方向整体偏反，不必然表示标签被颠倒；对分数取负后AUC变成1−原AUC。",
+    "see": "§VII, §VIII, §X"
+  },
+  {
+    "term": "混淆矩阵",
+    "en": "confusion matrix",
+    "def": "分类结果的2×2表格：TP（真阳性）、FP（假阳性）、FN（假阴性）、TN（真阴性）。从中计算精确率=TP/(TP+FP)、召回率=TP/(TP+FN)、F1=2PR/(P+R)。",
+    "see": "§VIII, §X"
+  },
+  {
+    "term": "K折交叉验证",
+    "en": "K-fold cross-validation",
+    "def": "将数据分K份，每次用K−1份训练、1份验证。所有学习型预处理和特征选择在每折训练数据内拟合。偏差、方差与K的关系依赖数据、算法和评估目标，没有普遍单调规律。调参后的评估可使用独立测试集或嵌套CV。",
+    "see": "§X"
+  },
+  {
+    "term": "PCA",
+    "en": "Principal Component Analysis",
+    "def": "线性降维方法：找方差最大的正交方向（主成分），用少数PC解释大部分方差。得分用特征向量权重w_pj计算，非载荷l_pj=w_pj·√λ_p。基于协方差矩阵或相关矩阵（标准化后）。",
+    "see": "§X, §XIV"
+  },
+  {
+    "term": "偏差-方差权衡",
+    "en": "bias-variance tradeoff",
+    "def": "平方损失下，在Y=f(X)+ε及零条件均值噪声等假设下，期望预测误差可分解为偏差²、估计方差与不可约噪声。它描述重复训练集下的期望，不意味着所有复杂模型一定高方差，或所有集成方法都只降方差。",
+    "see": "§X"
+  },
+  {
+    "term": "平稳性",
+    "en": "stationarity",
+    "def": "弱平稳要求有限且恒定的均值与方差，协方差只依赖滞后而非绝对时间。ARIMA在适当差分后对平稳部分建模。ADF拒绝单位根只针对所设回归中的单位根零假设，不能排除结构突变等其他非平稳形式。",
+    "see": "§XI"
+  },
+  {
+    "term": "ACF/PACF",
+    "en": "Autocorrelation / Partial Autocorrelation Function",
+    "def": "ACF=序列与自身滞后值的相关性。PACF=扣除中间滞后影响后的直接相关性。AR(p)的PACF在p阶后截尾；MA(q)的ACF在q阶后截尾。ARIMA定阶的重要工具。",
+    "see": "§XI"
+  },
+  {
+    "term": "影子价格",
+    "en": "shadow price",
+    "def": "约束右端项小幅改变时，最优目标值的局部边际变化，符号取决于最小化/最大化及不等式方向。在最优基不变等适用范围内可作线性敏感性解释；不应把任意放宽1单位都解释为固定改善。",
+    "see": "§XIII"
+  },
+  {
+    "term": "Pareto最优",
+    "en": "Pareto optimality",
+    "def": "不存在另一个可行方案在所有目标上不差且至少一个目标更好。严格区分目标空间中的Pareto前沿与决策空间中的Pareto最优解集。TOPSIS可用于给定方案集排序，并不自动先求出Pareto前沿。",
+    "see": "§XIII, §XIV"
+  },
+  {
+    "term": "动态规划",
+    "en": "Dynamic Programming, DP",
+    "def": "将复杂问题分解为重叠子问题，存储子问题解避免重复计算。Bellman最优性原理：最优策略的子策略也是最优的。适用于背包、最短路径、资源分配等。状态定义和转移方程是核心。",
+    "see": "§XIII"
+  },
+  {
+    "term": "TOPSIS",
+    "en": "Technique for Order Preference by Similarity to Ideal Solution",
+    "def": "综合评价方法：构造正理想解和负理想解，按方案距正理想解近、离负理想解远的原则排序。需外部权重（来自熵权法、AHP、CRITIC或专家判断），非无权重方法。",
+    "see": "§XIV"
+  },
+  {
+    "term": "熵权法",
+    "en": "Entropy Weight Method",
+    "def": "根据归一化指标的样本分布分散程度赋权：熵越小，差异系数通常越大。它不要求指标统计独立，但强相关指标可能重复计权。权重反映数据差异，不代表固有重要性；常量、非正值及零值需按明确规则处理。",
+    "see": "§XIV"
+  },
+  {
+    "term": "AHP",
+    "en": "Analytic Hierarchy Process",
+    "def": "通过正互反的两两比较矩阵求权重，常用主特征向量或行几何均值近似。一致性比率CR<0.1是常用经验阈值，RI及阈值需结合矩阵阶数和领域；一、二阶矩阵不按一般RI公式计算。",
+    "see": "§XIV"
+  },
+  {
+    "term": "SIR模型",
+    "en": "Susceptible-Infected-Recovered model",
+    "def": "标准封闭人群模型：dS/dt=−βSI/N，dI/dt=βSI/N−γI，dR/dt=γI，R₀=β/γ。若出现内部感染峰，S=Nγ/β；初始有效再生数为R₀S(0)/N。有限时刻的R(t)不等于最终感染规模，初始免疫或移除人数需另计。",
+    "see": "§XV"
+  },
+  {
+    "term": "Logistic增长",
+    "en": "Logistic growth",
+    "def": "在r>0、K>0时，dP/dt=rP(1−P/K)。若0<P(0)<K，种群趋向K；穿过K/2时增长率最大。只有P(0)<K/2的正向轨迹才会经历这个S形拐点，不能把所有初值都概括为完整S形增长。",
+    "see": "§XV"
+  },
+  {
+    "term": "蒙特卡洛模拟",
+    "en": "Monte Carlo simulation",
+    "def": "用随机抽样近似积分或随机系统等问题。对独立同分布、有限方差样本，样本均值标准误为σ/√n；阶数不直接含维度，但方差和计算成本可依赖维度。MCMC样本有相关性，应使用有效样本量和收敛诊断。",
+    "see": "§XVI"
+  },
+  {
+    "term": "Dijkstra算法",
+    "en": "Dijkstra's algorithm",
+    "def": "单源最短路径算法：贪心+优先队列，每次扩展当前距离最小的未访问节点。O((V+E)logV)。仅适用于非负权重图。负权边需用Bellman-Ford。",
+    "see": "§XVI"
+  },
+  {
+    "term": "Cramér's V",
+    "en": "Cramér's V",
+    "def": "列联表关联强度度量，基于卡方统计量：V=√(χ²/(n·min(r−1,c−1)))∈[0,1]。V=|φ|（2×2表时）。0=无关联，1=完全关联。适用于名义变量。所有基于卡方的度量只测关联强度不测方向。",
+    "see": "§III"
+  },
+  {
+    "term": "Spearman秩相关",
+    "en": "Spearman's rank correlation",
+    "def": "对每个变量采用平均秩处理重复值，再计算秩的Pearson相关。衡量单调关联；任一变量恒定时未定义。无需计算相关系数所用的数据服从正态，但显著性检验仍有抽样和近似条件。",
+    "see": "§III"
+  },
+  {
+    "term": "Kruskal-Wallis检验",
+    "en": "Kruskal-Wallis test",
+    "def": "比较多个独立样本的秩分布，零假设通常表述为各组来自相同分布。只有在分布形状相同的连续位置模型下，才可把结果主要解释为中位数差异；一般情况下也会对尺度或形状差异敏感。",
+    "see": "§V"
+  },
+  {
+    "term": "ANCOVA",
+    "en": "Analysis of Covariance",
+    "def": "方差分析与回归的结合：在比较组间均值时，用连续协变量（如基线值、年龄）控制混杂。提高检验功效，但ANCOVA≠因果推断——仍有未测量混杂的可能。",
+    "see": "§V"
+  },
+  {
+    "term": "Welch t检验",
+    "en": "Welch's t-test",
+    "def": "不假设两组方差相等的t检验，使用Satterthwaite近似自由度。竞赛建议默认使用Welch而非Student t——它更稳健，且方差异质时控制I类错误更好。",
+    "see": "§IV"
+  },
+  {
+    "term": "Mann-Whitney U检验",
+    "en": "Mann-Whitney U test",
+    "def": "对两独立样本进行秩比较，常见零假设为两组分布相同。U/(n₁n₂)关联随机抽取两组观测的相对大小概率，并按规则处理同值；拒绝零假设不等于证明一阶随机占优或一般中位数不同。小样本精确方法还需注意重复值处理。",
+    "see": "§IV"
+  },
+  {
+    "term": "Bootstrap",
+    "en": "Bootstrap",
+    "def": "重抽样方法：从样本中有放回地抽取n个观测值，重复B次（≥1000），计算每次的统计量，用其经验分布构建置信区间或做假设检验。非参数Bootstrap不假设分布形式。",
+    "see": "§IV"
+  },
+  {
+    "term": "Shapiro-Wilk检验",
+    "en": "Shapiro-Wilk test",
+    "def": "检验独立样本来自正态总体的零假设。p<α时拒绝；不拒绝不能证明正态。大样本可检出很小偏离，小样本可能功效不足，不存在统一的n>200失效界线，应结合Q-Q图和分析对偏离的敏感程度。",
+    "see": "§I"
+  },
+  {
+    "term": "GARCH模型",
+    "en": "Generalized AutoRegressive Conditional Heteroscedasticity",
+    "def": "GARCH(1,1)：σ²_t=ω+αε²_{t−1}+βσ²_{t−1}，通常ω>0、α≥0、β≥0。标准创新单位方差条件下，α+β<1保证有限无条件方差ω/(1−α−β)；严格平稳条件与有限方差条件并不完全相同。",
+    "see": "§XI"
+  },
+  {
+    "term": "误差修正模型",
+    "en": "Error Correction Model, ECM",
+    "def": "描述协整系统偏离长期均衡后的短期调整。对于特例Δe_t=αe_{t−1}+u_t，稳定条件是−2<α<0；含其他动态项或多变量反馈时，需检查整个系统特征根，不能将该范围套到任意ECM。",
+    "see": "§XI"
+  },
+  {
+    "term": "Hedges' g",
+    "en": "Hedges' g",
+    "def": "对标准化均值差进行小样本偏差校正。独立两组常用g=J(ν)d，ν=n₁+n₂−2；J(ν)=Γ(ν/2)/(√(ν/2)Γ((ν−1)/2))，常用近似1−3/(4ν−1)。应明确效应量定义及适用设计。",
+    "see": "§IV"
+  },
+  {
+    "term": "距离相关",
+    "en": "distance correlation, dCor",
+    "def": "在适当矩条件下，总体距离相关为0当且仅当两个随机向量独立。这是总体性质；有限样本距离相关为正不能单独证明依赖，通常需置换检验。等于1的条件远强于存在任意确定函数关系。",
+    "see": "§III"
+  },
+  {
+    "term": "预测区间",
+    "en": "prediction interval",
+    "def": "对未来随机观测值构造的区间，应说明标称覆盖率及模型假设。标准线性回归中，同一x处的新观测预测区间比均值响应置信区间宽，因为额外包含观测噪声；不能把这结论泛化到任意不同构造的区间。",
+    "see": "§XII, §VI"
+  },
+  {
+    "term": "灰色预测GM(1,1)",
+    "en": "Grey Model GM(1,1)",
+    "def": "对累加序列拟合一阶线性微分方程，再逆累加得到预测的灰色模型。少量数据可拟合不代表预测必然可靠；常见级比条件是适用性诊断之一，不保证外推准确，应与基线模型及留出验证比较。",
+    "see": "§XII"
+  },
+  {
+    "term": "轮廓系数",
+    "en": "Silhouette score",
+    "def": "聚类质量指标：s=(b−a)/max(a,b)，a=样本与同簇平均距离，b=样本与最近异簇平均距离。∈[−1,1]，越接近1越好。用于选择K和评估聚类结果。",
+    "see": "§IX"
+  },
+  {
+    "term": "DBSCAN",
+    "en": "Density-Based Spatial Clustering of Applications with Noise",
+    "def": "基于密度的聚类算法。两个参数：ε（邻域半径）和minPts（最小点数）。能发现任意形状簇、自动识别噪声点、不需预设簇数。不适合密度差异大的数据和高维数据。",
+    "see": "§IX"
+  }
 ]

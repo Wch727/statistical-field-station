@@ -1,14 +1,14 @@
 <div class="competition-box">
-<h4>竞赛真题场景</h4>
-<p><span class="q">Q：</span>国赛 A 题：根据城市的多项指标，将城市分为若干类（如「高发展-高污染」「低发展-低污染」等），为政策制定提供依据。<br>
-<span class="q">Q：</span>美赛 MCM：对客户进行市场细分（customer segmentation），K-Means 是最常用的方法。一等奖论文通常结合 PCA 降维 → K-Means 聚类 → 轮廓系数验证 → 结果解读。<br>
+<h4>建模应用示例（非特定真题或获奖论文引用）</h4>
+<p><span class="q">Q：</span>应用示例：根据城市的多项指标，将城市分为若干类（如「高发展-高污染」「低发展-低污染」等），为政策制定提供依据。<br>
+<span class="q">Q：</span>美赛 MCM：对客户进行市场细分（customer segmentation），K-Means 是最常用的方法。可比较 PCA 降维 → K-Means 聚类 → 轮廓系数验证 → 结果解读。<br>
 <span class="q">Q：</span>数据挖掘竞赛：异常检测——DBSCAN 自动标记噪声点，天然适合离群点检测。<br>
 <strong>→ 竞赛中，聚类结果不是终点，而是起点——聚类后需要分析每个簇的特征，回答「为什么这些样本被分在一起？」</strong></p>
 </div>
 
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 <h2>9.1 K-Means 聚类</h2>
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 
 <div class="concept-box">
 <h4>核心思想</h4>
@@ -46,7 +46,7 @@ C_k = \{ x_i : \|x_i - \mu_k\|^2 \le \|x_i - \mu_j\|^2 \ \forall j \neq k \}
 
 <p><strong>肘部法则 (Elbow Method)：</strong>绘制 WCSS 随 K 变化的曲线，选择「肘部」——即 WCSS 下降速度开始明显减缓的点。</p>
 
-<p><strong>轮廓系数 (Silhouette Score)：</strong>对于样本 \(i\)，设 \(a(i)\) 为同簇内样本的平均距离，\(b(i)\) 为到最近其他簇的平均距离：</p>
+<p><strong>轮廓系数 (Silhouette Score)：</strong>对于样本 \(i\)，设 \(a(i)\) 为与同簇其他样本（不含自身）的平均距离，\(b(i)\) 为到其他各簇的平均距离中的最小值（不是到最近质心的距离）：</p>
 
 <div class="math-block">
 \[
@@ -54,20 +54,20 @@ s(i) = \frac{b(i) - a(i)}{\max(a(i), b(i))} \in [-1, 1]
 \]
 </div>
 
-<p>\(s(i) \approx 1\)：样本很好地聚类；\(s(i) \approx 0\)：样本在簇边界上；\(s(i) \approx -1\)：样本可能被分错了簇。平均轮廓系数是选择 K 的重要指标。</p>
+<p>\(s(i) \approx 1\)：样本很好地聚类；\(s(i) \approx 0\)：样本在簇边界上；\(s(i) \approx -1\)：样本可能被分错了簇。平均轮廓系数是选择 K 的参考，通常需 2≤K≤n−1；单样本簇的该点得分约定为 0，零分母也记为 0。对非凸或密度簇，该指标可能偏爱凸簇。</p>
 
 <div class="toolkit-box">
 <h4>竞赛工具箱：K-Means 使用指南</h4>
 <p><strong>K 的选择：</strong>同时参考肘部法则 + 轮廓系数 + 业务可解释性。三个指标一致时最有说服力。<br>
 <strong>初始化：</strong>使用 K-Means++（sklearn 默认），它选择初始质心时尽量分散，显著减少收敛到局部最优的概率。<br>
-<strong>标准化：</strong>K-Means 依赖欧氏距离——<strong>必须先标准化</strong>。否则取值范围大的特征主导聚类结果。<br>
+<strong>标准化：</strong>K-Means 依赖欧氏距离——应依据量纲与业务权重决定是否标准化，而非无条件标准化。否则取值范围大的特征主导聚类结果。<br>
 <strong>多次运行：</strong>设置 n_init=10 或更多，取 WCSS 最小的结果。<br>
-<strong>局限性：</strong>K-Means 假设簇是球形且大小相近——对拉长的、大小不一的、非凸的簇效果差。</p>
+<strong>局限性：</strong>K-Means 的欧氏平方目标偏好紧凑、近似球形且尺度相近的簇（并非显式概率假设）——对拉长的、大小不一的、非凸的簇效果差。</p>
 </div>
 
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 <h2>9.2 层次聚类</h2>
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 
 <div class="concept-box">
 <h4>核心思想</h4>
@@ -101,7 +101,7 @@ s(i) = \frac{b(i) - a(i)}{\max(a(i), b(i))} \in [-1, 1]
 
 <div class="derive-box">
 <h4>Ward 方法的增量公式</h4>
-<p>合并簇 \(A\) 和 \(B\) 后，WCSS 的增量（即 Ward 距离）为：</p>
+<p>合并簇 \(A\) 和 \(B\) 后，WCSS 的增量（合并代价；SciPy 的 linkage 树高为该增量的两倍再开平方，须区分约定）为：</p>
 <div class="math-block">
 \[
 \Delta(A,B) = \frac{|A| \cdot |B|}{|A| + |B|} \cdot \|\mu_A - \mu_B\|^2
@@ -111,12 +111,12 @@ s(i) = \frac{b(i) - a(i)}{\max(a(i), b(i))} \in [-1, 1]
 </div>
 
 <div class="note-box">
-<strong>竞赛提示：</strong>层次聚类的一个巨大优势是<strong>不需要预先指定 K</strong>——你可以画树状图，然后根据图的形状和业务需求选择截断高度。在论文中展示树状图比只给一个 K 值更有说服力。此外，Ward 方法在大多数竞赛场景中表现最好。
+<strong>竞赛提示：</strong>层次聚类的一个巨大优势是<strong>不需要预先指定 K</strong>——你可以画树状图，然后根据图的形状和业务需求选择截断高度。在论文中展示树状图比只给一个 K 值更有说服力。此外，Ward 适用于欧氏距离下偏紧凑的簇，不能保证在所有数据上最好；传入预计算距离时也须满足其欧氏几何要求。
 </div>
 
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 <h2>9.3 DBSCAN</h2>
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 
 <div class="concept-box">
 <h4>核心思想</h4>
@@ -142,7 +142,7 @@ s(i) = \frac{b(i) - a(i)}{\max(a(i), b(i))} \in [-1, 1]
 <h4>算法流程</h4>
 <p>① 对每个未访问的点 \(p\)，检查其 \(\varepsilon\)-邻域。如果 \(|N_\varepsilon(p)| \ge \text{minPts}\)，则 \(p\) 是核心点，创建新簇。<br>
 ② 将 \(p\) 的 \(\varepsilon\)-邻域中所有点加入该簇。对每个新加入的点 \(q\)，如果 \(q\) 也是核心点，则将其 \(\varepsilon\)-邻域中的点也加入簇（<strong>密度可达</strong>的传递性）。<br>
-③ 重复直到没有新点可加入。剩余未访问的点标记为噪声。</p>
+③ 重复直到没有新点可加入。对剩余未访问点继续检查邻域并创建其他簇；邻居不足者先暂记噪声，之后仍可成为核心点邻域中的边界点，最终未加入任何簇者才为噪声。</p>
 </div>
 
 <h3>9.3.2 DBSCAN vs K-Means</h3>
@@ -160,16 +160,16 @@ s(i) = \frac{b(i) - a(i)}{\max(a(i), b(i))} \in [-1, 1]
 </table>
 
 <div class="note-box">
-<strong>竞赛技巧：</strong>DBSCAN 特别适合<strong>地理空间数据</strong>（如城市聚类、污染源定位）和<strong>异常检测</strong>（噪声点 = 异常样本）。在竞赛中，如果数据有明显的非球形结构或需要异常检测，DBSCAN 通常比 K-Means 更合适。参数 \(\varepsilon\) 的选择可以使用 k-距离图（k-distance graph）——找曲线的拐点。
+<strong>竞赛技巧：</strong>DBSCAN 特别适合<strong>地理空间数据</strong>（如城市聚类、污染源定位；经纬度需投影或使用球面距离并明确单位）和<strong>异常检测</strong>（噪声点是当前参数下的低密度候选，是否为领域异常仍需核查）。在竞赛中，如果数据有明显的非球形结构或需要异常检测，DBSCAN 通常比 K-Means 更合适。参数 \(\varepsilon\) 的选择可以使用 k-距离图（k-distance graph）——找曲线的拐点。
 </div>
 
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 <h2>9.3A 高斯混合模型 (GMM)</h2>
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 
 <div class="concept-box">
 <h4>从硬聚类到软聚类</h4>
-<p>K-Means 将每个样本硬性分配给一个簇（要么属于，要么不属于）。GMM 则给出每个样本<strong>属于每个簇的概率</strong>——这被称为软聚类（soft clustering）。GMM 假设数据由 \(K\) 个高斯分布的混合生成，每个高斯分布代表一个簇。</p>
+<p>K-Means 将每个样本硬性分配给一个簇（要么属于，要么不属于）。GMM 则给出每个样本<strong>属于每个簇的概率</strong>——这被称为软聚类（soft clustering）。GMM 假设数据由 \(K\) 个高斯分量混合生成；分量可以重叠，不一定对应领域中的真实簇。无约束高斯混合似然可能因协方差塌缩而无界，实践中需协方差正则化、多次初始化和收敛诊断。</p>
 </div>
 
 <h3>GMM 的概率模型</h3>
@@ -198,7 +198,7 @@ p(x) = \sum_{k=1}^{K} \pi_k \cdot \mathcal{N}(x \mid \mu_k, \Sigma_k)
 \pi_k = \frac{\sum_i \gamma_{ik}}{n}
 \]
 </div>
-<p>GMM 的协方差矩阵可以有不同的约束形式：<strong>spherical</strong>（各向同性，等价于 K-Means）、<strong>diagonal</strong>（轴对齐椭圆）、<strong>tied</strong>（所有分量共享同一协方差）、<strong>full</strong>（每个分量独立的任意协方差）。</p>
+<p>GMM 的协方差矩阵可以有不同的约束形式：<strong>spherical</strong>（每个分量各向同性，但可有不同方差，不等价于 K-Means）、<strong>diagonal</strong>（轴对齐椭圆）、<strong>tied</strong>（所有分量共享同一协方差）、<strong>full</strong>（每个分量独立的任意协方差）。</p>
 </div>
 
 <h3>GMM vs K-Means</h3>
@@ -209,18 +209,18 @@ p(x) = \sum_{k=1}^{K} \pi_k \cdot \mathcal{N}(x \mid \mu_k, \Sigma_k)
 <tr><td>簇形状</td><td>圆形（等方差）</td><td>椭圆（任意协方差）</td></tr>
 <tr><td>分配方式</td><td>硬分配（0/1）</td><td>软分配（概率）</td></tr>
 <tr><td>不确定性的表达</td><td>无</td><td>有（后验概率）</td></tr>
-<tr><td>优化算法</td><td>Lloyd（EM 的特例）</td><td>EM 算法</td></tr>
+<tr><td>优化算法</td><td>Lloyd（可联系到共享球形方差趋零时的硬分配极限）</td><td>EM 算法</td></tr>
 <tr><td>对初始化的敏感度</td><td>高</td><td>高（用 K-Means 初始化）</td></tr>
 </tbody>
 </table>
 
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 <h2>9.3B 聚类评估指标</h2>
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 
 <div class="concept-box">
 <h4>如何判断聚类质量？</h4>
-<p>聚类是无监督学习——没有真实的标签来验证。但我们可以用内部指标评估聚类的紧致性和分离性，用外部指标（如果有部分标签）评估聚类与真实分类的一致性。</p>
+<p>聚类训练不使用标签；有时仍存在可用于外部评估的参考标签。但我们可以用内部指标评估聚类的紧致性和分离性，用外部指标（如果有部分标签）评估聚类与真实分类的一致性。</p>
 </div>
 
 <table class="compact-table">
@@ -243,7 +243,7 @@ p(x) = \sum_{k=1}^{K} \pi_k \cdot \mathcal{N}(x \mid \mu_k, \Sigma_k)
 <h2>9.3C 谱聚类 (Spectral Clustering)</h2>
 
 <div class="concept-box">
-<h4>当聚类不是凸的——K-Means 和 DBSCAN 都束手无策</h4>
+<h4>当非凸结构更适合图相似度表示</h4>
 <p>K-Means 只能找到球形聚类，DBSCAN 依赖密度阈值。谱聚类通过<strong>图论</strong>方法——将数据点视为图的节点，相似度视为边的权重，然后切割图——能够发现任意形状的非凸聚类。</p>
 </div>
 
@@ -252,7 +252,7 @@ p(x) = \sum_{k=1}^{K} \pi_k \cdot \mathcal{N}(x \mid \mu_k, \Sigma_k)
 <p><strong>Step 1 — 构建相似矩阵：</strong>\(W_{ij} = \exp\left(-\frac{\|x_i - x_j\|^2}{2\sigma^2}\right)\)（高斯核）。σ 控制邻域大小——这是最关键的超参数。</p>
 <p><strong>Step 2 — 构建拉普拉斯矩阵：</strong>\(\mathbf{L} = \mathbf{D} - \mathbf{W}\)，其中 \(\mathbf{D}_{ii} = \sum_j W_{ij}\)（度矩阵）。或使用归一化版本 \(\mathbf{L}_{sym} = \mathbf{D}^{-1/2}\mathbf{L}\mathbf{D}^{-1/2}\)。</p>
 <p><strong>Step 3 — 特征分解：</strong>计算 \(\mathbf{L}\) 的前 \(k\) 个最小特征值对应的特征向量，组成矩阵 \(\mathbf{U} \in \mathbb{R}^{n \times k}\)。</p>
-<p><strong>Step 4 — K-Means：</strong>将 \(\mathbf{U}\) 的每一行作为数据点的新坐标（谱嵌入），用 K-Means 聚类。</p>
+<p><strong>Step 4 — K-Means：</strong>非归一化 L 版本可直接将 U 的行作为新坐标再 K-Means；使用 L_sym 的 Ng–Jordan–Weiss 版本通常先将 U 各行归一化（零行需处理），再聚类。</p>
 </div>
 
 <div class="math-block">
@@ -270,22 +270,22 @@ p(x) = \sum_{k=1}^{K} \pi_k \cdot \mathcal{N}(x \mid \mu_k, \Sigma_k)
 
 <div class="concept-box">
 <h4>不是聚类方法，但是聚类可视化必需品</h4>
-<p>t-SNE 和 UMAP 是<strong>降维可视化</strong>方法——将高维数据映射到 2D 或 3D 空间，保留局部结构。它们<strong>不能</strong>产生聚类标签，但可以<strong>非常直观地展示</strong>聚类结果——如果聚类是合理的，同一簇的点在 t-SNE/UMAP 图中应该聚在一起。</p>
+<p>t-SNE 和 UMAP 是<strong>降维可视化</strong>方法——将高维数据映射到 2D 或 3D 空间，保留局部结构。它们<strong>直接</strong>产生聚类标签，可作为探索性的可视化；图上的聚集或分离不能独立证明原空间聚类合理。</p>
 </div>
 
 <table class="compact-table">
 <thead><tr><th>特性</th><th>t-SNE</th><th>UMAP</th><th>PCA</th></tr></thead>
 <tbody>
 <tr><td>保留结构</td><td>局部邻居关系</td><td>局部 + 部分全局</td><td>全局方差</td></tr>
-<tr><td>速度</td><td>慢 (O(n²))</td><td>快 (O(n log n))</td><td>极快 (O(p³))</td></tr>
-<tr><td>可解释性</td><td>低（轴无含义）</td><td>低（轴无含义）</td><td>高（载荷可解释）</td></tr>
-<tr><td>聚类可视化</td><td>★★★★★</td><td>★★★★★</td><td>★★★</td></tr>
-<tr><td>随机性</td><td>有（多次运行结果不同）</td><td>有（但更稳定）</td><td>无（确定性）</td></tr>
+<tr><td>速度</td><td>精确方法 O(n²)，Barnes–Hut 等近似可加速</td><td>常用近似邻居实现较快，复杂度取决于实现与参数</td><td>取决于 n、p、求解器和保留维数（通常基于 SVD）</td></tr>
+<tr><td>可解释性</td><td>低（轴无含义）</td><td>高（载荷可解释）</td></tr>
+<tr><td>聚类可视化</td><td>★★★★★</td><td>★★★</td></tr>
+<tr><td>随机性</td><td>有（多次运行结果不同）</td><td>有（但更稳定）</td><td>完整 SVD 确定至符号/重根子空间；随机 SVD 有随机性</td></tr>
 </tbody>
 </table>
 
 <div class="warn-box">
-<strong>关键警告：</strong>① t-SNE/UMAP 的簇间距离无意义——两个簇在图上的距离不代表它们的实际相似度。② t-SNE 的 perplexity 参数对结果影响巨大——建议尝试 5, 30, 50 多个值。③ <strong>不能在 t-SNE 图上做聚类然后说「我发现了 3 个簇」</strong>——这是循环论证。正确的做法是先用 K-Means/DBSCAN 聚类，再用 t-SNE 可视化验证聚类结果。④ 竞赛中永远不要只展示 t-SNE 图——结合 PCA 和聚类评估指标一起使用。
+<strong>关键警告：</strong>① t-SNE/UMAP 的簇间距离无意义——两个簇在图上的距离不代表它们的实际相似度。② t-SNE 的 perplexity 参数对结果影响巨大——建议尝试 5, 30, 50 多个值。③ <strong>不能在 t-SNE 图上做聚类然后说「我发现了 3 个簇」</strong>——这是循环论证。正确的做法是在原始/合理预处理空间用指标、稳定性和领域知识评估聚类，再用 t-SNE/UMAP 辅助呈现。也可把 UMAP 作为聚类前处理的候选，但必须独立验证，不能只凭二维图断言簇数。④ 竞赛中永远不要只展示 t-SNE 图——结合 PCA 和聚类评估指标一起使用。
 </div>
 
 <!-- ═══════════ 9.3E 高维聚类 ═══════════ -->
@@ -293,13 +293,13 @@ p(x) = \sum_{k=1}^{K} \pi_k \cdot \mathcal{N}(x \mid \mu_k, \Sigma_k)
 
 <div class="concept-box">
 <h4>维度灾难在聚类中的表现</h4>
-<p>当维度 p > 20 时，聚类面临三个严重问题：① <strong>距离失效：</strong>高维空间中，所有点之间的距离趋于相等——最近邻和最远邻的差距消失。② <strong>噪声累积：</strong>每个维度都贡献一些噪声，p 个维度的噪声加起来淹没了信号。③ <strong>稀疏性：</strong>数据点在高维空间中极其稀疏，大部分区域是空的。</p>
+<p>高维且噪声特征较多时，聚类可能面临以下问题；没有 p&gt;20 的统一失效界限：① <strong>距离失效：</strong>高维空间中，所有点之间的距离趋于相等——最近邻和最远邻的差距消失。② <strong>噪声累积：</strong>每个维度都贡献一些噪声，p 个维度的噪声加起来淹没了信号。③ <strong>稀疏性：</strong>数据点在高维空间中极其稀疏，大部分区域是空的。</p>
 </div>
 
 <div class="toolkit-box">
 <h4>建模工具箱：高维聚类的应对策略</h4>
 <p><strong>① PCA 降维 → 聚类：</strong>最常用的策略。先 PCA 降到 5-20 维（保留 80%+ 方差），再 K-Means。优点是简单、可解释（载荷可说明每个簇的特征）。<br>
-<strong>② 特征选择 → 聚类：</strong>用方差阈值、互信息或 LASSO 选出与聚类最相关的特征。适合特征有明确含义时。<br>
+<strong>② 特征选择 → 聚类：</strong>无标签时可按常数/冗余特征及领域依据筛选；普通监督互信息和 LASSO 需要目标 Y，不能凭空用于无监督特征选择。适合特征有明确含义时。<br>
 <strong>③ 子空间聚类：</strong>不同簇可能存在于不同的特征子集中——例如「簇 1 由特征 A,B,C 定义，簇 2 由特征 D,E,F 定义」。CLIQUE 和 PROCLUS 是经典算法。<br>
 <strong>④ 谱聚类 + 自适应 σ：</strong>使用局部缩放的高斯核，对高维噪声更鲁棒。</p>
 </div>
@@ -308,9 +308,9 @@ p(x) = \sum_{k=1}^{K} \pi_k \cdot \mathcal{N}(x \mid \mu_k, \Sigma_k)
 <strong>竞赛技巧：</strong>竞赛中高维聚类 (p > 30) 的标准流程：① 特征筛选（去掉方差接近 0 的特征）。② PCA 降维（保留 80-90% 方差）。③ 在 PCA 空间上做 K-Means/DBSCAN/谱聚类。④ 通过载荷分析解释每个簇的含义。⑤ 用 t-SNE 可视化最终结果。这五步流程在论文中非常规范。
 </div>
 
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 <h2>9.4 聚类方法选择决策树</h2>
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 
 <table class="compact-table">
 <thead><tr><th>条件</th><th>推荐方法</th><th>理由</th></tr></thead>
@@ -329,9 +329,9 @@ p(x) = \sum_{k=1}^{K} \pi_k \cdot \mathcal{N}(x \mid \mu_k, \Sigma_k)
 <strong>竞赛常见错误：</strong>① 不标准化就做 K-Means/层次聚类——距离度量对尺度敏感。② 只用肘部法则选 K 而不报告轮廓系数。③ 使用 DBSCAN 但不解释参数选择——评委会问「为什么选这个 \(\varepsilon\)？」。④ 聚类后不做簇的解读——只给「分成了 3 类」是不够的，必须分析每个簇的特征（均值、方差、最有区分度的特征）。
 </div>
 
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 <!-- INSTRUMENT No.9A: K-Means 迭代动画 -->
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 <h2>仪器 No.9A — K-Means 迭代演示</h2>
 <div class="panel">
 <div class="panel-label">INSTRUMENT No.9A · K-Means Lloyd Iteration</div>
@@ -351,13 +351,13 @@ p(x) = \sum_{k=1}^{K} \pi_k \cdot \mathcal{N}(x \mid \mu_k, \Sigma_k)
 <div class="chart-container" id="km-chart"></div>
 </div>
 
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 <!-- INSTRUMENT No.9B: DBSCAN 演示 -->
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 <h2>仪器 No.9B — DBSCAN 密度聚类演示</h2>
 <div class="panel">
 <div class="panel-label">INSTRUMENT No.9B · DBSCAN Density-Based Clustering</div>
-<p style="font-size:0.9rem;color:var(--slate);margin-bottom:12px">对比 K-Means 和 DBSCAN 在非球形数据上的表现。K-Means 强制将数据分为 K 个球形簇，而 DBSCAN 能发现任意形状的簇并标记噪声。</p>
+<p style="font-size:0.9rem;color:var(--slate);margin-bottom:12px">对比 K-Means 和 DBSCAN 在非球形数据上的表现。K-Means 用 K 个质心划分 Voronoi 区域，偏好紧凑簇，而 DBSCAN 能发现任意形状的簇并标记噪声。</p>
 <div class="panel-grid">
   <div>
     <div class="slider-row"><label>ε = <span class="slider-val" id="db-eps-val">0.08</span></label><input type="range" id="db-eps" min="0.02" max="0.25" value="0.08" step="0.01"></div>
@@ -382,17 +382,19 @@ p(x) = \sum_{k=1}^{K} \pi_k \cdot \mathcal{N}(x \mid \mu_k, \Sigma_k)
 </div>
 </div>
 
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 <h2>9.5 竞赛实战流程</h2>
-<!-- ══════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════ -->
 
 <div class="toolkit-box">
 <h4>聚类问题竞赛流程</h4>
-<p><strong>Step 1：</strong>数据预处理——标准化（必须）、处理缺失值、去除无关特征。<br>
-<strong>Step 2：</strong>降维可视化——PCA 降到 2D（见 §X），初步观察数据分布。<br>
+<p><strong>Step 1：</strong>数据预处理——根据量纲与业务权重决定缩放、处理缺失值、去除无关特征。<br>
+<strong>Step 2：</strong>降维可视化——PCA 降到 2D（见 §10.3），初步观察数据分布。<br>
 <strong>Step 3：</strong>确定 K 的范围——肘部法则 + 轮廓系数，确定候选 K 值。<br>
 <strong>Step 4：</strong>多方法对比——K-Means + 层次聚类（Ward）+ DBSCAN（如果数据非球形）。<br>
 <strong>Step 5：</strong>结果验证——轮廓系数、Davies-Bouldin 指数、Calinski-Harabasz 指数。<br>
 <strong>Step 6：</strong>簇的解读——分析每个簇的统计特征（均值、方差），找出区分簇的关键特征。<br>
 <strong>Step 7：</strong>可视化呈现——PCA 散点图（颜色编码簇）+ 特征雷达图（每个簇的轮廓）。</p>
 </div>
+
+<div class="note-box"><strong>延伸核对：</strong><a href="https://scikit-learn.org/stable/modules/clustering.html" target="_blank" rel="noopener noreferrer">scikit-learn 聚类方法与指标</a>；<a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.cluster.hierarchy.ward.html" target="_blank" rel="noopener noreferrer">SciPy Ward linkage</a>。公式使用条件与库默认值应一并阅读。</div>

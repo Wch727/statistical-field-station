@@ -1,7 +1,3 @@
-function lgamma(x){const g=7,c=[0.99999999999980993,676.5203681218851,-1259.1392167224028,771.32342877765313,-176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];if(x<0.5)return Math.log(Math.PI/Math.sin(Math.PI*x))-lgamma(1-x);x-=1;let a=c[0],t=x+g+0.5;for(let i=1;i<c.length;i++)a+=c[i]/(x+i);return Math.log(Math.sqrt(2*Math.PI))+Math.log(a)-t+Math.log(t)*(x+0.5);}
-function regularizedIncompleteBeta(x,a,b){if(x===0)return 0;if(x===1)return 1;const MAX_IT=200,EPS=1e-15;const front=Math.exp(lgamma(a+b)-lgamma(a)-lgamma(b)+a*Math.log(x)+b*Math.log(1-x));let f=1,c=1,d=1-(a+b)*x/(a+1);if(Math.abs(d)<EPS)d=EPS;d=1/d;let h=d;for(let m=1;m<=MAX_IT;m++){const m2=2*m;let aa=m*(b-m)*x/((a+m2-1)*(a+m2));d=1+aa*d;if(Math.abs(d)<EPS)d=EPS;c=1+aa/c;if(Math.abs(c)<EPS)c=EPS;d=1/d;h*=d*c;aa=-(a+m)*(a+b+m)*x/((a+m2)*(a+m2+1));d=1+aa*d;if(Math.abs(d)<EPS)d=EPS;c=1+aa/c;if(Math.abs(c)<EPS)c=EPS;d=1/d;const del=d*c;h*=del;if(Math.abs(del-1)<EPS)break;}return front*(h-1)/a;}
-function fCDF(x,df1,df2){const y=df1*x/(df1*x+df2);return regularizedIncompleteBeta(y,df1/2,df2/2);}
-
 function updateANOVA(){
   const m1=+document.getElementById('anova-m1').value,n1=+document.getElementById('anova-n1').value;
   const m2=+document.getElementById('anova-m2').value,n2=+document.getElementById('anova-n2').value;
@@ -16,11 +12,11 @@ function updateANOVA(){
   const SSB=n1*(m1-grandMean)**2+n2*(m2-grandMean)**2+n3*(m3-grandMean)**2;
   const SSW=(n1-1)*sigma*sigma+(n2-1)*sigma*sigma+(n3-1)*sigma*sigma;
   const dfB=2,dfW=N-3,MSB=SSB/dfB,MSW=SSW/dfW;
-  const F=MSW===0?0:MSB/MSW,p=F===0?1:1-fCDF(F,dfB,dfW);
+  const F=MSW>0?MSB/MSW:(MSB>0?Infinity:NaN),p=fSurvival(F,dfB,dfW);
   const etaSq=SSB/(SSB+SSW),omegaSq=(SSB-dfB*MSW)/(SSB+SSW+MSW);
 
   document.getElementById('anova-tbody').innerHTML=`
-    <tr><td>组间 (Between)</td><td>${SSB.toFixed(2)}</td><td>${dfB}</td><td>${MSB.toFixed(2)}</td><td rowspan="2" style="font-weight:600;">${F.toFixed(3)}</td><td rowspan="2" class="${p<0.05?'sig':''}">${p.toFixed(4)}</td></tr>
+    <tr><td>组间 (Between)</td><td>${SSB.toFixed(2)}</td><td>${dfB}</td><td>${MSB.toFixed(2)}</td><td rowspan="2" style="font-weight:600;">${F.toFixed(3)}</td><td rowspan="2" class="${p<0.05?'sig':''}">${p>0 && p<0.0001?p.toExponential(3):p.toFixed(4)}</td></tr>
     <tr><td>组内 (Within)</td><td>${SSW.toFixed(2)}</td><td>${dfW}</td><td>${MSW.toFixed(2)}</td></tr>
     <tr style="border-top:2px solid var(--stone);"><td>总计 (Total)</td><td>${(SSB+SSW).toFixed(2)}</td><td>${N-1}</td><td></td><td></td><td></td></tr>
     <tr><td colspan="6" style="font-size:0.85rem;color:var(--slate);">η² = ${etaSq.toFixed(3)} &nbsp;|&nbsp; ω² = ${omegaSq.toFixed(3)} &nbsp;|&nbsp; Cohen's f = ${Math.sqrt(etaSq/(1-etaSq)).toFixed(3)}</td></tr>`;

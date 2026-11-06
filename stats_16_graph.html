@@ -30,11 +30,11 @@
 
 <main id="main-content">
 <div class="competition-box">
-<h4>竞赛真题场景</h4>
+<h4>竞赛建模示例（改编场景，非原题题面）</h4>
 <p><span class="q">Q：</span>美赛 MCM：如何规划城市交通网络？→ 最短路径 + 最大流。<br>
 <span class="q">Q：</span>国赛/美赛：如何识别社交网络中的关键节点？→ 网络中心性分析。<br>
 <span class="q">Q：</span>美赛 ICM：如何模拟排队系统（如医院、收费站）？→ 排队模拟（离散事件仿真）。<br>
-<span class="q">Q：</span>国赛 B 题：如何模拟交通流或人群疏散？→ 元胞自动机。<br>
+<span class="q">Q：</span>建模场景：如何模拟交通流或人群疏散？→ 元胞自动机。<br>
 <strong>→ 图论和仿真在竞赛中常作为「建模工具」出现——它们不是最终答案，而是分析和验证方案的手段。</strong></p>
 </div>
 
@@ -57,7 +57,7 @@
 </table>
 
 <div class="note-box">
-<strong>Python 工具：</strong>networkx 是 Python 图论的标准库。一行代码创建图：<code>G = nx.Graph()</code>，一行代码求最短路径：<code>nx.shortest_path(G, source, target)</code>。竞赛中画网络图：<code>nx.draw(G, pos, with_labels=True)</code>。本节涉及的最短路径、最小生成树、中心性等全部在 networkx 中有现成实现。
+<strong>Python 工具：</strong>NetworkX 是需额外安装的 Python 图论第三方库。一行代码创建图：<code>G = nx.Graph()</code>，一行代码求最短路径：<code>nx.shortest_path(G, source, target, weight="weight")</code>。竞赛中画网络图：<code>nx.draw(G, pos, with_labels=True)</code>。本节涉及的最短路径、最小生成树、中心性等全部在 networkx 中有现成实现。
 </div>
 
 <!-- ══════════════════════════════════════════════ -->
@@ -98,7 +98,7 @@ d_{ij}^{(k)} = \min\left(d_{ij}^{(k-1)},\; d_{ik}^{(k-1)} + d_{kj}^{(k-1)}\right
 
 <div class="concept-box">
 <h4>用最小的代价连接所有节点</h4>
-<p>最小生成树（Minimum Spanning Tree, MST）是包含所有节点且边权重之和最小的无环连通子图。竞赛应用：铺设管网、布线、通信网络规划。</p>
+<p>对于连通无向图，最小生成树（Minimum Spanning Tree, MST）是包含所有节点且边权重之和最小的无环连通子图。竞赛应用：铺设管网、布线、通信网络规划；不连通图只能得到最小生成森林。</p>
 </div>
 
 <div class="derive-box">
@@ -122,7 +122,7 @@ d_{ij}^{(k)} = \min\left(d_{ij}^{(k-1)},\; d_{ik}^{(k-1)} + d_{kj}^{(k-1)}\right
 <tbody>
 <tr><td><strong>度中心性</strong></td><td>\(C_D(v) = \deg(v)\)</td><td>谁的联系最多？</td></tr>
 <tr><td><strong>介数中心性</strong></td><td>\(C_B(v) = \sum_{s \neq v \neq t} \frac{\sigma_{st}(v)}{\sigma_{st}}\)</td><td>谁是信息流通的「桥梁」？</td></tr>
-<tr><td><strong>接近中心性</strong></td><td>\(C_C(v) = \frac{1}{\sum_u d(v,u)}\)</td><td>谁离所有人最近？</td></tr>
+<tr><td><strong>接近中心性</strong></td><td>\(C_C(v) = \frac{|V|-1}{\sum_{u\ne v} d(v,u)}\)</td><td>谁离所有人最近？</td></tr>
 <tr><td><strong>特征向量中心性</strong></td><td>\(\mathbf{A}\mathbf{x} = \lambda \mathbf{x}\)（邻接矩阵特征向量）</td><td>谁连接了重要的人？</td></tr>
 <tr><td><strong>PageRank</strong></td><td>\(PR(v) = \frac{1-d}{N} + d \sum_{u \to v} \frac{PR(u)}{L(u)}\)</td><td>在有向图中谁被重要节点指向？</td></tr>
 </tbody>
@@ -139,7 +139,7 @@ d_{ij}^{(k)} = \min\left(d_{ij}^{(k-1)},\; d_{ik}^{(k-1)} + d_{kj}^{(k-1)}\right
 <div class="concept-box">
 <h4>图的结构分析</h4>
 <p><strong>连通分量：</strong>无向图中，如果两个节点之间存在路径，它们属于同一连通分量。竞赛中识别连通分量可以发现网络中的「孤岛」。</p>
-<p><strong>社区检测：</strong>将节点划分为若干组，使组内连接密集、组间连接稀疏。主要方法：① 模块度最大化（Girvan-Newman）② Louvain 算法 ③ 谱聚类（见 §IX）。竞赛中社区检测常用于发现社交网络中的群体结构。</p>
+<p><strong>社区检测：</strong>将节点划分为若干组，使组内连接密集、组间连接稀疏。主要方法：① Girvan-Newman（按边介数逐步删边，可用模块度选划分）② Louvain（启发式模块度优化） ③ 谱聚类（见 §IX）。竞赛中社区检测常用于发现社交网络中的群体结构。</p>
 </div>
 
 <!-- ══════════════════════════════════════════════ -->
@@ -159,7 +159,7 @@ d_{ij}^{(k)} = \min\left(d_{ij}^{(k-1)},\; d_{ik}^{(k-1)} + d_{kj}^{(k-1)}\right
 \pi \approx 4 \times \frac{\text{圆内点数}}{\text{总点数}}
 \]
 </div>
-<p>误差随点数 \(N\) 以 \(O(1/\sqrt{N})\) 的速度收敛。要增加一位小数精度，需要 100 倍的点数。</p>
+<p>独立均匀采样下估计无偏，标准误为 \(4\sqrt{(\pi/4)(1-\pi/4)/N}\)，均方根误差为 \(O(N^{-1/2})\)；单次绝对误差不保证单调下降。要增加一位小数精度，需要 100 倍的点数。</p>
 </div>
 
 <div class="derive-box">
@@ -210,7 +210,7 @@ d_{ij}^{(k)} = \min\left(d_{ij}^{(k-1)},\; d_{ik}^{(k-1)} + d_{kj}^{(k-1)}\right
 <h4>经典示例：交通流 NASCH 模型</h4>
 <p>将道路离散化为元胞（每个元胞为空或被一辆车占据）。车辆速度 v ∈ {0, 1, ..., v_max}。每步更新四步：</p>
 <p><strong>Step 1 — 加速：</strong>\(v \to \min(v+1, v_{\max})\)<br>
-<strong>Step 2 — 减速（防撞）：</strong>\(v \to \min(v, d-1)\)，其中 d 是前方空元胞数<br>
+<strong>Step 2 — 减速（防撞）：</strong>\(v \to \min(v, d-1)\)，其中 d 是本车到前车的格点距离（若g为前方空元胞数，则v→min(v,g)）<br>
 <strong>Step 3 — 随机慢化：</strong>以概率 p 减速：\(v \to \max(v-1, 0)\)<br>
 <strong>Step 4 — 运动：</strong>车辆向前移动 v 个元胞</p>
 <p>这个简单的四步规则可以复现交通流中的<strong>幽灵堵车</strong>（无外部原因的自发拥堵）和从自由流到拥堵的相变。竞赛中元胞自动机广泛用于交通流、人群疏散、森林火灾蔓延、城市扩张模拟。</p>
@@ -262,12 +262,16 @@ d_{ij}^{(k)} = \min\left(d_{ij}^{(k-1)},\; d_{ik}^{(k-1)} + d_{kj}^{(k-1)}\right
 <div class="toolkit-box">
 <h4>图论 + 仿真竞赛标准流程</h4>
 <p><strong>图论分析：</strong>① 将问题建模为图——节点是什么？边是什么？权重是什么？② 选择合适的算法（最短路径 / MST / 最大流 / 中心性）。③ 用 networkx 求解。④ 分析结果——哪些节点/边是关键？改变网络结构会怎样？<br>
-<strong>仿真分析：</strong>① 定义系统状态和演化规则。② 确定随机性来源（到达时间、服务时间、随机扰动）。③ 运行多次仿真（至少 100-1000 次独立运行）。④ 报告结果的均值 ± 标准差（因为仿真有随机性，单次结果不可靠）。⑤ 灵敏度分析——改变关键参数，观察结果如何变化。</p>
+<strong>仿真分析：</strong>① 定义系统状态和演化规则。② 确定随机性来源（到达时间、服务时间、随机扰动）。③ 按目标标准误/置信区间宽度决定独立重复次数，设置随机种子并检查稳态仿真的预热与自相关。④ 同时区分输出波动（样本标准差）与均值精度（标准误s/√R、相应置信区间）。⑤ 灵敏度分析——改变关键参数，观察结果如何变化。</p>
 </div>
 
 <div class="warn-box">
 <strong>竞赛陷阱：</strong>① 蒙特卡洛仿真只跑一次就报告结果——仿真结果有随机性，必须报告均值和置信区间。② 图论模型过于简化——忽略了实际约束（如道路不是直线、节点之间不是无限容量）。③ 元胞自动机不解释规则设计——评委需要知道你为什么选择这些规则、有什么依据。④ 排队模型用 M/M/1 硬套现实——大多数真实排队系统不是 Poisson 到达 + 指数服务。
 </div>
+
+<div class="note-box"><strong>适用条件与边界：</strong>度中心性可用原始度或除以|V|−1的规范值；接近中心性公式适用于连通无向图，非连通或有向图需明确可达范围及方向。介数需排除s=t及端点，并明确有向/无向计数与规范化；PageRank需将悬挂节点权重按给定分布重新分配，d∈(0,1)。M/M/1公式是无限缓冲、FCFS、独立泊松到达与指数服务、λ<μ下的稳态结果，Wq不含服务时间；W=1/(μ−λ)。蒙特卡洛单次运行若有大量独立采样也可估计标准误，并非必须机械重复整个程序。</div>
+
+<p class="source-note">核对资料：<a href="https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.shortest_paths.generic.shortest_path.html">NetworkX最短路径权重参数</a>；<a href="https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.community.centrality.girvan_newman.html">Girvan-Newman算法</a></p>
 </main>
 
 
@@ -282,7 +286,7 @@ d_{ij}^{(k)} = \min\left(d_{ij}^{(k-1)},\; d_{ik}^{(k-1)} + d_{kj}^{(k-1)}\right
   <div class="footer-meta">
     <span>版本 v1.2.0</span> <span>|</span>
     <span>持续更新中 · 欢迎反馈纠错</span> <span>|</span>
-    <span>最后更新: 2026-07</span>
+    <span>最后更新: 2026-11</span>
   </div>
   <p>Statistical Field Station &copy; 2026 · KaTeX + D3.js</p>
 </footer>
@@ -316,7 +320,9 @@ if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
   nodes.forEach(n => adj[n.id] = []);
   edges.forEach(e => {
     adj[e.from].push({to:e.to, w:e.w});
-    adj[e.to].push({to:e.from, w:e.w});  let selectedStart = null, selectedEnd = null;
+    adj[e.to].push({to:e.from, w:e.w});
+  });
+  let selectedStart = null, selectedEnd = null;
 
   const svg = d3.select('#sp-chart').append('svg').attr('width',W).attr('height',H).attr('viewBox',`0 0 ${W} ${H}`);
 
@@ -477,11 +483,14 @@ if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
   function updateStats() {
     const piEst = total > 0 ? 4 * inside / total : 0;
     const err = total > 0 ? Math.abs(piEst - Math.PI) : 0;
+    const p = total > 0 ? inside / total : 0;
+    const se = total > 0 ? 4 * Math.sqrt(p * (1-p) / total) : NaN;
     d3.select('#mc-stats').html(`
       <div class="stat-card"><div class="lbl">总点数</div><div class="val">${total}</div></div>
       <div class="stat-card"><div class="lbl">圆内点数</div><div class="val">${inside}</div></div>
       <div class="stat-card"><div class="lbl">π 估计值</div><div class="val" style="color:var(--terracotta)">${piEst.toFixed(6)}</div></div>
       <div class="stat-card"><div class="lbl">误差</div><div class="val">${err.toFixed(6)}</div></div>
+      <div class="stat-card"><div class="lbl">蒙特卡洛标准误</div><div class="val">${total > 0 ? se.toFixed(6) : '—'}</div></div>
       <div class="stat-card"><div class="lbl">真值 π</div><div class="val">${Math.PI.toFixed(6)}</div></div>
     `);
   }
@@ -492,10 +501,10 @@ if (typeof d3 === 'undefined' || typeof renderMathInElement === 'undefined') {
   d3.select('#mc-reset').on('click', () => {
     total = 0; inside = 0;
     svg.selectAll('circle').remove();
-    updateStats();  addPoints(200);
-})();
-})();
+    updateStats();
   });
+  addPoints(200);
+})();
 
 
 // ============ KaTeX Auto-Render ============

@@ -10,8 +10,9 @@
     "test:links": "node tests/check-links.js",
     "test:assets": "node tests/check-assets.js",
     "test:smoke": "node tests/smoke-pages.js",
-    "test": "node tests/run-statistics-tests.js && node tests/check-links.js && node tests/check-assets.js",
-    "test:all": "npm run test:statistics && npm run test:links && npm run test:assets && npm run test:smoke",
-    "build": "node build/build.js"
+    "test": "node tests/run-statistics-tests.js && npm run test:audit && node tests/check-links.js && node tests/check-assets.js",
+    "test:all": "npm run test:statistics && npm run test:audit && npm run test:links && npm run test:assets && npm run test:smoke",
+    "build": "node build/build.js",
+    "test:audit": "node tests/run-audit-tests.cjs"
   }
 }
